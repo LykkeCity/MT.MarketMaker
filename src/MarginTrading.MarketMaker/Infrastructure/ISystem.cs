@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MarginTrading.MarketMaker.HelperServices
+namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface ISystem
     {

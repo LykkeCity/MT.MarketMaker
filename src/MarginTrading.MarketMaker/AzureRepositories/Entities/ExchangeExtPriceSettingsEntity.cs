@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 

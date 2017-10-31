@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 

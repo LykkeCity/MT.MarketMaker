@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public static class ShallowCopyHelper<T>
     {

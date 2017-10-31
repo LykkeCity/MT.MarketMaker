@@ -4,7 +4,7 @@ using Common;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Settings;
 
-namespace MarginTrading.MarketMaker.HelperServices
+namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface IRabbitMqService
     {

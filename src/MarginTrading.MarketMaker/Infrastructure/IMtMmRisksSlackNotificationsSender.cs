@@ -1,6 +1,6 @@
 ﻿using Lykke.SlackNotifications;
 
-namespace MarginTrading.MarketMaker.HelperServices
+namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface IMtMmRisksSlackNotificationsSender: ISlackNotificationsSender
     {

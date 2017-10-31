@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public static class ImmutableDictionaryBuilderExtensions
     {

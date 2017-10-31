@@ -14,7 +14,7 @@ using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public class RabbitMqService : IRabbitMqService, IDisposable
     {

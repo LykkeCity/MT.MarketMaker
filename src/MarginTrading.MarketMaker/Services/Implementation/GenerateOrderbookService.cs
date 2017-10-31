@@ -8,10 +8,10 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
-using Trace = MarginTrading.MarketMaker.HelperServices.Implemetation.Trace;
+using Trace = MarginTrading.MarketMaker.Infrastructure.Implemetation.Trace;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {

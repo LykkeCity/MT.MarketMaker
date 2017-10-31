@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Lykke.SlackNotifications;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public class MtMmRisksSlackNotificationsSender : IMtMmRisksSlackNotificationsSender
     {
