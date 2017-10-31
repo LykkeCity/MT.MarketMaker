@@ -114,11 +114,12 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
         public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
         {
-            IList<AssetPairExtPriceSettingsEntity> assetPairsEntities;
+            IEnumerable<AssetPairExtPriceSettingsEntity> assetPairsEntities;
             if (assetPairId == null)
                 assetPairsEntities = await _assetPairsRepository.GetAllAsync();
             else
-                assetPairsEntities = new[] {_assetPairsCachedAccessor.GetByKey(GetAssetPairKeys(assetPairId))};
+                assetPairsEntities =
+                    new[] {_assetPairsCachedAccessor.GetByKey(GetAssetPairKeys(assetPairId))}.Where(e => e != null);
 
             return assetPairsEntities
                 .GroupJoin(await _exchangesRepository.GetAllAsync(), ap => ap.AssetPairId, e => e.AssetPairId, Convert)

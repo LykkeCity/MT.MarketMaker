@@ -31,7 +31,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Entities
         public RepeatedOutliersParams RepeatedOutliers { get; set; } = new RepeatedOutliersParams();
 
         [EditorBrowsable(EditorBrowsableState.Never), CanBeNull, JsonIgnore]
-        public string StepsStr;
+        public string StepsStr { get; set; }
 
         [CanBeNull]
         private ImmutableDictionary<OrderbookGeneratorStepEnum, bool> _stepsCache;
