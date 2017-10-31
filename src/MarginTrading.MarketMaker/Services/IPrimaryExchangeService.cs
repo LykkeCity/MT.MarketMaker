@@ -18,6 +18,10 @@ namespace MarginTrading.MarketMaker.Services
         [Pure]
         IReadOnlyDictionary<string, ImmutableDictionary<string, ExchangeQuality>> GetQualities();
 
+        [Pure]
         IReadOnlyDictionary<string, string> GetLastPrimaryExchanges();
+
+        [Pure]
+        ImmutableDictionary<string, ExchangeQuality> GetQualities(string assetPairId);
     }
 }
