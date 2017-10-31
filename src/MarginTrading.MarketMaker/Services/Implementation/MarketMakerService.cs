@@ -7,7 +7,8 @@ using Common;
 using Common.Log;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices;
+using MarginTrading.MarketMaker.Filters;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
@@ -114,6 +115,11 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             if (model.SetSourceType != null)
             {
                 quotesSourceType = model.SetSourceType.Value;
+                if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
+                {
+                    TestFunctionalityFilter.ValidateTestsEnabled();
+                }
+
                 await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(model.AssetPairId,
                     model.SetSourceType.Value);
             }

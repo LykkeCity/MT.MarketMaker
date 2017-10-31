@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using MarginTrading.MarketMaker.Filters;
 using Microsoft.AspNetCore.Hosting;
 
 namespace MarginTrading.MarketMaker
@@ -17,6 +18,7 @@ namespace MarginTrading.MarketMaker
             Console.WriteLine("Is RELEASE");
 #endif
             Console.WriteLine($"ENV_INFO: {Environment.GetEnvironmentVariable("ENV_INFO")}");
+            Console.WriteLine($"TestsEnabled: {TestFunctionalityFilter.TestsEnabled}");
 
             void RunHost() =>
                 new WebHostBuilder()
