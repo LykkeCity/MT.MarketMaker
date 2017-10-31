@@ -1,7 +1,7 @@
 ﻿using System;
 using Common.Log;
 using Lykke.SettingsReader;
-using MarginTrading.MarketMaker.HelperServices;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Settings;
 

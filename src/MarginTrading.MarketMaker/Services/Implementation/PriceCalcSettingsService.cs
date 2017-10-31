@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.AzureRepositories.Entities;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 using MoreLinq;
@@ -114,11 +114,12 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
         public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
         {
-            IList<AssetPairExtPriceSettingsEntity> assetPairsEntities;
+            IEnumerable<AssetPairExtPriceSettingsEntity> assetPairsEntities;
             if (assetPairId == null)
                 assetPairsEntities = await _assetPairsRepository.GetAllAsync();
             else
-                assetPairsEntities = new[] {_assetPairsCachedAccessor.GetByKey(GetAssetPairKeys(assetPairId))};
+                assetPairsEntities =
+                    new[] {_assetPairsCachedAccessor.GetByKey(GetAssetPairKeys(assetPairId))}.Where(e => e != null);
 
             return assetPairsEntities
                 .GroupJoin(await _exchangesRepository.GetAllAsync(), ap => ap.AssetPairId, e => e.AssetPairId, Convert)
@@ -128,6 +129,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public Task Set(AssetPairExtPriceSettingsModel model)
         {
             var entity = Convert(model);
+            entity.Timestamp = DateTimeOffset.UtcNow;
 
             var upsertAssetPairTask = _assetPairsCachedAccessor.Upsert(entity);
 

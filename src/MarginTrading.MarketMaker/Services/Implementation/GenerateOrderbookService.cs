@@ -8,10 +8,10 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
-using Trace = MarginTrading.MarketMaker.HelperServices.Implemetation.Trace;
+using Trace = MarginTrading.MarketMaker.Infrastructure.Implemetation.Trace;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
@@ -31,7 +31,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         private readonly IPriceCalcSettingsService _priceCalcSettingsService;
         private readonly IAlertService _alertService;
         private readonly IPrimaryExchangeService _primaryExchangeService;
-        private readonly IArbitrageFreeSpreadService _arbitrageFreeSpreadService;
+        private readonly ITransformOrderbookService _transformOrderbookService;
         private readonly IBestPricesService _bestPricesService;
         private readonly ILog _log;
         private readonly ITelemetryService _telemetryService;
@@ -48,7 +48,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             IPriceCalcSettingsService priceCalcSettingsService,
             IAlertService alertService,
             IPrimaryExchangeService primaryExchangeService,
-            IArbitrageFreeSpreadService arbitrageFreeSpreadService,
+            ITransformOrderbookService transformOrderbookService,
             IBestPricesService bestPricesService,
             ILog log,
             ITelemetryService telemetryService,
@@ -63,7 +63,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _priceCalcSettingsService = priceCalcSettingsService;
             _alertService = alertService;
             _primaryExchangeService = primaryExchangeService;
-            _arbitrageFreeSpreadService = arbitrageFreeSpreadService;
+            _transformOrderbookService = transformOrderbookService;
             _bestPricesService = bestPricesService;
             _log = log;
             _telemetryService = telemetryService;
@@ -156,7 +156,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var bestPrices =
                 validOrderbooks.Values.ToDictionary(o => o.ExchangeName,
                     orderbook => _bestPricesService.Calc(orderbook));
-            return _arbitrageFreeSpreadService.Transform(primaryOrderbook, bestPrices);
+            return _transformOrderbookService.Transform(primaryOrderbook, bestPrices);
         }
 
         /// <summary>

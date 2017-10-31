@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MarginTrading.MarketMaker.Settings
+﻿namespace MarginTrading.MarketMaker.Settings
 {
     public class RabbitMqConsumersSettings
     {

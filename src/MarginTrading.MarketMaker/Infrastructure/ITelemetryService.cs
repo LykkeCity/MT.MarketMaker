@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MarginTrading.MarketMaker.HelperServices
+namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface ITelemetryService
     {

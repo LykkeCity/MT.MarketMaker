@@ -1,9 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Common;
 using Lykke.SettingsReader;
-using Lykke.SlackNotifications;
-using MarginTrading.MarketMaker.HelperServices;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Settings;
 

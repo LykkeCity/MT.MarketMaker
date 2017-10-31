@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Swashbuckle.SwaggerGen.Annotations;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
+    [TestFunctionalityFilter]
     public class TestsController : Controller
     {
         private readonly ITestingHelperService _testingHelperService;

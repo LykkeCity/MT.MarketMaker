@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
-using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
-    public class ArbitrageFreeSpreadService : IArbitrageFreeSpreadService
+    public class TransformOrderbookService : ITransformOrderbookService
     {
         private readonly IPriceCalcSettingsService _priceCalcSettingsService;
 
-        public ArbitrageFreeSpreadService(IPriceCalcSettingsService priceCalcSettingsService)
+        public TransformOrderbookService(IPriceCalcSettingsService priceCalcSettingsService)
         {
             _priceCalcSettingsService = priceCalcSettingsService;
         }

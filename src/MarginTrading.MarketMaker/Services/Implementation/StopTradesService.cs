@@ -5,7 +5,7 @@ using System.Linq;
 using Common;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services.Implementation

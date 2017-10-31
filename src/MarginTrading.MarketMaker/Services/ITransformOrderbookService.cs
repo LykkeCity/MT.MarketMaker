@@ -3,7 +3,7 @@ using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services
 {
-    public interface IArbitrageFreeSpreadService
+    public interface ITransformOrderbookService
     {
         Orderbook Transform(ExternalOrderbook primaryOrderbook, IReadOnlyDictionary<string, BestPrices> bestPrices);
     }

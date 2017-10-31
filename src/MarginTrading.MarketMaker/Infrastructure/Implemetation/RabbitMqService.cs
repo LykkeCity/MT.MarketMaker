@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AzureStorage;
 using AzureStorage.Blob;
 using Common;
 using Common.Log;
@@ -15,7 +14,7 @@ using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.Extensions.PlatformAbstractions;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public class RabbitMqService : IRabbitMqService, IDisposable
     {

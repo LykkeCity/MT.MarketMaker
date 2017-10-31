@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.ApplicationInsights;
 
-namespace MarginTrading.MarketMaker.HelperServices.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
 {
     public class TelemetryService : ITelemetryService
     {

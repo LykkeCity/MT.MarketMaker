@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -31,7 +31,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Entities
         public RepeatedOutliersParams RepeatedOutliers { get; set; } = new RepeatedOutliersParams();
 
         [EditorBrowsable(EditorBrowsableState.Never), CanBeNull, JsonIgnore]
-        public string StepsStr;
+        public string StepsStr { get; set; }
 
         [CanBeNull]
         private ImmutableDictionary<OrderbookGeneratorStepEnum, bool> _stepsCache;
