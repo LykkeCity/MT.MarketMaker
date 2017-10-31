@@ -8,7 +8,6 @@ using Common.Log;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.HelperServices;
-using MarginTrading.MarketMaker.HelperServices.Implemetation;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MarginTrading.MarketMaker.Enums;
+﻿using MarginTrading.MarketMaker.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 

@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Messages;
 
 namespace MarginTrading.MarketMaker.Services

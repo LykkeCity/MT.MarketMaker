@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AzureStorage;
 using AzureStorage.Blob;
 using Common;
 using Common.Log;

@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using MarginTrading.MarketMaker.Messages;
-using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Services

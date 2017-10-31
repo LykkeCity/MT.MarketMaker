@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MarginTrading.MarketMaker.Messages
+﻿namespace MarginTrading.MarketMaker.Messages
 {
     public class StartedMessage
     {
