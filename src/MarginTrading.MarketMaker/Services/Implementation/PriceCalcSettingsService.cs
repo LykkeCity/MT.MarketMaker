@@ -129,6 +129,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public Task Set(AssetPairExtPriceSettingsModel model)
         {
             var entity = Convert(model);
+            entity.Timestamp = DateTimeOffset.UtcNow;
 
             var upsertAssetPairTask = _assetPairsCachedAccessor.Upsert(entity);
 
