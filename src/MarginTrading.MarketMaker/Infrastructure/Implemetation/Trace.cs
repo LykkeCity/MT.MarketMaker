@@ -24,7 +24,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
         public static void Write(string str)
         {
             _lastElemsQueue.Enqueue(str);
-            if (_lastElemsQueue.Count > 500)
+            if (_lastElemsQueue.Count > 5000)
                 _lastElemsQueue.TryDequeue(out var _);
 
             _consoleQueue.Add(str);

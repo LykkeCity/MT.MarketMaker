@@ -84,6 +84,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var assetPairId = orderbook.AssetPairId;
             if (!_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
+                Trace.Write($"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
                 return null;
             }
 
