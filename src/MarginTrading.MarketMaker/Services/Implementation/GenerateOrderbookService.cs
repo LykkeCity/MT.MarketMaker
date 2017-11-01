@@ -79,14 +79,14 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             {
                 return null;
             }
-            
+
 
             var assetPairId = orderbook.AssetPairId;
-            if (_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
+            if (!_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
                 return null;
             }
-            
+
             var allOrderbooks = _orderbooksService.AddAndGetByAssetPair(orderbook);
             var now = orderbook.LastUpdatedTime;
             var (exchangesErrors, validOrderbooks) = MarkExchangesErrors(assetPairId, allOrderbooks, now);
