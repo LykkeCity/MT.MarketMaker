@@ -112,6 +112,11 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 });
         }
 
+        public bool IsExchangeConfigured(string assetPairId, string exchange)
+        {
+            return AllExchanges(assetPairId).ContainsKey(exchange);
+        }
+
         public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
         {
             IEnumerable<AssetPairExtPriceSettingsEntity> assetPairsEntities;
