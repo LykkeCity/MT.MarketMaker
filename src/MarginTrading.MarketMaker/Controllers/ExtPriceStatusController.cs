@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models.Api;
@@ -51,6 +52,18 @@ namespace MarginTrading.MarketMaker.Controllers
         public string GetLogs()
         {
             return string.Join("\r\n", Trace.GetLast());
+        }
+
+        /// <summary>
+        /// Gets logs for asset pair
+        /// </summary>
+        [HttpGet]
+        [Route("logs/{contains}")]
+        [SwaggerOperation("GetLogsFiltered")]
+        [CanBeNull]
+        public string GetLogsFiltered(string contains)
+        {
+            return string.Join("\r\n", Trace.GetLast().Where(l => l.Contains(contains)));
         }
     }
 }

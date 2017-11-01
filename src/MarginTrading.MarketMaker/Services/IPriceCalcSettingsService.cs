@@ -23,5 +23,6 @@ namespace MarginTrading.MarketMaker.Services
         IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences();
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
         void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable);
+        bool IsExchangeConfigured(string assetPairId, string exchange);
     }
 }
