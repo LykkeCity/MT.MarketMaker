@@ -59,7 +59,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public async Task DeleteAsync(string assetPairId)
         {
             var keys = GetKeys(assetPairId);
-            await _assetsPairsSettingsRepository.DeleteIfExistAsync(keys.PartitionKey, keys.RowKey);
+            await _assetsPairsSettingsRepository.DeleteIfExistAsync(GenerateEntityFromKeys(keys));
             DeleteByKey(keys);
         }
 

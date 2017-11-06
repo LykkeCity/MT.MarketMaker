@@ -162,7 +162,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var bestPrices =
                 validOrderbooks.Values.ToDictionary(o => o.ExchangeName,
-                    orderbook => _bestPricesService.Calc(orderbook));
+                    orderbook => _bestPricesService.CalcExternal(orderbook));
             return _transformOrderbookService.Transform(primaryOrderbook, bestPrices);
         }
 

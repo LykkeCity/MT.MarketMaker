@@ -3,7 +3,7 @@ using Lykke.SettingsReader.Attributes;
 
 namespace MarginTrading.MarketMaker.Settings
 {
-    public class AppSettings
+    internal class AppSettings
     {
         public MarginTradingMarketMakerSettings MarginTradingMarketMaker { get; set; }
 

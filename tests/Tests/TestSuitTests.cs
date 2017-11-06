@@ -16,6 +16,19 @@ namespace Tests
         }
 
         [Test]
+        public void Reset_SutShouldBeRecreated()
+        {
+            //arrange
+            _testSuit.Sut.I = 10;
+
+            //act
+            _testSuit.Reset();
+
+            //assert
+            _testSuit.Sut.I.Should().Be(1);
+        }
+
+        [Test]
         public void UsingTraditionalSetups_ShouldCorrectlySetupMocks()
         {
             //arrange
@@ -76,6 +89,7 @@ namespace Tests
         [UsedImplicitly]
         private class MySut
         {
+            public int I { get; set; } = 1;
             public IDependency1 Dependency1 { get; }
             public IDependency2 Dependency2 { get; }
 

@@ -1,12 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Common.Log;
+using Lykke.Service.Assets.Client.Custom;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using Rocks.Caching;
 
 namespace MarginTrading.MarketMaker.Modules
@@ -15,6 +19,7 @@ namespace MarginTrading.MarketMaker.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly ILog _log;
+        private readonly IServiceCollection _services = new ServiceCollection();
 
         public MarketMakerModule(IReloadingManager<AppSettings> settings, ILog log)
         {
@@ -36,6 +41,12 @@ namespace MarginTrading.MarketMaker.Modules
                 .As<IRabbitMqService>().SingleInstance();
 
             builder.RegisterType<BrokerService>().As<IBrokerService>().InstancePerDependency();
+
+            _services.UseAssetsClient(AssetServiceSettings.Create(
+                new Uri(_settings.CurrentValue.MarginTradingMarketMaker.ExternalServices.AssetsServiceUrl),
+                TimeSpan.FromMinutes(5)));
+
+            builder.Populate(_services);
         }
 
         /// <summary>

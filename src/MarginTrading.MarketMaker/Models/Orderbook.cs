@@ -6,11 +6,13 @@ namespace MarginTrading.MarketMaker.Models
     {
         public ImmutableArray<OrderbookPosition> Bids { get; }
         public ImmutableArray<OrderbookPosition> Asks { get; }
+        public string AssetPairId { get; }
 
-        public Orderbook(ImmutableArray<OrderbookPosition> bids, ImmutableArray<OrderbookPosition> asks)
+        public Orderbook(string assetPairId, ImmutableArray<OrderbookPosition> bids, ImmutableArray<OrderbookPosition> asks)
         {
             Bids = bids;
             Asks = asks;
+            AssetPairId = assetPairId;
         }
     }
 }
