@@ -13,9 +13,9 @@ namespace MarginTrading.MarketMaker.Models
         [JsonConverter(typeof(StringEnumConverter))]
         public ExchangeErrorState? Error { get; }
         public bool OrderbookReceived { get; }
-        public DateTime LastOrderbookReceivedTime { get; }
+        public DateTime? LastOrderbookReceivedTime { get; }
 
-        public ExchangeQuality(string exchange, decimal hedgingPreference, ExchangeErrorState? error, bool orderbookReceived, DateTime lastOrderbookReceivedTime)
+        public ExchangeQuality(string exchange, decimal hedgingPreference, ExchangeErrorState? error, bool orderbookReceived, DateTime? lastOrderbookReceivedTime)
         {
             Exchange = exchange;
             HedgingPreference = hedgingPreference;

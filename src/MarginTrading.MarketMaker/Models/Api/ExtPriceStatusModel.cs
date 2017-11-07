@@ -16,6 +16,6 @@ namespace MarginTrading.MarketMaker.Models.Api
         public ExchangeErrorState? Error { get; set; }
 
         public bool IsPrimary { get; set; }
-        public DateTime LastOrderbookReceivedTime { get; set; }
+        public DateTime? LastOrderbookReceivedTime { get; set; }
     }
 }

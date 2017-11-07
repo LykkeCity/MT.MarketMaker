@@ -15,8 +15,10 @@ namespace MarginTrading.MarketMaker.Services.Implementation
     {
         private readonly ReadWriteLockedDictionary<string, string> _primaryExchanges =
             new ReadWriteLockedDictionary<string, string>();
-        private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeQuality>> _exchangesQualities =
-            new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeQuality>>();
+
+        private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeQuality>>
+            _exchangesQualities =
+                new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeQuality>>();
 
         private readonly IAlertService _alertService;
         private readonly IHedgingPreferenceService _hedgingPreferenceService;
@@ -51,7 +53,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors,
-            DateTime now)
+            DateTime now, string currentProcessingExchange)
         {
             if (!_priceCalcSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.ChoosePrimary, assetPairId))
             {
@@ -60,7 +62,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return presetPrimaryExchange;
             }
 
-            var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now);
+            var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now, currentProcessingExchange);
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
             _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.Exchange, now,
                 primaryQuality.HedgingPreference, primaryQuality.Error);
@@ -76,8 +78,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             if (primaryExchange == null)
             {
                 var result = SwitchPrimaryExchange(assetPairId, null, exchangeQualities,
-                    newPrimary => $"{newPrimary.Exchange} has been chosen as an initial primary exchange for {assetPairId}. " +
-                                  $"It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
+                    newPrimary =>
+                        $"{newPrimary.Exchange} has been chosen as an initial primary exchange for {assetPairId}. " +
+                        $"It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
                 return result;
             }
 
@@ -89,7 +92,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 case ExchangeErrorState.None when primaryPreference > 0:
                     return primaryQuality;
                 case ExchangeErrorState.Outlier when primaryPreference > 0:
-                    _alertService.AlertRiskOfficer(assetPairId, $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.");
+                    _alertService.AlertRiskOfficer(assetPairId,
+                        $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.");
                     return primaryQuality;
                 default:
                     primaryQuality = SwitchPrimaryExchange(assetPairId, primaryQuality, exchangeQualities,
@@ -162,30 +166,39 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             throw new InvalidOperationException("Unable to choose backup exchange for assetPair " + assetPairId);
         }
 
-        private ImmutableDictionary<string, ExchangeQuality> CalcExchangeQualities(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now)
+        private ImmutableDictionary<string, ExchangeQuality> CalcExchangeQualities(string assetPairId,
+            ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now, string currentProcessingExchange)
         {
-            var exchangeQualities = _hedgingPreferenceService.Get(assetPairId)
-                .ToImmutableDictionary(p => p.Key,
-                    p =>
-                    {
-                        var orderbookReceived = errors.TryGetValue(p.Key, out var state);
-                        return new ExchangeQuality(p.Key, p.Value,
-                            orderbookReceived ? state : (ExchangeErrorState?) null,
-                            orderbookReceived, now);
-                    });
+            var hedgingPreferences = _hedgingPreferenceService.Get(assetPairId);
+
+            ImmutableDictionary<string, ExchangeQuality> Calc(ImmutableDictionary<string, ExchangeQuality> old)
+                => hedgingPreferences
+                    .ToImmutableDictionary(p => p.Key,
+                        p =>
+                        {
+                            var orderbookReceived = errors.TryGetValue(p.Key, out var state);
+                            return new ExchangeQuality(p.Key, p.Value,
+                                orderbookReceived ? state : (ExchangeErrorState?) null,
+                                orderbookReceived,
+                                currentProcessingExchange == p.Key
+                                    ? now
+                                    : old?.GetValueOrDefault(p.Key).LastOrderbookReceivedTime);
+                        });
 
             ImmutableDictionary<string, ExchangeQuality> oldQualities = null;
-            _exchangesQualities.AddOrUpdate(assetPairId, k => exchangeQualities, (k, old) =>
-            {
-                oldQualities = old;
-                return exchangeQualities;
-            });
+            var exchangeQualities = _exchangesQualities.AddOrUpdate(assetPairId, k => Calc(null),
+                (k, old) =>
+                {
+                    oldQualities = old;
+                    return Calc(old);
+                });
 
             AlertIfQualitiesChanged(assetPairId, oldQualities, exchangeQualities);
             return exchangeQualities;
         }
 
-        private void AlertIfQualitiesChanged(string assetPairId, ImmutableDictionary<string, ExchangeQuality> oldQualities,
+        private void AlertIfQualitiesChanged(string assetPairId,
+            ImmutableDictionary<string, ExchangeQuality> oldQualities,
             ImmutableDictionary<string, ExchangeQuality> exchangeQualities)
         {
             var hasChanges = oldQualities.Values
@@ -200,9 +213,10 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         q.Error == ExchangeErrorState.None);
                     var activeCount = exchangeQualities.Values.Count(q =>
                         q.Error == ExchangeErrorState.None || q.Error == ExchangeErrorState.Outlier);
-                    _alertService.AlertRiskOfficer(assetPairId, $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
-                                                         $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +
-                                                         GetExchangesQualitiesString(exchangeQualities.Values));
+                    _alertService.AlertRiskOfficer(assetPairId,
+                        $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
+                        $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +
+                        GetExchangesQualitiesString(exchangeQualities.Values));
                 });
             }
         }

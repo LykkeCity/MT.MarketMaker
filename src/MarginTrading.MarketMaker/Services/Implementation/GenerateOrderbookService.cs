@@ -91,7 +91,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var allOrderbooks = _orderbooksService.AddAndGetByAssetPair(orderbook);
             var now = orderbook.LastUpdatedTime;
             var (exchangesErrors, validOrderbooks) = MarkExchangesErrors(assetPairId, allOrderbooks, now);
-            var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now);
+            var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now, orderbook.ExchangeName);
             if (primaryExchange == null)
             {
                 return null;
