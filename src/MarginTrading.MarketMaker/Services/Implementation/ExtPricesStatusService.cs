@@ -33,6 +33,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                             OrderbookReceived = q.OrderbookReceived,
                             HedgingPreference = q.HedgingPreference,
                             IsPrimary = q.Exchange == primary,
+                            LastOrderbookReceivedTime = q.LastOrderbookReceivedTime,
                         }).ToList();
                 });
 

@@ -84,7 +84,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var assetPairId = orderbook.AssetPairId;
             if (!_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
-                Trace.Write($"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
+                Trace.Write(assetPairId + " warn trace", $"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
                 return null;
             }
 
@@ -133,7 +133,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var repeatedProblemsExchanges = GetRepeatedProblemsExchanges(assetPairId, enabledOrderbooks,
                 outdatedExchanges, outliersExchanges, now);
-            _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges);
+            _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges, "Repeated outlier");
 
             var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorState>()
                 .SetValueForKeys(disabledExchanges, ExchangeErrorState.Disabled)
@@ -244,7 +244,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         {"Exchange", orderbook.ExchangeName},
                     });
             }
-            Trace.Write(
+            Trace.Write(orderbook.AssetPairId + " trace",
                 $"Processed {orderbook.AssetPairId} from {orderbook.ExchangeName}, primary: {primaryExchange}, time: {elapsedMilliseconds} ms");
         }
     }

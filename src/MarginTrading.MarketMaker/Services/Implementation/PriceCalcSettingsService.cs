@@ -23,12 +23,15 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         private readonly CachedEntityAccessorService<AssetPairExtPriceSettingsEntity> _assetPairsCachedAccessor;
         private readonly IExchangeExtPriceSettingsRepository _exchangesRepository;
         private readonly IAssetsPairsExtPriceSettingsRepository _assetPairsRepository;
+        private readonly IAlertService _alertService;
 
         public PriceCalcSettingsService(ICacheProvider cache,
             IAssetsPairsExtPriceSettingsRepository assetPairsRepository,
-            IExchangeExtPriceSettingsRepository exchangesRepository)
+            IExchangeExtPriceSettingsRepository exchangesRepository,
+            IAlertService alertService)
         {
             _exchangesRepository = exchangesRepository;
+            _alertService = alertService;
             _assetPairsRepository = assetPairsRepository;
             _assetPairsCachedAccessor =
                 new CachedEntityAccessorService<AssetPairExtPriceSettingsEntity>(cache, assetPairsRepository);
@@ -96,7 +99,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         public void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges,
-            bool disable)
+            bool disable, string reason)
         {
             if (exchanges.Count == 0)
                 return;
@@ -104,12 +107,37 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _exchangesCache.UpdateIfExists(assetPairId,
                 (k, old) =>
                 {
-                    var toUpdate = old.Values.Where(o => exchanges.Contains(o.Exchange))
-                        .Pipe(p => p.Disabled.IsTemporarilyDisabled = true); // and hope races won't break anything
                     //todo: replace with copying
+                    var toUpdate = old.Values.Where(o => exchanges.Contains(o.Exchange))
+                        .Pipe(p =>
+                        {
+                            // and hope races won't break anything
+                            p.Disabled = new ExchangeExtPriceSettingsEntity.DisabledSettings
+                            {
+                                IsTemporarilyDisabled = true,
+                                Reason = reason,
+                            };
+                        });
                     _exchangesRepository.InsertOrReplaceAsync(toUpdate).GetAwaiter().GetResult();
                     return old;
                 });
+            ExchangesTemporarilyDisabledChanged(assetPairId, exchanges, disable);
+        }
+
+        private void ExchangesTemporarilyDisabledChanged(string assetPairId, IEnumerable<string> exchanges, bool disable)
+        {
+            ExchangesStateChanged(assetPairId, exchanges, disable ? "disabled" : "enabled");
+        }
+
+        private void ExchangesStateChanged(string assetPairId, IEnumerable<string> exchanges, string stateChangeDescription)
+        {
+            var exchangesStr = string.Join(", ", exchanges);
+            if (exchangesStr == string.Empty)
+            {
+                return;
+            }
+
+            _alertService.AlertRiskOfficer(assetPairId, $"Exchanges for {assetPairId} became {stateChangeDescription}: {exchangesStr}");
         }
 
         public bool IsExchangeConfigured(string assetPairId, string exchange)
@@ -139,6 +167,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var upsertAssetPairTask = _assetPairsCachedAccessor.Upsert(entity);
 
             var exchangesEntities = model.Exchanges.Select(e => Convert(e, entity)).ToImmutableDictionary(e => e.Exchange);
+            ImmutableDictionary<string, ExchangeExtPriceSettingsEntity> oldExchangesEntities = null;
 
             // do not update existing entities instances!
             _exchangesCache.AddOrUpdate(entity.AssetPairId,
@@ -149,6 +178,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 },
                 (k, old) =>
                 {
+                    oldExchangesEntities = old;
                     Task.WaitAll(
                         _exchangesRepository.InsertOrReplaceAsync(exchangesEntities.Values),
                         _exchangesRepository.DeleteAsync(old.Values.Where(o =>
@@ -156,7 +186,41 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     return exchangesEntities;
                 });
 
+            ExchangesTemporarilyDisabledChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values);
+            CanPerformHedgingChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values);
             return upsertAssetPairTask;
+        }
+
+        private void CanPerformHedgingChanged(string assetPairId,
+            IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
+            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities)
+        {
+            var (hedgingOn, hedgingOff) = oldEntities.FindChanges(newEntities, e => e.Exchange,
+                    CanPerformHedging,
+                    (o, n) => o == n)
+                .Where(t => t.New != null)
+                .Partition(t => CanPerformHedging(t.New));
+
+            ExchangesStateChanged(assetPairId, hedgingOn.Select(t => t.New.Exchange), "available for hedging");
+            ExchangesStateChanged(assetPairId, hedgingOff.Select(t => t.New.Exchange), "unavailable for hedging");
+        }
+
+        private void ExchangesTemporarilyDisabledChanged(string assetPairId,
+            IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
+            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities)
+        {
+            var (disable, enable) = oldEntities.FindChanges(newEntities, e => e.Exchange,
+                    e => e.Disabled.IsTemporarilyDisabled,
+                    (o, n) => o == n)
+                .Where(t => t.New != null)
+                .Partition(ex => ex.New.Disabled.IsTemporarilyDisabled);
+            ExchangesTemporarilyDisabledChanged(assetPairId, disable.Select(t => t.New.Exchange), true);
+            ExchangesTemporarilyDisabledChanged(assetPairId, enable.Select(t => t.New.Exchange), false);
+        }
+
+        private static bool CanPerformHedging(ExchangeExtPriceSettingsEntity e)
+        {
+            return e.Hedging.DefaultPreference * (e.Hedging.IsTemporarilyUnavailable ? 0 : 1) > 0;
         }
 
         private ImmutableDictionary<string, ExchangeExtPriceSettingsEntity> AllExchanges(string assetPairId)

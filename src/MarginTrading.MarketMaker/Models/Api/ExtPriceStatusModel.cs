@@ -1,4 +1,5 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using System;
+using MarginTrading.MarketMaker.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -15,5 +16,6 @@ namespace MarginTrading.MarketMaker.Models.Api
         public ExchangeErrorState? Error { get; set; }
 
         public bool IsPrimary { get; set; }
+        public DateTime LastOrderbookReceivedTime { get; set; }
     }
 }

@@ -24,12 +24,13 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public bool IsRepeatedProblemsOrderbook(ExternalOrderbook orderbook, bool isOutdated, bool isOutlier,
             DateTime now)
         {
-            var repeatedOutliersParams = _priceCalcSettingsService.GetRepeatedOutliersParams(orderbook.AssetPairId);
+            var assetPairId = orderbook.AssetPairId;
+            var repeatedOutliersParams = _priceCalcSettingsService.GetRepeatedOutliersParams(assetPairId);
             DateTime outlierSequenceStart = now - repeatedOutliersParams.MaxSequenceAge;
             DateTime outlierAvgStart = now - repeatedOutliersParams.MaxAvgAge;
             DateTime minEventTime = outlierSequenceStart < outlierAvgStart ? outlierSequenceStart : outlierAvgStart;
             var newEvent = new Event(now, isOutdated, isOutlier);
-            var actualProblems = _lastEvents.AddOrUpdate((orderbook.AssetPairId, orderbook.ExchangeName),
+            var actualProblems = _lastEvents.AddOrUpdate((assetPairId, orderbook.ExchangeName),
                 k => ImmutableSortedSet.Create(Event.ComparerByTime, newEvent),
                 (k, old) => AddEventAndCleanOld(old, newEvent, minEventTime));
 
@@ -48,10 +49,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
                     if (outliersInRow > repeatedOutliersParams.MaxSequenceLength)
                     {
-                        _alertService.AlertRiskOfficer(
-                            $"{orderbook.ExchangeName} is a repeated outlier exchange for {orderbook.AssetPairId}.\r\n" +
-                            $"It had {outliersInRow} outlier orderbooks in a row during last {repeatedOutliersParams.MaxSequenceAge.TotalSeconds:f0} secs.");
-                        Trace.Write("Repeated outlier (sequence)", new { orderbook.AssetPairId, orderbook.ExchangeName, outliersInRow, repeatedOutliersParams.MaxSequenceLength });
+                        _alertService.AlertRiskOfficer(assetPairId, $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
+                                                             $"It had {outliersInRow} outlier orderbooks in a row during last {repeatedOutliersParams.MaxSequenceAge.TotalSeconds:f0} secs.");
+                        Trace.Write(assetPairId + " err trace", "Repeated outlier (sequence)", new { AssetPairId = assetPairId, orderbook.ExchangeName, outliersInRow, repeatedOutliersParams.MaxSequenceLength });
                         return true;
                     }
 
@@ -66,10 +66,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 var avg = outliersCount / (decimal) statsCount;
                 if (avg > repeatedOutliersParams.MaxAvg)
                 {
-                    _alertService.AlertRiskOfficer(
-                        $"{orderbook.ExchangeName} is a repeated outlier exchange for {orderbook.AssetPairId}.\r\n" +
-                        $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
-                    Trace.Write("Repeated outlier (avg)", new { orderbook.AssetPairId, orderbook.ExchangeName, outliersCount, statsCount, avg, repeatedOutliersParams.MaxAvg });
+                    _alertService.AlertRiskOfficer(assetPairId, $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
+                                                         $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
+                    Trace.Write(assetPairId + " err trace", "Repeated outlier (avg)", new { AssetPairId = assetPairId, orderbook.ExchangeName, outliersCount, statsCount, avg, repeatedOutliersParams.MaxAvg });
                     return true;
                 }
             }

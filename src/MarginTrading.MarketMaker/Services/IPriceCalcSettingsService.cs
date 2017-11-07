@@ -22,7 +22,7 @@ namespace MarginTrading.MarketMaker.Services
         (decimal Bid, decimal Ask) GetPriceMarkups(string assetPairId);
         IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences();
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
-        void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable);
+        void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
         bool IsExchangeConfigured(string assetPairId, string exchange);
     }
 }
