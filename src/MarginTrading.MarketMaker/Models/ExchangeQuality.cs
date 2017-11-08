@@ -26,7 +26,7 @@ namespace MarginTrading.MarketMaker.Models
 
         public override string ToString()
         {
-            return $"{Exchange} ({Error?.ToString() ?? "NoOrderbook"}, {HedgingPreference:N4})";
+            return $"{Exchange} ({Error?.ToString() ?? "NoOrderbook"}, {HedgingPreference:P2})";
         }
     }
 }
