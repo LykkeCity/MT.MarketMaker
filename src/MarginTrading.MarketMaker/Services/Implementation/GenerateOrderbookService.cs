@@ -128,7 +128,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         private bool CanSendOrderbook(Orderbook orderbook)
         {
             var now = _system.UtcNow;
-            var newHash = orderbook.GetHashCode();
+            var newHash = Orderbook.Comparer.GetHashCode(orderbook);
             bool canSend = true;
             var period = _priceCalcSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
              _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),

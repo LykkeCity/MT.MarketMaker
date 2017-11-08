@@ -45,6 +45,9 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Entities
             set => StepsStr = JsonConvert.SerializeObject(_stepsCache = value ?? ImmutableDictionary<OrderbookGeneratorStepEnum, bool>.Empty);
         }
 
+        [Obsolete]
+        public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; set; }
+
         public TimeSpan? MinOrderbooksSendingPeriod { get; set; }
 
         public static string GeneratePartitionKey()
