@@ -89,7 +89,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var primaryError = primaryQuality.Error;
             switch (primaryError)
             {
-                case ExchangeErrorState.None when primaryPreference > 0:
+                case ExchangeErrorState.Valid when primaryPreference > 0:
                     return primaryQuality;
                 case ExchangeErrorState.Outlier when primaryPreference > 0:
                     _alertService.AlertRiskOfficer(assetPairId,
@@ -145,7 +145,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 // ReSharper disable once PossibleInvalidOperationException
                 .ToLookup(t => t.Error.Value);
 
-            var primary = allHedgingPriorities[ExchangeErrorState.None]
+            var primary = allHedgingPriorities[ExchangeErrorState.Valid]
                 .OrderByDescending(p => p.HedgingPreference)
                 .FirstOrDefault();
 
@@ -154,7 +154,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return primary;
             }
 
-            foreach (var state in new[] {ExchangeErrorState.None, ExchangeErrorState.Outlier})
+            foreach (var state in new[] {ExchangeErrorState.Valid, ExchangeErrorState.Outlier})
             {
                 primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).FirstOrDefault();
                 if (primary != null)
@@ -198,21 +198,23 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         private void AlertIfQualitiesChanged(string assetPairId,
-            ImmutableDictionary<string, ExchangeQuality> oldQualities,
+            [CanBeNull] ImmutableDictionary<string, ExchangeQuality> oldQualities,
             ImmutableDictionary<string, ExchangeQuality> exchangeQualities)
         {
-            var hasChanges = oldQualities.Values
-                .FindChanges(exchangeQualities.Values, q => q.Exchange, q => q.ToString(), (o, n) => o == n).Any();
+            var hasChanges = oldQualities?.Values
+                                 .FindChanges(exchangeQualities.Values, q => q.Exchange, q => q.ToString(),
+                                     (o, n) => o == n).Any()
+                             ?? true;
             if (hasChanges)
             {
                 Task.Run(() =>
                 {
                     var validHedgableCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.None && q.HedgingPreference > 0);
+                        q.Error == ExchangeErrorState.Valid && q.HedgingPreference > 0);
                     var validCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.None);
+                        q.Error == ExchangeErrorState.Valid);
                     var activeCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.None || q.Error == ExchangeErrorState.Outlier);
+                        q.Error == ExchangeErrorState.Valid || q.Error == ExchangeErrorState.Outlier);
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
                         $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +

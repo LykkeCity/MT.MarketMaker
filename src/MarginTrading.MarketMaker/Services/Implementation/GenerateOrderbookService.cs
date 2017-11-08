@@ -139,7 +139,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 .SetValueForKeys(disabledExchanges, ExchangeErrorState.Disabled)
                 .SetValueForKeys(outdatedExchanges, ExchangeErrorState.Outdated)
                 .SetValueForKeys(outliersExchanges, ExchangeErrorState.Outlier)
-                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorState.None)
+                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorState.Valid)
                 .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorState.Disabled)
                 .ToImmutable();
 
