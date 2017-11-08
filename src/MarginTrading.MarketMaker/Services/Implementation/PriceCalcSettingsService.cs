@@ -121,15 +121,15 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     _exchangesRepository.InsertOrReplaceAsync(toUpdate).GetAwaiter().GetResult();
                     return old;
                 });
-            ExchangesTemporarilyDisabledChanged(assetPairId, exchanges, disable);
+            ExchangesTemporarilyDisabledChanged(assetPairId, exchanges, disable, reason);
         }
 
-        private void ExchangesTemporarilyDisabledChanged(string assetPairId, IEnumerable<string> exchanges, bool disable)
+        private void ExchangesTemporarilyDisabledChanged(string assetPairId, IEnumerable<string> exchanges, bool disable, string reason)
         {
-            ExchangesStateChanged(assetPairId, exchanges, disable ? "disabled" : "enabled");
+            ExchangesStateChanged(assetPairId, exchanges, disable ? "disabled" : "enabled", reason);
         }
 
-        private void ExchangesStateChanged(string assetPairId, IEnumerable<string> exchanges, string stateChangeDescription)
+        private void ExchangesStateChanged(string assetPairId, IEnumerable<string> exchanges, string stateChangeDescription, string reason)
         {
             var exchangesStr = string.Join(", ", exchanges);
             if (exchangesStr == string.Empty)
@@ -137,12 +137,14 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return;
             }
 
-            _alertService.AlertRiskOfficer(assetPairId, $"Exchanges for {assetPairId} became {stateChangeDescription}: {exchangesStr}");
+            var ending = exchangesStr.Contains(',') ? "s" : "";
+
+            _alertService.AlertRiskOfficer(assetPairId, $"Exchange{ending} {exchangesStr} for {assetPairId} became {stateChangeDescription} because {reason}");
         }
 
         public bool IsExchangeConfigured(string assetPairId, string exchange)
         {
-            return AllExchanges(assetPairId).ContainsKey(exchange);
+            return AllExchanges(assetPairId).GetValueOrDefault(exchange) != null;
         }
 
         public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
@@ -186,14 +188,15 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     return exchangesEntities;
                 });
 
-            ExchangesTemporarilyDisabledChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values);
-            CanPerformHedgingChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values);
+            const string reason = "settings was manually changed";
+            ExchangesTemporarilyDisabledChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values, reason);
+            CanPerformHedgingChanged(entity.AssetPairId, oldExchangesEntities.Values, exchangesEntities.Values, reason);
             return upsertAssetPairTask;
         }
 
         private void CanPerformHedgingChanged(string assetPairId,
             IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
-            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities)
+            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities, string reason)
         {
             var (hedgingOn, hedgingOff) = oldEntities.FindChanges(newEntities, e => e.Exchange,
                     CanPerformHedging,
@@ -201,21 +204,21 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 .Where(t => t.New != null)
                 .Partition(t => CanPerformHedging(t.New));
 
-            ExchangesStateChanged(assetPairId, hedgingOn.Select(t => t.New.Exchange), "available for hedging");
-            ExchangesStateChanged(assetPairId, hedgingOff.Select(t => t.New.Exchange), "unavailable for hedging");
+            ExchangesStateChanged(assetPairId, hedgingOn.Select(t => t.New.Exchange), "available for hedging", reason);
+            ExchangesStateChanged(assetPairId, hedgingOff.Select(t => t.New.Exchange), "unavailable for hedging", reason);
         }
 
         private void ExchangesTemporarilyDisabledChanged(string assetPairId,
             IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
-            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities)
+            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities, string reason)
         {
             var (disable, enable) = oldEntities.FindChanges(newEntities, e => e.Exchange,
                     e => e.Disabled.IsTemporarilyDisabled,
                     (o, n) => o == n)
                 .Where(t => t.New != null)
                 .Partition(ex => ex.New.Disabled.IsTemporarilyDisabled);
-            ExchangesTemporarilyDisabledChanged(assetPairId, disable.Select(t => t.New.Exchange), true);
-            ExchangesTemporarilyDisabledChanged(assetPairId, enable.Select(t => t.New.Exchange), false);
+            ExchangesTemporarilyDisabledChanged(assetPairId, disable.Select(t => t.New.Exchange), true, reason);
+            ExchangesTemporarilyDisabledChanged(assetPairId, enable.Select(t => t.New.Exchange), false, reason);
         }
 
         private static bool CanPerformHedging(ExchangeExtPriceSettingsEntity e)
