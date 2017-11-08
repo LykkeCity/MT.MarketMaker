@@ -30,7 +30,21 @@ namespace MarginTrading.MarketMaker.Models.Api
         [CanBeNull]
         public static ExchangeErrorStateModel? ConvertErrorStateModel(ExchangeErrorState? errorState)
         {
-            return (ExchangeErrorStateModel?) errorState;
+            switch (errorState)
+            {
+                case ExchangeErrorState.Valid:
+                    return ExchangeErrorStateModel.None;
+                case ExchangeErrorState.Outlier:
+                    return ExchangeErrorStateModel.Outlier;
+                case ExchangeErrorState.Outdated:
+                    return ExchangeErrorStateModel.Outdated;
+                case ExchangeErrorState.Disabled:
+                    return ExchangeErrorStateModel.Outdated;
+                case null:
+                    return null;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(errorState), errorState, null);
+            }
         }
     }
 }
