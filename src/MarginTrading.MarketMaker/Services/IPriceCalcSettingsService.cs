@@ -24,5 +24,6 @@ namespace MarginTrading.MarketMaker.Services
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
         void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
         bool IsExchangeConfigured(string assetPairId, string exchange);
+        TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId);
     }
 }

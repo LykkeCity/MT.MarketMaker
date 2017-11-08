@@ -5,14 +5,13 @@ using System.ComponentModel;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implemetation;
-using MarginTrading.MarketMaker.Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 
 namespace MarginTrading.MarketMaker.AzureRepositories.Entities
 {
-    internal class AssetPairExtPriceSettingsEntity : TableEntity, IAssetPairSettingsEntity
+    internal class AssetPairExtPriceSettingsEntity : TableEntity
     {
         public AssetPairExtPriceSettingsEntity()
         {
@@ -46,8 +45,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Entities
             set => StepsStr = JsonConvert.SerializeObject(_stepsCache = value ?? ImmutableDictionary<OrderbookGeneratorStepEnum, bool>.Empty);
         }
 
-        /// <inheritdoc />
-        public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; set; }
+        public TimeSpan? MinOrderbooksSendingPeriod { get; set; }
 
         public static string GeneratePartitionKey()
         {

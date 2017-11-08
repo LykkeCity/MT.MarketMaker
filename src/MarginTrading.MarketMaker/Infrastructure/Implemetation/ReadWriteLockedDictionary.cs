@@ -211,25 +211,25 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
                 _lock?.Dispose();
             }
 
-            public IDisposable EnterReadLock()
+            public Disposable EnterReadLock()
             {
                 _lock.EnterReadLock();
                 return new Disposable(_lock, l => l.ExitReadLock());
             }
 
-            public IDisposable EnterWriteLock()
+            public Disposable EnterWriteLock()
             {
                 _lock.EnterWriteLock();
                 return new Disposable(_lock, l => l.ExitWriteLock());
             }
 
-            public IDisposable EnterUpgradeableReadLock()
+            public Disposable EnterUpgradeableReadLock()
             {
                 _lock.EnterUpgradeableReadLock();
                 return new Disposable(_lock, l => l.ExitUpgradeableReadLock());
             }
 
-            private struct Disposable : IDisposable
+            public struct Disposable : IDisposable
             {
                 private readonly Action<ReaderWriterLockSlim> _onDispose;
                 private readonly ReaderWriterLockSlim _locker;

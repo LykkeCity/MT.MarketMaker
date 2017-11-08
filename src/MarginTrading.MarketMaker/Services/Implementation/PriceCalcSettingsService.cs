@@ -147,6 +147,11 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             return AllExchanges(assetPairId).GetValueOrDefault(exchange) != null;
         }
 
+        public TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId)
+        {
+            return Asset(assetPairId).MinOrderbooksSendingPeriod ?? TimeSpan.FromSeconds(1);
+        }
+
         public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
         {
             IEnumerable<AssetPairExtPriceSettingsEntity> assetPairsEntities;
@@ -259,6 +264,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 AssetPairId = assetPair.AssetPairId,
                 Timestamp = assetPair.Timestamp,
                 PresetDefaultExchange = assetPair.PresetDefaultExchange,
+                MinOrderbooksSendingPeriod = assetPair.MinOrderbooksSendingPeriod ?? TimeSpan.FromSeconds(1),
                 RepeatedOutliers = new RepeatedOutliersParamsModel
                 {
                     MaxSequenceLength = assetPair.RepeatedOutliers.MaxSequenceLength,
@@ -309,6 +315,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 AssetPairId = model.AssetPairId,
                 Timestamp = model.Timestamp,
                 PresetDefaultExchange = model.PresetDefaultExchange,
+                MinOrderbooksSendingPeriod = model.MinOrderbooksSendingPeriod ?? TimeSpan.FromSeconds(1),
                 RepeatedOutliers = new AssetPairExtPriceSettingsEntity.RepeatedOutliersParams
                 {
                     MaxSequenceLength = model.RepeatedOutliers.MaxSequenceLength,
