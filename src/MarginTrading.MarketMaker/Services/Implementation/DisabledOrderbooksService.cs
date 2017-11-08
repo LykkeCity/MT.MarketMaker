@@ -16,9 +16,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             return _priceCalcSettingsService.GetDisabledExchanges(assetPairId);
         }
 
-        public void Disable(string assetPairId, ImmutableHashSet<string> exchanges)
+        public void Disable(string assetPairId, ImmutableHashSet<string> exchanges, string reason)
         {
-            _priceCalcSettingsService.ChangeExchangesTemporarilyDisabled(assetPairId, exchanges, true);
+            _priceCalcSettingsService.ChangeExchangesTemporarilyDisabled(assetPairId, exchanges, true, reason);
         }
     }
 }

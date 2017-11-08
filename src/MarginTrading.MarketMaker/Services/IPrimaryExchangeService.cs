@@ -10,7 +10,7 @@ namespace MarginTrading.MarketMaker.Services
     public interface IPrimaryExchangeService
     {
         [CanBeNull]
-        string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now);
+        string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now, string currentProcessingExchange);
 
         [CanBeNull, Pure]
         string GetLastPrimaryExchange(string assetPairId);

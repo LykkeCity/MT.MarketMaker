@@ -29,10 +29,11 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         .Select(q => new ExtPriceStatusModel
                         {
                             Exchange = q.Exchange,
-                            Error = q.Error,
+                            Error = ExtPriceStatusModel.ConvertErrorStateModel(q.Error),
                             OrderbookReceived = q.OrderbookReceived,
                             HedgingPreference = q.HedgingPreference,
                             IsPrimary = q.Exchange == primary,
+                            LastOrderbookReceivedTime = q.LastOrderbookReceivedTime,
                         }).ToList();
                 });
 

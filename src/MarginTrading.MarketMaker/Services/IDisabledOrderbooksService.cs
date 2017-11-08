@@ -5,6 +5,6 @@ namespace MarginTrading.MarketMaker.Services
     public interface IDisabledOrderbooksService
     {
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
-        void Disable(string assetPairId, ImmutableHashSet<string> exchanges);
+        void Disable(string assetPairId, ImmutableHashSet<string> exchanges, string reason);
     }
 }

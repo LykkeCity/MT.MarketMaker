@@ -84,14 +84,14 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var assetPairId = orderbook.AssetPairId;
             if (!_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
-                Trace.Write($"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
+                Trace.Write(assetPairId + " warn trace", $"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
                 return null;
             }
 
             var allOrderbooks = _orderbooksService.AddAndGetByAssetPair(orderbook);
             var now = orderbook.LastUpdatedTime;
             var (exchangesErrors, validOrderbooks) = MarkExchangesErrors(assetPairId, allOrderbooks, now);
-            var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now);
+            var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now, orderbook.ExchangeName);
             if (primaryExchange == null)
             {
                 return null;
@@ -133,13 +133,13 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var repeatedProblemsExchanges = GetRepeatedProblemsExchanges(assetPairId, enabledOrderbooks,
                 outdatedExchanges, outliersExchanges, now);
-            _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges);
+            _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges, "Repeated outlier");
 
             var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorState>()
                 .SetValueForKeys(disabledExchanges, ExchangeErrorState.Disabled)
                 .SetValueForKeys(outdatedExchanges, ExchangeErrorState.Outdated)
                 .SetValueForKeys(outliersExchanges, ExchangeErrorState.Outlier)
-                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorState.None)
+                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorState.Valid)
                 .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorState.Disabled)
                 .ToImmutable();
 
@@ -244,7 +244,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         {"Exchange", orderbook.ExchangeName},
                     });
             }
-            Trace.Write(
+            Trace.Write(orderbook.AssetPairId + " trace",
                 $"Processed {orderbook.AssetPairId} from {orderbook.ExchangeName}, primary: {primaryExchange}, time: {elapsedMilliseconds} ms");
         }
     }

@@ -49,7 +49,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var isPrimaryOk = state.PrimaryState == null ||
                               state.PrimaryState.HedgingPreference > 0 &&
-                              (state.PrimaryState.ErrorState == ExchangeErrorState.None ||
+                              (state.PrimaryState.ErrorState == ExchangeErrorState.Valid ||
                                state.PrimaryState.ErrorState == ExchangeErrorState.Outlier);
 
             var isFreshOk = state.FreshOrderbooksState == null ||

@@ -1,4 +1,6 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using System;
+using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -12,8 +14,23 @@ namespace MarginTrading.MarketMaker.Models.Api
         public bool OrderbookReceived { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        public ExchangeErrorState? Error { get; set; }
+        public ExchangeErrorStateModel? Error { get; set; }
 
         public bool IsPrimary { get; set; }
+        public DateTime? LastOrderbookReceivedTime { get; set; }
+
+        public enum ExchangeErrorStateModel
+        {
+            None = 0,
+            Outlier = 1,
+            Outdated = 2,
+            Disabled = 4
+        }
+
+        [CanBeNull]
+        public static ExchangeErrorStateModel? ConvertErrorStateModel(ExchangeErrorState? errorState)
+        {
+            return (ExchangeErrorStateModel?) errorState;
+        }
     }
 }
