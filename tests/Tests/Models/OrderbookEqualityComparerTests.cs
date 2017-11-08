@@ -11,15 +11,6 @@ namespace Tests.Models
 {
     public class OrderbookEqualityComparerTests
     {
-        public static IEnumerable<TestCaseData> GetTestCases()
-        {
-            yield return new TestCaseData("1", "1", new[] { new OrderbookPosition[0] }, new[] { new OrderbookPosition[0] }).Returns(true);
-            yield return new TestCaseData("1", "1", new[] {new []{new OrderbookPosition(1, 1)}}, new[] { new[] { new OrderbookPosition(1, 1) } }).Returns(true);
-            yield return new TestCaseData("1", "1", new[] {new []{new OrderbookPosition(1, 1), new OrderbookPosition(1, 1) } }, new[] { new[] { new OrderbookPosition(1, 1) } }).Returns(false);
-            yield return new TestCaseData("1", "1", new[] {new []{new OrderbookPosition(1, 2)}}, new[] { new[] { new OrderbookPosition(1, 1) } }).Returns(false);
-            yield return new TestCaseData("1", "2", new[] { new OrderbookPosition[0] }, new[] { new OrderbookPosition[0] }).Returns(false);
-        }
-
         [TestCase("1","2", ExpectedResult = false)]
         [TestCase("1","1", ExpectedResult = true)]
         public bool ArraysEqual_ShouldReturnValidResult(string id1, string id2)
