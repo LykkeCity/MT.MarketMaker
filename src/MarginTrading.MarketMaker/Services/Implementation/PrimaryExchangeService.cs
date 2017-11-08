@@ -147,6 +147,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var primary = allHedgingPriorities[ExchangeErrorState.Valid]
                 .OrderByDescending(p => p.HedgingPreference)
+                .ThenBy(p => p.Exchange)
                 .FirstOrDefault();
 
             if (primary != null && primary.HedgingPreference > 0)
@@ -156,7 +157,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             foreach (var state in new[] {ExchangeErrorState.Valid, ExchangeErrorState.Outlier})
             {
-                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).FirstOrDefault();
+                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).ThenBy(p => p.Exchange).FirstOrDefault();
                 if (primary != null)
                 {
                     return primary;

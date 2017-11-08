@@ -23,6 +23,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
     /// </remarks>
     public class GenerateOrderbookService : IStartable, IDisposable, IGenerateOrderbookService
     {
+        private readonly ReadWriteLockedDictionary<string, (int Hash, DateTime Time)> _sentOrderbooks =
+            new ReadWriteLockedDictionary<string, (int, DateTime)>();
+
         private readonly IOrderbooksService _orderbooksService;
         private readonly IDisabledOrderbooksService _disabledOrderbooksService;
         private readonly IOutdatedOrderbooksService _outdatedOrderbooksService;
@@ -37,6 +40,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         private readonly ITelemetryService _telemetryService;
         private readonly ITestingHelperService _testingHelperService;
         private readonly IStopTradesService _stopTradesService;
+        private readonly ISystem _system;
 
 
         public GenerateOrderbookService(
@@ -53,7 +57,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             ILog log,
             ITelemetryService telemetryService,
             ITestingHelperService testingHelperService,
-            IStopTradesService stopTradesService)
+            IStopTradesService stopTradesService, ISystem system)
         {
             _orderbooksService = orderbooksService;
             _disabledOrderbooksService = disabledOrderbooksService;
@@ -69,6 +73,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _telemetryService = telemetryService;
             _testingHelperService = testingHelperService;
             _stopTradesService = stopTradesService;
+            _system = system;
         }
 
         public Orderbook OnNewOrderbook(ExternalOrderbook orderbook)
@@ -80,12 +85,18 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return null;
             }
 
+            var (result, primaryExchange) = OnNewOrderbookInternal(orderbook);
+            LogCycle(orderbook, watch, primaryExchange, result == null);
+            return result;
+        }
 
+        private (Orderbook Orderbook, string PrimaryExchange) OnNewOrderbookInternal(ExternalOrderbook orderbook)
+        {
             var assetPairId = orderbook.AssetPairId;
             if (!_priceCalcSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
                 Trace.Write(assetPairId + " warn trace", $"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
-                return null;
+                return (null, null);
             }
 
             var allOrderbooks = _orderbooksService.AddAndGetByAssetPair(orderbook);
@@ -94,20 +105,46 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now, orderbook.ExchangeName);
             if (primaryExchange == null)
             {
-                return null;
+                return (null, null);
             }
 
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
             {
                 _log.WriteWarningAsync(nameof(GenerateOrderbookService), null,
                     $"{primaryExchange} not found in allOrderbooks ({allOrderbooks.Keys.ToJson()})");
-                return null;
+                return (null, primaryExchange);
             }
 
             _stopTradesService.FinishCycle(primaryOrderbook, now);
-            var result = Transform(primaryOrderbook, validOrderbooks);
-            LogCycle(orderbook, watch, primaryExchange);
-            return result;
+            var resultingOrderbook = Transform(primaryOrderbook, validOrderbooks);
+            if (!CanSendOrderbook(resultingOrderbook))
+            {
+                return (null, primaryExchange);
+            }
+
+            return (resultingOrderbook, primaryExchange);
+        }
+
+        private bool CanSendOrderbook(Orderbook orderbook)
+        {
+            var now = _system.UtcNow;
+            var newHash = Orderbook.Comparer.GetHashCode(orderbook);
+            bool canSend = true;
+            var period = _priceCalcSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
+             _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
+                       (k, old) =>
+                       {
+                           if (newHash == old.Hash || now.Subtract(old.Time) < period)
+                           {
+                               canSend = false;
+                               return old;
+                           }
+                           else
+                           {
+                               return (newHash, now);
+                           }
+                       });
+            return canSend;
         }
 
         public void Start()
@@ -230,7 +267,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             return (outdatedExchanges, freshOrderbooks);
         }
 
-        private void LogCycle(ExternalOrderbook orderbook, Stopwatch watch, string primaryExchange)
+        private void LogCycle(ExternalOrderbook orderbook, Stopwatch watch, string primaryExchange, bool isSkip)
         {
             var elapsedMilliseconds = watch.ElapsedMilliseconds;
             if (elapsedMilliseconds > 20)
@@ -242,10 +279,13 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     {
                         {"AssetPairId", orderbook.AssetPairId},
                         {"Exchange", orderbook.ExchangeName},
+                        {"IsPrimary", (orderbook.ExchangeName == primaryExchange).ToString()},
+                        {"IsSkip", isSkip.ToString()},
                     });
             }
+
             Trace.Write(orderbook.AssetPairId + " trace",
-                $"Processed {orderbook.AssetPairId} from {orderbook.ExchangeName}, primary: {primaryExchange}, time: {elapsedMilliseconds} ms");
+                $"{(isSkip ? "Skipped " : "Processed")} {orderbook.AssetPairId} from {orderbook.ExchangeName}, primary: {primaryExchange}, time: {elapsedMilliseconds} ms");
         }
     }
 }
