@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MarginTrading.MarketMaker.AzureRepositories;
@@ -26,7 +25,7 @@ namespace Tests.Services.CrossRates
             //arrange
             var crossRatesSettings = GetFilledSettings();
             var suit = _testSuit
-                .Setup<ICrossRatesSettingsRepository>(m => MockExtensions.ReturnsAsync(m.Setup(s => s.GetAllAsync()), new[] { crossRatesSettings }));
+                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(new[] { crossRatesSettings }));
 
             //act
             var result = suit.Sut.Get();
@@ -44,7 +43,7 @@ namespace Tests.Services.CrossRates
 
             CrossRatesSettings writtenSettings = null;
             var suit = _testSuit
-                .Setup<ICrossRatesSettingsRepository>(m => MockExtensions.ReturnsAsync(m.Setup(s => s.GetAllAsync()), new []{ emptyCrossRatesSettings }))
+                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(new []{ emptyCrossRatesSettings }))
                 .Setup<ICrossRatesSettingsRepository>(m => m
                     .Setup(s => s.InsertOrReplaceAsync(It.IsNotNull<CrossRatesSettings>()))
                     .Callback<CrossRatesSettings>(s => writtenSettings = s)

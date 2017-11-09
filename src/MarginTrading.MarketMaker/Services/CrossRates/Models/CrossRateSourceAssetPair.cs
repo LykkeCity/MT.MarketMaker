@@ -7,7 +7,7 @@
 
         public CrossRateSourceAssetPair(string id, bool isUsdQuoting)
         {
-            Id = id;
+            Id = id ?? throw new System.ArgumentNullException(nameof(id));
             IsUsdQuoting = isUsdQuoting;
         }
     }

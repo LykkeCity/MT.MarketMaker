@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MoreLinq;
 
@@ -22,16 +25,17 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId) // ex: (btcusd)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             var configuredCrossPairs = GetConfiguredCrossPairs(); // ex: [(btc, eur), (eur, btc)]
             var assetPairs = _assetsService.GetAssetPairs().Where(p => !p.IsDisabled).ToDictionary(p => p.Id); // todo: cache
             var existingAssetPairs = assetPairs.Values
-                .Where(p => configuredCrossPairs.Contains((p.BaseAssetId, p.QuotingAssetId))) // ex: btceur
+                .Where(p => configuredCrossPairs.Contains((p.BaseAssetId, p.QuotingAssetId)) && !string.IsNullOrWhiteSpace(p.Source) && !string.IsNullOrWhiteSpace(p.Source2)) // ex: btceur
                 .Select(p => new CrossRateCalcInfo(p.Id, GetCrossRateSourceAssetPair(p.Source, assetPairs),
                     GetCrossRateSourceAssetPair(p.Source2, assetPairs))) // ex: {btceur, btcusd, eurusd}
                 .SelectMany(i => new[]
                     {(i.Source1.Id, i), (i.Source2.Id, i)}) // ex: [(btcusd, btceur), (eurusd, btceur)]
                 .ToLookup(); // ex: [btcusd=>btceur, eurusd=>btceur] // todo: cache
-            return existingAssetPairs[assetPairId]; // ex: btceur
+            return existingAssetPairs[assetPairId].RequiredNotNullOrEmpty("result"); // ex: btceur
         }
 
         private static CrossRateSourceAssetPair GetCrossRateSourceAssetPair(string pairId,

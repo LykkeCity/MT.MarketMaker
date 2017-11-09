@@ -1,62 +1,78 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
-using Microsoft.Rest;
 using NUnit.Framework;
 
 namespace Tests.Services.CrossRates
 {
     public class DependentCrossRatesServiceTests
     {
-        private static readonly TestSuit<DependentCrossRatesService> _testSuit = TestSuit.Create<DependentCrossRatesService>();
+        private static readonly TestSuit<DependentCrossRatesService> _testSuit =
+            TestSuit.Create<DependentCrossRatesService>();
 
         private static readonly IList<AssetPairResponseModel> AssetPairs = new[]
         {
             new AssetPairResponseModel
             {
-                Accuracy = 3,
                 BaseAssetId = "BTC",
                 Id = "BTCEUR",
-                InvertedAccuracy = 8,
                 IsDisabled = false,
-                Name = "BTC/EUR",
                 QuotingAssetId = "EUR",
                 Source = "BTCUSD",
                 Source2 = "EURUSD"
             },
             new AssetPairResponseModel
             {
-                Accuracy = 3,
                 BaseAssetId = "BTC",
-                Id = "BTCEUR",
-                InvertedAccuracy = 8,
+                Id = "BTCAUD",
                 IsDisabled = false,
-                Name = "BTC/EUR",
-                QuotingAssetId = "EUR",
+                QuotingAssetId = "AUD",
                 Source = "BTCUSD",
-                Source2 = "EURUSD"
+                Source2 = "AUDUSD"
             },
             new AssetPairResponseModel
             {
-                Accuracy = 3,
-                BaseAssetId = "BTC",
-                Id = "BTCEUR",
-                InvertedAccuracy = 8,
+                BaseAssetId = "ETH",
+                Id = "ETHUSD",
                 IsDisabled = false,
-                Name = "BTC/EUR",
-                QuotingAssetId = "EUR",
-                Source = "BTCUSD",
-                Source2 = "EURUSD"
+                QuotingAssetId = "USD",
+                Source = "ETHBTC",
+                Source2 = "BTCUSD"
+            },
+            new AssetPairResponseModel
+            {
+                BaseAssetId = "ETH",
+                Id = "ETHBTC",
+                IsDisabled = false,
+                QuotingAssetId = "BTC",
+            },
+            new AssetPairResponseModel
+            {
+                BaseAssetId = "AUD",
+                Id = "AUDUSD",
+                IsDisabled = false,
+                QuotingAssetId = "USD",
+            },
+            new AssetPairResponseModel
+            {
+                BaseAssetId = "EUR",
+                Id = "EURUSD",
+                IsDisabled = false,
+                QuotingAssetId = "USD",
+            },
+            new AssetPairResponseModel
+            {
+                BaseAssetId = "BTC",
+                Id = "BTCUSD",
+                IsDisabled = false,
+                QuotingAssetId = "USD",
             },
         };
 
@@ -66,20 +82,22 @@ namespace Tests.Services.CrossRates
             _testSuit.Reset();
         }
 
-        [Test]
-        public void Always_ShouldDoSmth()
+        [TestCase("BTCUSD", ExpectedResult = new[] {"BTCEUR", "BTCAUD", "ETHUSD"})]
+        [TestCase("EURUSD", ExpectedResult = new[] {"BTCEUR"})]
+        [TestCase("AUDUSD", ExpectedResult = new[] {"BTCAUD"})]
+        [TestCase("ETHBTC", ExpectedResult = new[] {"ETHUSD"})]
+        public string[] Always_ShouldCorrectlyChooseResultingPair(string assetPairId)
         {
             //arrange
-            var crossRatesSettings = new CrossRatesSettings(ImmutableArray.Create("BTC, USD"), ImmutableArray.Create("EUR", "LKK"));
+            var crossRatesSettings = new CrossRatesSettings(ImmutableArray.Create("BTC", "USD"),
+                ImmutableArray.Create("EUR", "AUD", "ETH"));
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == crossRatesSettings)
-                .Setup<IAssetsservice>(p => p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+                .Setup<IAssetsservice>(p =>
+                    p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
             //act
-            var result = _testSuit.Sut.GetDependentAssetPairs("srcPair").ToList();
-
-            //assert
-            result.Should().NotBeNullOrEmpty();
+            return _testSuit.Sut.GetDependentAssetPairs(assetPairId).Select(i => i.ResultingPairId).ToArray();
         }
     }
 }

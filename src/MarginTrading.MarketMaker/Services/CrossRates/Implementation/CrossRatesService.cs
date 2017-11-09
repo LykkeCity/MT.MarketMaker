@@ -25,7 +25,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public ImmutableList<Orderbook> CalcDependentOrderbooks(Orderbook orderbook) // ex: (btcusd)
         {
-            _orderbooks[orderbook.AssetPairId] = orderbook;
+            _orderbooks[orderbook.AssetPairId] = orderbook; // todo: include sport orderbooks
             var dependent = _dependentCrossRatesService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }
@@ -35,10 +35,12 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         {
             var sourceOrderbook1 = _orderbooks.GetValueOrDefault(info.Source1.Id); // ex: btcusd
             var sourceOrderbook2 = _orderbooks.GetValueOrDefault(info.Source2.Id); // ex: eurusd
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (sourceOrderbook1 == null || sourceOrderbook2 == null)
             {
-                Trace.Write($"Skipping gernerating cross");
+                Trace.Write(info.ResultingPairId + " warn trace",
+                    "Skipping generating cross-rate: " +
+                    (sourceOrderbook1 == null ? $"Orderbook for {info.Source1.Id} not exists. " : "") +
+                    (sourceOrderbook2 == null ? $"Orderbook for {info.Source2.Id} not exists. " : ""));
                 return null;
             }
 
