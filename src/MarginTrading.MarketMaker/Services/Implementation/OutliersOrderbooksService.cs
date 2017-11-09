@@ -37,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             {
                 if (Math.Abs(prices.BestBid - medianBid) > threshold * medianBid)
                 {
-                    Trace.Write("Outlier (bid)", new
+                    Trace.Write(assetPairId + " err trace", "Outlier (bid)", new
                     {
                         orderbook.AssetPairId,
                         orderbook.ExchangeName,
@@ -51,7 +51,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 }
                 else if (Math.Abs(prices.BestAsk - medianAsk) > threshold * medianAsk)
                 {
-                    Trace.Write("Outlier (ask)", new
+                    Trace.Write(assetPairId + " err trace", "Outlier (ask)", new
                     {
                         orderbook.AssetPairId,
                         orderbook.ExchangeName,

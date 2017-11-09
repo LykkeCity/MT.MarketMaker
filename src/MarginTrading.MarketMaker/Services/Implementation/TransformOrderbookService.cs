@@ -15,9 +15,11 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _priceCalcSettingsService = priceCalcSettingsService;
         }
 
-        public Orderbook Transform(ExternalOrderbook primaryOrderbook, IReadOnlyDictionary<string, BestPrices> bestPrices)
+        public Orderbook Transform(ExternalOrderbook primaryOrderbook,
+            IReadOnlyDictionary<string, BestPrices> bestPrices)
         {
-            var isArbitrageFreeSpreadEnabled = _priceCalcSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.GetArbitrageFreeSpread,
+            var isArbitrageFreeSpreadEnabled = _priceCalcSettingsService.IsStepEnabled(
+                OrderbookGeneratorStepEnum.GetArbitrageFreeSpread,
                 primaryOrderbook.AssetPairId);
 
             var arbitrageFreeSpread = isArbitrageFreeSpreadEnabled
@@ -27,7 +29,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var primaryBestPrices = bestPrices[primaryOrderbook.ExchangeName];
             var bidShift = arbitrageFreeSpread.WorstBid - primaryBestPrices.BestBid; // negative
             var askShift = arbitrageFreeSpread.WorstAsk - primaryBestPrices.BestAsk; // positive
-            var volumeMultiplier = _priceCalcSettingsService.GetVolumeMultiplier(primaryOrderbook.AssetPairId, primaryOrderbook.ExchangeName);
+            var volumeMultiplier =
+                _priceCalcSettingsService.GetVolumeMultiplier(primaryOrderbook.AssetPairId,
+                    primaryOrderbook.ExchangeName);
             var priceMarkups = _priceCalcSettingsService.GetPriceMarkups(primaryOrderbook.AssetPairId);
             return new Orderbook(
                 primaryOrderbook.AssetPairId,
@@ -35,7 +39,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 primaryOrderbook.Asks.Select(b => new OrderbookPosition(b.Price + askShift + priceMarkups.Ask, b.Volume * volumeMultiplier)).ToImmutableArray());
         }
 
-        private static (decimal WorstBid, decimal WorstAsk) GetArbitrageFreeSpread(IReadOnlyDictionary<string, BestPrices> bestPrices)
+        private static (decimal WorstBid, decimal WorstAsk) GetArbitrageFreeSpread(
+            IReadOnlyDictionary<string, BestPrices> bestPrices)
         {
             var worstBid = bestPrices.Values.Min(p => p.BestBid);
             var worstAsk = bestPrices.Values.Max(p => p.BestAsk);
