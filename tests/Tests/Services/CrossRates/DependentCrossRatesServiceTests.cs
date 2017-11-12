@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
@@ -17,6 +19,8 @@ namespace Tests.Services.CrossRates
     {
         private static readonly TestSuit<DependentCrossRatesService> _testSuit =
             TestSuit.Create<DependentCrossRatesService>();
+
+        private static readonly DateTime _now = DateTime.UtcNow;
 
         private static readonly IList<AssetPairResponseModel> AssetPairs = new[]
         {
@@ -77,10 +81,11 @@ namespace Tests.Services.CrossRates
             },
         };
 
-        [TearDown]
-        public void TearDown()
+        [SetUp]
+        public void SetUp()
         {
             _testSuit.Reset();
+            _testSuit.Setup<ISystem>(s => s.UtcNow == _now);
         }
 
         [TestCase("BTCUSD", ExpectedResult = new[] {"BTCEUR", "BTCAUD", "ETHUSD"})]
