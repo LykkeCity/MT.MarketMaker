@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.SwaggerGen.Annotations;
@@ -12,22 +15,36 @@ namespace MarginTrading.MarketMaker.Controllers
     public class CrossRatesSettingsController : Controller
     {
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
+        private readonly IAssetPairsSettingsService _assetPairsSettingsService;
+        private readonly IDependentCrossRatesService _dependentCrossRatesService;
 
-        public CrossRatesSettingsController(ICrossRatesSettingsService crossRatesSettingsService)
+        public CrossRatesSettingsController(
+            ICrossRatesSettingsService crossRatesSettingsService,
+            IAssetPairsSettingsService assetPairsSettingsService,
+            IDependentCrossRatesService dependentCrossRatesService)
         {
             _crossRatesSettingsService = crossRatesSettingsService;
+            _assetPairsSettingsService = assetPairsSettingsService;
+            _dependentCrossRatesService = dependentCrossRatesService;
         }
 
         /// <summary>
-        ///     Inserts or updates settings for an asset pair
+        ///     Replaces all existing settings.
+        ///     Warning: changes also AssetPairQuotesSourceType to CrossRates for the specified assets pairs.
         /// </summary>
         [HttpPost]
         [Route("set")]
         [SwaggerOperation("SetCrossRatesSettings")]
-        public IActionResult Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
+        public async Task<IActionResult> Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
         {
             _crossRatesSettingsService.Set(settings.Select(Convert).ToList());
-            return Ok(new {success = true});
+            var existingCrossPairs = _dependentCrossRatesService.GetExistingCrossPairs().ToList();
+            foreach (var assetPairId in existingCrossPairs)
+            {
+                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
+            }
+
+            return Ok(new {success = true, existingCrossPairs });
         }
 
         /// <summary>

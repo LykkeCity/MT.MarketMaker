@@ -39,6 +39,11 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _existingAssetPairs.Get()[assetPairId].RequiredNotNullElems("result"); // ex: btceur
         }
 
+        public IEnumerable<string> GetExistingCrossPairs()
+        {
+            return _existingAssetPairs.Get().Select(gr => gr.Key);
+        }
+
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
         {
             return Calculate.Cached(

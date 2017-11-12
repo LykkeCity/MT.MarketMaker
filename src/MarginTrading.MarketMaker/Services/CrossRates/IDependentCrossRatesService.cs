@@ -6,5 +6,6 @@ namespace MarginTrading.MarketMaker.Services.CrossRates
     public interface IDependentCrossRatesService
     {
         IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId);
+        IEnumerable<string> GetExistingCrossPairs();
     }
 }

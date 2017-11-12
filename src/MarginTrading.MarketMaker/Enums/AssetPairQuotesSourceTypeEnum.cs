@@ -11,7 +11,7 @@
         Manual = 1,
 
         /// <summary>
-        /// Quotes are provided only from external exchange
+        /// Quotes are provided only from external exchanges
         /// </summary>
         External = 2,
 
@@ -19,5 +19,10 @@
         /// Quotes are provided from the spot orderbook
         /// </summary>
         Spot = 3,
+
+        /// <summary>
+        /// Quotes are provided using cross-rates from external exchanges
+        /// </summary>
+        CrossRates = 4,
     }
 }
