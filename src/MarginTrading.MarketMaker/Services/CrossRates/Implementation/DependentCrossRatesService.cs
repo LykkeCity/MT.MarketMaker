@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure.Implemetation;
@@ -22,7 +23,8 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             _crossRatesSettingsService = crossRatesSettingsService;
         }
 
-        public IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId) // ex: (btcusd)
+        [ItemNotNull]
+        public IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs([NotNull] string assetPairId) // ex: (btcusd)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             var configuredCrossPairs = GetConfiguredCrossPairs(); // ex: [(btc, eur), (eur, btc)]
@@ -35,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                 .SelectMany(i => new[]
                     {(i.Source1.Id, i), (i.Source2.Id, i)}) // ex: [(btcusd, btceur), (eurusd, btceur)]
                 .ToLookup(); // ex: [btcusd=>btceur, eurusd=>btceur] // todo: cache
-            return existingAssetPairs[assetPairId].RequiredNotNullOrEmpty("result"); // ex: btceur
+            return existingAssetPairs[assetPairId].RequiredNotNullElems("result"); // ex: btceur
         }
 
         private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPairResponseModel resultingPair, Dictionary<string, AssetPairResponseModel> assetPairs)

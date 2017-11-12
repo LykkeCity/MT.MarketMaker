@@ -1,7 +1,9 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
+using MarginTrading.MarketMaker.Infrastructure.Implemetation;
 using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
@@ -20,8 +22,9 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             _repository = repository;
         }
 
-        public void Set(CrossRatesSettings model)
+        public void Set([NotNull] CrossRatesSettings model)
         {
+            if (model == null) throw new ArgumentNullException(nameof(model));
             lock (_writeLock)
             {
                 WriteRepository(model);
@@ -43,7 +46,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                 }
             }
 
-            return _cache;
+            return _cache.RequiredNotNull("result");
         }
 
         private void WriteRepository(CrossRatesSettings model)

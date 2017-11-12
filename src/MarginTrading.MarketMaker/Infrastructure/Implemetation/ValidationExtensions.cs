@@ -90,6 +90,26 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
             }
         }
 
+
+        [NotNull, ContractAnnotation("values:null => halt"), MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IEnumerable<T> RequiredNotNullElems<T>([CanBeNull][ItemCanBeNull] this IEnumerable<T> values, string paramName, string message = null)
+        {
+            if (values == null)
+            {
+                throw new ArgumentNullException(paramName, message);
+            }
+
+            foreach (var value in values)
+            {
+                if (value == null)
+                {
+                    throw new ArgumentException(message, paramName);
+                }
+
+                yield return value;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T RequiredEqualsTo<T>(this T value, T value2, string paramName, string message = null)
         {

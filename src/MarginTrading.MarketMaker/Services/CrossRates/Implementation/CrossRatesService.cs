@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
@@ -23,9 +24,12 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             _dependentCrossRatesService = dependentCrossRatesService;
         }
 
-        public ImmutableList<Orderbook> CalcDependentOrderbooks(Orderbook orderbook) // ex: (btcusd)
+        [ItemNotNull]
+        public ImmutableList<Orderbook> CalcDependentOrderbooks([NotNull] Orderbook orderbook) // ex: (btcusd)
         {
-            _orderbooks[orderbook.AssetPairId] = orderbook; // todo: include spot orderbooks?
+            // todo: include spot orderbooks?
+            _orderbooks[orderbook.AssetPairId] = orderbook
+                                                 ?? throw new ArgumentNullException(nameof(orderbook));
             var dependent = _dependentCrossRatesService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }

@@ -1,15 +1,22 @@
 ﻿using System.Collections.Immutable;
-using AzureStorage;
+using AzureStorage.Tables;
+using Common.Log;
+using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.AzureRepositories.Entities;
 using MarginTrading.MarketMaker.Models;
+using MarginTrading.MarketMaker.Settings;
 using Newtonsoft.Json;
 
 namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
 {
-    internal class CrossRatesSettingsRepository : AbstractRepository<CrossRatesSettingsEntity, CrossRatesSettings>, ICrossRatesSettingsRepository
+    internal class CrossRatesSettingsRepository
+        : AbstractRepository<CrossRatesSettingsEntity, CrossRatesSettings>, ICrossRatesSettingsRepository
     {
-        public CrossRatesSettingsRepository(INoSQLTableStorage<CrossRatesSettingsEntity> tableStorage) : base(
-            tableStorage)
+        public CrossRatesSettingsRepository(IReloadingManager<MarginTradingMarketMakerSettings> settings, ILog log) :
+            base(
+                AzureTableStorage<CrossRatesSettingsEntity>.Create(
+                    settings.Nested(s => s.Db.ConnectionString),
+                    "MarketMakerCrossRatesSettings", log))
         {
         }
 
