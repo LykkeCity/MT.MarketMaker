@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal static class Trace
     {

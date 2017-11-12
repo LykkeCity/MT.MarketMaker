@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MoreLinq;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal static class EnumerableExtensions
     {

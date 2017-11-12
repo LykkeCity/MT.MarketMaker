@@ -6,7 +6,7 @@ using Common.Log;
 using Lykke.Service.Assets.Client.Custom;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;

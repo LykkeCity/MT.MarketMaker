@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class SystemService : ISystem
     {

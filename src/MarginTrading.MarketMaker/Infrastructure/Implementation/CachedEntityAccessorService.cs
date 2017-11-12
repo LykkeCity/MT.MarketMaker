@@ -5,7 +5,7 @@ using MarginTrading.MarketMaker.AzureRepositories;
 using Microsoft.WindowsAzure.Storage.Table;
 using Rocks.Caching;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class CachedEntityAccessorService<TEntity> : CachedEntityAccessorService
         where TEntity : class, ITableEntity, new()

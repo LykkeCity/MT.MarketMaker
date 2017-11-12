@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;

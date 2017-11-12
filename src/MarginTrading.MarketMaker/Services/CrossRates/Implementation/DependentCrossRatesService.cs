@@ -5,7 +5,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MoreLinq;
 

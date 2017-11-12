@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     public class ReadWriteLockedDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, IDisposable
     {
