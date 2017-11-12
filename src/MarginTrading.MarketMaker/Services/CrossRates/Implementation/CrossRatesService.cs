@@ -56,10 +56,10 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         // todo: reduce operations to speedup
         private static decimal GetCrossRate(decimal rate1, decimal rate2, CrossRateCalcInfo info)
         {
-            if (!info.Source1.IsUsdQuoting)
+            if (!info.Source1.IsCrossRateBaseAssetQuoting)
                 rate1 = 1 / rate1;
 
-            if (!info.Source2.IsUsdQuoting)
+            if (!info.Source2.IsCrossRateBaseAssetQuoting)
                 rate2 = 1 / rate2;
 
             return rate1 / rate2;

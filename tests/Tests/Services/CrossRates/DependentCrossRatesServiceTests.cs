@@ -8,6 +8,7 @@ using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
+using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using NUnit.Framework;
 
 namespace Tests.Services.CrossRates
@@ -98,6 +99,29 @@ namespace Tests.Services.CrossRates
 
             //act
             return _testSuit.Sut.GetDependentAssetPairs(assetPairId).Select(i => i.ResultingPairId).ToArray();
+        }
+
+        [Test]
+        public void Btcusd_ShouldCorrectlyFillResult()
+        {
+            //arrange
+            var crossRatesSettings = new CrossRatesSettings(ImmutableArray.Create("BTC", "USD"),
+                ImmutableArray.Create("EUR", "AUD", "ETH"));
+            _testSuit
+                .Setup<ICrossRatesSettingsService>(p => p.Get() == crossRatesSettings)
+                .Setup<IAssetsservice>(p =>
+                    p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+
+            //act
+            var result = _testSuit.Sut.GetDependentAssetPairs("BTCUSD").ToArray();
+
+            //assert
+            result.ShouldAllBeEquivalentTo(new List<CrossRateCalcInfo>
+            {
+                new CrossRateCalcInfo("BTCEUR", new CrossRateSourceAssetPair("BTCUSD", true), new CrossRateSourceAssetPair("EURUSD", true)),
+                new CrossRateCalcInfo("BTCAUD", new CrossRateSourceAssetPair("BTCUSD", true), new CrossRateSourceAssetPair("AUDUSD", true)),
+                new CrossRateCalcInfo("ETHUSD", new CrossRateSourceAssetPair("ETHBTC", true), new CrossRateSourceAssetPair("BTCUSD", false)),
+            });
         }
     }
 }
