@@ -32,6 +32,22 @@ namespace MarginTrading.MarketMaker.Controllers
             return Ok(new {success = true});
         }
 
+        /// <summary>
+        /// Inserts or updates settings array
+        /// </summary>
+        [HttpPost]
+        [Route("set-array")]
+        [SwaggerOperation("SetSettingsArray")]
+        public async Task<IActionResult> Set([FromBody] IReadOnlyList<AssetPairSettingsModel> settings)
+        {
+            foreach (var setting in settings)
+            {
+                await _marketMakerService.ProcessAssetPairSettingsAsync(setting);
+            }
+
+            return Ok(new {success = true});
+        }
+
 
         /// <summary>
         /// Deletes settings for an asset pair. This makes the pair get ignored.

@@ -53,7 +53,6 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public Task ProcessNewExternalOrderbookAsync(ExternalExchangeOrderbookMessage orderbook)
         {
             var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPairId);
-            //Trace.Write($"MMS: Received {orderbook.AssetPairId} from {orderbook.Source}. Settings: {quotesSource.ToString()}");
             if (quotesSource != AssetPairQuotesSourceTypeEnum.External
                 || (orderbook.Bids?.Count ?? 0) == 0 || (orderbook.Asks?.Count ?? 0) == 0)
             {
@@ -72,6 +71,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
                 .Add(externalOrderbook);
 
+            // todo: send batches of batches (because of cross-rates)
             return Task.WhenAll(orderbooksToSend
                 .Select(o =>
                 {
