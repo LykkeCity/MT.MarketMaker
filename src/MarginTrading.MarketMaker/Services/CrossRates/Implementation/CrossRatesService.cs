@@ -25,7 +25,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public ImmutableList<Orderbook> CalcDependentOrderbooks(Orderbook orderbook) // ex: (btcusd)
         {
-            _orderbooks[orderbook.AssetPairId] = orderbook; // todo: include sport orderbooks
+            _orderbooks[orderbook.AssetPairId] = orderbook; // todo: include spot orderbooks?
             var dependent = _dependentCrossRatesService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }
@@ -48,7 +48,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var bestPrices2 = _bestPricesService.Calc(sourceOrderbook2); // ex: eurusd
             var crossBid = GetCrossRate(bestPrices1.BestBid, bestPrices2.BestBid, info);
             var crossAsk = GetCrossRate(bestPrices1.BestAsk, bestPrices2.BestAsk, info);
-            return new Orderbook(info.Source1.Id + info.Source2.Id,
+            return new Orderbook(info.ResultingPairId,
                 ImmutableArray.Create(new OrderbookPosition(crossBid, 1)), // in future: calc whole orderbook
                 ImmutableArray.Create(new OrderbookPosition(crossAsk, 1)));
         }

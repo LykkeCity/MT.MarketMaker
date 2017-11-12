@@ -1,6 +1,6 @@
 ﻿namespace MarginTrading.MarketMaker.Services.CrossRates.Models
 {
-    internal class CrossRateSourceAssetPair
+    public class CrossRateSourceAssetPair
     {
         /// <summary>
         /// Asset pair Id, ex. BTCUSD

@@ -118,9 +118,12 @@ namespace Tests.Services.CrossRates
             //assert
             result.ShouldAllBeEquivalentTo(new List<CrossRateCalcInfo>
             {
-                new CrossRateCalcInfo("BTCEUR", new CrossRateSourceAssetPair("BTCUSD", true), new CrossRateSourceAssetPair("EURUSD", true)),
-                new CrossRateCalcInfo("BTCAUD", new CrossRateSourceAssetPair("BTCUSD", true), new CrossRateSourceAssetPair("AUDUSD", true)),
-                new CrossRateCalcInfo("ETHUSD", new CrossRateSourceAssetPair("ETHBTC", true), new CrossRateSourceAssetPair("BTCUSD", false)),
+                new CrossRateCalcInfo("BTCEUR", new CrossRateSourceAssetPair("BTCUSD", true),
+                    new CrossRateSourceAssetPair("EURUSD", true)),
+                new CrossRateCalcInfo("BTCAUD", new CrossRateSourceAssetPair("BTCUSD", true),
+                    new CrossRateSourceAssetPair("AUDUSD", true)),
+                new CrossRateCalcInfo("ETHUSD", new CrossRateSourceAssetPair("ETHBTC", true),
+                    new CrossRateSourceAssetPair("BTCUSD", false)),
             });
         }
     }

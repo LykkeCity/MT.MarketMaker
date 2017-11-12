@@ -29,5 +29,15 @@
                 return (Price.GetHashCode() * 397) ^ Volume.GetHashCode();
             }
         }
+
+        public static bool operator ==(OrderbookPosition first, OrderbookPosition second)
+        {
+            return first.Equals(second);
+        }
+
+        public static bool operator !=(OrderbookPosition first, OrderbookPosition second)
+        {
+            return !(first == second);
+        }
     }
 }

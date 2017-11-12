@@ -3,7 +3,7 @@ using MarginTrading.MarketMaker.Services.CrossRates.Models;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates
 {
-    internal interface IDependentCrossRatesService
+    public interface IDependentCrossRatesService
     {
         IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId);
     }

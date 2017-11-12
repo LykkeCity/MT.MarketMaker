@@ -2,7 +2,7 @@
 
 namespace MarginTrading.MarketMaker.Services.CrossRates.Models
 {
-    internal class CrossRateCalcInfo
+    public class CrossRateCalcInfo
     {
         public string ResultingPairId { get; }
         public CrossRateSourceAssetPair Source1 { get; }
