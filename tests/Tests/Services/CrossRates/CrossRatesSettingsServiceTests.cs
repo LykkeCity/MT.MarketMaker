@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MarginTrading.MarketMaker.AzureRepositories;
@@ -25,13 +27,13 @@ namespace Tests.Services.CrossRates
             //arrange
             var crossRatesSettings = GetFilledSettings();
             var suit = _testSuit
-                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(new[] { crossRatesSettings }));
+                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(crossRatesSettings));
 
             //act
             var result = suit.Sut.Get();
 
             //assert
-            AssetSettingsEqual(result, crossRatesSettings);
+            result.ShouldAllBeEquivalentTo(crossRatesSettings);
         }
 
         [Test]
@@ -41,12 +43,12 @@ namespace Tests.Services.CrossRates
             var emptyCrossRatesSettings = GetEmptySettings();
             var newCrossRatesSettings = GetFilledSettings();
 
-            CrossRatesSettings writtenSettings = null;
+            IEnumerable<CrossRatesSettings> writtenSettings = null;
             var suit = _testSuit
-                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(new []{ emptyCrossRatesSettings }))
+                .Setup<ICrossRatesSettingsRepository>(m => m.Setup(s => s.GetAllAsync()).ReturnsAsync(emptyCrossRatesSettings))
                 .Setup<ICrossRatesSettingsRepository>(m => m
-                    .Setup(s => s.InsertOrReplaceAsync(It.IsNotNull<CrossRatesSettings>()))
-                    .Callback<CrossRatesSettings>(s => writtenSettings = s)
+                    .Setup(s => s.InsertOrReplaceAsync(It.IsNotNull<IEnumerable<CrossRatesSettings>>()))
+                    .Callback<IEnumerable<CrossRatesSettings>>(s => writtenSettings = s)
                     .Returns(Task.CompletedTask));
 
             //act
@@ -54,25 +56,22 @@ namespace Tests.Services.CrossRates
             var readed = suit.Sut.Get();
 
             //assert
-            AssetSettingsEqual(writtenSettings, newCrossRatesSettings);
-            AssetSettingsEqual(readed, newCrossRatesSettings);
+            writtenSettings.ShouldAllBeEquivalentTo(newCrossRatesSettings);
+            readed.ShouldAllBeEquivalentTo(newCrossRatesSettings);
         }
 
-        private static void AssetSettingsEqual(CrossRatesSettings current, CrossRatesSettings expected)
+        private static IReadOnlyList<CrossRatesSettings> GetEmptySettings()
         {
-            current.Should().NotBeNull();
-            current.BaseAssetsIds.Should().BeEquivalentTo(expected.BaseAssetsIds);
-            current.OtherAssetsIds.Should().BeEquivalentTo(expected.OtherAssetsIds);
+            return Array.Empty<CrossRatesSettings>();
         }
 
-        private static CrossRatesSettings GetEmptySettings()
+        private static IReadOnlyList<CrossRatesSettings> GetFilledSettings()
         {
-            return new CrossRatesSettings(ImmutableArray<string>.Empty, ImmutableArray<string>.Empty);
-        }
-
-        private static CrossRatesSettings GetFilledSettings()
-        {
-            return new CrossRatesSettings(ImmutableArray.Create("base1", "base2"), ImmutableArray.Create("other1", "other2"));
+            return new[]
+            {
+                new CrossRatesSettings("base1", ImmutableArray.Create("other1", "other2")),
+                new CrossRatesSettings("base2", ImmutableArray.Create("other3", "other4")),
+            };
         }
     }
 }

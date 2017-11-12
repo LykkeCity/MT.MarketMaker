@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
@@ -21,6 +20,11 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
         public Task InsertOrReplaceAsync(TEntity entity)
         {
             return TableStorage.InsertOrReplaceAsync(entity);
+        }
+
+        public Task InsertOrReplaceAsync(IEnumerable<TEntity> entities)
+        {
+            return TableStorage.InsertOrReplaceAsync(entities);
         }
 
         public Task<TEntity> GetAsync(TEntity entity)
@@ -52,6 +56,11 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
         public Task InsertOrReplaceAsync(TDto entity)
         {
             return TableStorage.InsertOrReplaceAsync(Convert(entity));
+        }
+
+        public Task InsertOrReplaceAsync(IEnumerable<TDto> entities)
+        {
+            return TableStorage.InsertOrReplaceAsync(entities.Select(Convert));
         }
 
         public async Task<TDto> GetAsync(TDto dto)

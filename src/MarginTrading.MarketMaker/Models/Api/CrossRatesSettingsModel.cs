@@ -4,7 +4,7 @@ namespace MarginTrading.MarketMaker.Models.Api
 {
     public class CrossRatesSettingsModel
     {
-        public ImmutableArray<string> BaseAssetsIds { get; set; }
+        public string BaseAssetId { get; set; }
         public ImmutableArray<string> OtherAssetsIds { get; set; }
     }
 }

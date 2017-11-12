@@ -81,6 +81,12 @@ namespace Tests.Services.CrossRates
             },
         };
 
+        private static readonly CrossRatesSettings[] CrossRatesSettings =
+        {
+            new CrossRatesSettings("BTC", ImmutableArray.Create("EUR", "AUD", "ETH")),
+            new CrossRatesSettings("USD", ImmutableArray.Create("EUR", "AUD", "ETH")),
+        };
+
         [SetUp]
         public void SetUp()
         {
@@ -95,10 +101,8 @@ namespace Tests.Services.CrossRates
         public string[] Always_ShouldCorrectlyChooseResultingPair(string assetPairId)
         {
             //arrange
-            var crossRatesSettings = new CrossRatesSettings(ImmutableArray.Create("BTC", "USD"),
-                ImmutableArray.Create("EUR", "AUD", "ETH"));
             _testSuit
-                .Setup<ICrossRatesSettingsService>(p => p.Get() == crossRatesSettings)
+                .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
                 .Setup<IAssetsservice>(p =>
                     p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
@@ -110,10 +114,8 @@ namespace Tests.Services.CrossRates
         public void Btcusd_ShouldCorrectlyFillResult()
         {
             //arrange
-            var crossRatesSettings = new CrossRatesSettings(ImmutableArray.Create("BTC", "USD"),
-                ImmutableArray.Create("EUR", "AUD", "ETH"));
             _testSuit
-                .Setup<ICrossRatesSettingsService>(p => p.Get() == crossRatesSettings)
+                .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
                 .Setup<IAssetsservice>(p =>
                     p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 

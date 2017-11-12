@@ -13,17 +13,16 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
         : AbstractRepository<CrossRatesSettingsEntity, CrossRatesSettings>, ICrossRatesSettingsRepository
     {
         public CrossRatesSettingsRepository(IReloadingManager<MarginTradingMarketMakerSettings> settings, ILog log) :
-            base(
-                AzureTableStorage<CrossRatesSettingsEntity>.Create(
-                    settings.Nested(s => s.Db.ConnectionString),
-                    "MarketMakerCrossRatesSettings", log))
+            base(AzureTableStorage<CrossRatesSettingsEntity>.Create(
+                settings.Nested(s => s.Db.ConnectionString),
+                "MarketMakerCrossRatesSettings", log))
         {
         }
 
         protected override CrossRatesSettings Convert(CrossRatesSettingsEntity entity)
         {
             return new CrossRatesSettings(
-                JsonConvert.DeserializeObject<ImmutableArray<string>>(entity.BaseAssetsIds ?? "[]"),
+                entity.BaseAssetId,
                 JsonConvert.DeserializeObject<ImmutableArray<string>>(entity.OtherAssetsIds ?? "[]"));
         }
 
@@ -31,7 +30,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
         {
             return new CrossRatesSettingsEntity
             {
-                BaseAssetsIds = JsonConvert.SerializeObject(dto.BaseAssetsIds),
+                BaseAssetId = dto.BaseAssetId,
                 OtherAssetsIds = JsonConvert.SerializeObject(dto.OtherAssetsIds),
             };
         }

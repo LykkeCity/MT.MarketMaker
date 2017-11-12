@@ -7,7 +7,6 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MoreLinq;
 
@@ -18,9 +17,9 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         private readonly IAssetsservice _assetsService;
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
         private readonly ISystem _system;
-        private readonly CachedCalculation<DateTime, Dictionary<string, AssetPairResponseModel>> _assetPairs;
-        private readonly CachedCalculation<CrossRatesSettings, ImmutableHashSet<(string, string)>> _configuredCrossPairs;
-        private readonly CachedCalculation<ExistingAssetPairsCalcSource, ILookup<string, CrossRateCalcInfo>> _existingAssetPairs;
+        private readonly ICachedCalculation<Dictionary<string, AssetPairResponseModel>> _assetPairs;
+        private readonly ICachedCalculation<ImmutableHashSet<(string, string)>> _configuredCrossPairs;
+        private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _existingAssetPairs;
 
         public DependentCrossRatesService(IAssetsservice assetsService,
             ICrossRatesSettingsService crossRatesSettingsService, ISystem system)
@@ -40,11 +39,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _existingAssetPairs.Get()[assetPairId].RequiredNotNullElems("result"); // ex: btceur
         }
 
-        private CachedCalculation<ExistingAssetPairsCalcSource, ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
+        private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
         {
             return Calculate.Cached(
-                () => new ExistingAssetPairsCalcSource(_assetPairs.Get(), /* ex: [btceur, btcusd, eurusd] */
-                    _configuredCrossPairs.Get() /* ex: [(btc, eur), (eur, btc)] */),
+                () => new
+                {
+                    AllPairs = _assetPairs.Get(), /* ex: [btceur, btcusd, eurusd] */
+                    CrossPairs = _configuredCrossPairs.Get() /* ex: [(btc, eur), (eur, btc)] */
+                },
                 (o, n) => o.AllPairs == n.AllPairs && o.CrossPairs == n.CrossPairs,
                 s => s.AllPairs.Values
                     .Where(p => s.CrossPairs.Contains((p.BaseAssetId, p.QuotingAssetId)) &&
@@ -57,18 +59,17 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             );
         }
 
-        private CachedCalculation<CrossRatesSettings, ImmutableHashSet<(string, string)>> GetConfiguredCrossPairs()
+        private ICachedCalculation<ImmutableHashSet<(string, string)>> GetConfiguredCrossPairs()
         {
             return Calculate.Cached(() => _crossRatesSettingsService.Get(),
-                (o, n) => o == n,
-                settings => settings.BaseAssetsIds // [btc]
-                    .Cartesian(settings.OtherAssetsIds, // [eur]
-                        (a1, a2) => new[] {(a1, a2), (a2, a1)}) // [(btc, eur), (eur, btc)]
-                    .SelectMany(a => a)
+                ReferenceEquals,
+                settings => settings
+                    .SelectMany(s => s.OtherAssetsIds.SelectMany(
+                        o => new[] {(s.BaseAssetId, o), (o, s.BaseAssetId)})) // [(btc, eur), (eur, btc)]
                     .ToImmutableHashSet());
         }
 
-        private CachedCalculation<DateTime, Dictionary<string, AssetPairResponseModel>> GetAssetPairs()
+        private ICachedCalculation<Dictionary<string, AssetPairResponseModel>> GetAssetPairs()
         {
             return Calculate.Cached(() => _system.UtcNow,
                 (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
@@ -93,18 +94,6 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var sourceAssets1 = new[] { sourcePair1.BaseAssetId, sourcePair1.QuotingAssetId };
             var sourceAssets2 = new[] { sourcePair2.BaseAssetId, sourcePair2.QuotingAssetId };
             return sourceAssets1.Single(a => sourceAssets2.Contains(a));
-        }
-
-        public class ExistingAssetPairsCalcSource
-        {
-            public Dictionary<string, AssetPairResponseModel> AllPairs { get; }
-            public ImmutableHashSet<ValueTuple<string, string>> CrossPairs { get; }
-
-            public ExistingAssetPairsCalcSource(Dictionary<string, AssetPairResponseModel> allPairs, ImmutableHashSet<ValueTuple<string, string>> crossPairs)
-            {
-                AllPairs = allPairs;
-                CrossPairs = crossPairs;
-            }
         }
     }
 }

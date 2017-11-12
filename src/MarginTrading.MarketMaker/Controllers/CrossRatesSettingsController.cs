@@ -1,6 +1,7 @@
-﻿using MarginTrading.MarketMaker.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.SwaggerGen.Annotations;
@@ -22,10 +23,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("set")]
-        [SwaggerOperation("SetCrossCourceSettings")]
-        public IActionResult Set([FromBody] CrossRatesSettingsModel settings)
+        [SwaggerOperation("SetCrossRatesSettings")]
+        public IActionResult Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
         {
-            _crossRatesSettingsService.Set(Convert(settings));
+            _crossRatesSettingsService.Set(settings.Select(Convert).ToList());
             return Ok(new {success = true});
         }
 
@@ -34,24 +35,24 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("")]
-        [SwaggerOperation("GetCrossCourceSettings")]
-        public CrossRatesSettingsModel Get()
+        [SwaggerOperation("GetCrossRatesSettings")]
+        public IEnumerable<CrossRatesSettingsModel> Get()
         {
-            return Convert(_crossRatesSettingsService.Get());
+            return _crossRatesSettingsService.Get().Select(Convert);
         }
 
         private static CrossRatesSettingsModel Convert(CrossRatesSettings settings)
         {
             return new CrossRatesSettingsModel
             {
-                BaseAssetsIds = settings.BaseAssetsIds,
+                BaseAssetId = settings.BaseAssetId,
                 OtherAssetsIds = settings.OtherAssetsIds,
             };
         }
 
         private static CrossRatesSettings Convert(CrossRatesSettingsModel model)
         {
-            return new CrossRatesSettings(model.BaseAssetsIds, model.OtherAssetsIds);
+            return new CrossRatesSettings(model.BaseAssetId, model.OtherAssetsIds);
         }
     }
 }

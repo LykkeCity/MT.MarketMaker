@@ -4,12 +4,12 @@ namespace MarginTrading.MarketMaker.Models
 {
     public class CrossRatesSettings
     {
-        public ImmutableArray<string> BaseAssetsIds { get; }
+        public string BaseAssetId { get; }
         public ImmutableArray<string> OtherAssetsIds { get; }
 
-        public CrossRatesSettings(ImmutableArray<string> baseAssetsIds, ImmutableArray<string> otherAssetsIds)
+        public CrossRatesSettings(string baseAssetId, ImmutableArray<string> otherAssetsIds)
         {
-            BaseAssetsIds = baseAssetsIds;
+            BaseAssetId = baseAssetId;
             OtherAssetsIds = otherAssetsIds;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
@@ -11,7 +12,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
     internal class CrossRatesSettingsService : ICrossRatesSettingsService
     {
         [CanBeNull]
-        private CrossRatesSettings _cache;
+        private IReadOnlyList<CrossRatesSettings> _cache;
 
         private readonly object _writeLock = new object();
 
@@ -22,17 +23,17 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             _repository = repository;
         }
 
-        public void Set([NotNull] CrossRatesSettings model)
+        public void Set([NotNull] IReadOnlyList<CrossRatesSettings> models)
         {
-            if (model == null) throw new ArgumentNullException(nameof(model));
+            if (models == null) throw new ArgumentNullException(nameof(models));
             lock (_writeLock)
             {
-                WriteRepository(model);
-                _cache = model;
+                WriteRepository(models);
+                _cache = models;
             }
         }
 
-        public CrossRatesSettings Get()
+        public IReadOnlyList<CrossRatesSettings> Get()
         {
             if (_cache == null)
             {
@@ -40,8 +41,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                 {
                     if (_cache == null)
                     {
-                        _cache = ReadRepository()
-                                 ?? new CrossRatesSettings(ImmutableArray<string>.Empty, ImmutableArray<string>.Empty);
+                        _cache = ReadRepository();
                     }
                 }
             }
@@ -49,15 +49,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _cache.RequiredNotNull("result");
         }
 
-        private void WriteRepository(CrossRatesSettings model)
+        private void WriteRepository(IEnumerable<CrossRatesSettings> models)
         {
-            _repository.InsertOrReplaceAsync(model).GetAwaiter().GetResult();
+            _repository.InsertOrReplaceAsync(models).GetAwaiter().GetResult();
         }
 
-        [CanBeNull]
-        private CrossRatesSettings ReadRepository()
+        private IReadOnlyList<CrossRatesSettings> ReadRepository()
         {
-            return _repository.GetAllAsync().GetAwaiter().GetResult().FirstOrDefault();
+            return _repository.GetAllAsync().GetAwaiter().GetResult();
         }
     }
 }

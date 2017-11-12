@@ -8,12 +8,14 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Entities
         public CrossRatesSettingsEntity()
         {
             PartitionKey = "CrossRatesSettings";
-            RowKey = "CrossRatesSettings";
         }
 
-        [CanBeNull]
-        public string BaseAssetsIds { get; set; }
-        
+        public string BaseAssetId
+        {
+            get => RowKey;
+            set => RowKey = value;
+        }
+
         [CanBeNull]
         public string OtherAssetsIds { get; set; }
     }
