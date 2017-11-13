@@ -78,6 +78,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
         public Orderbook OnNewOrderbook(ExternalOrderbook orderbook)
         {
+            if (orderbook == null) throw new ArgumentNullException(nameof(orderbook));
             var watch = Stopwatch.StartNew();
             orderbook = _testingHelperService.ModifyOrderbookIfNeeded(orderbook);
             if (orderbook == null)
@@ -249,7 +250,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
 
         /// <summary>
-        ///     Detects outdates exchanges
+        ///     Detects outdated exchanges
         /// </summary>
         private (ImmutableHashSet<string>, ImmutableDictionary<string, ExternalOrderbook>)
             FindOutdated(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> orderbooksByExchanges,

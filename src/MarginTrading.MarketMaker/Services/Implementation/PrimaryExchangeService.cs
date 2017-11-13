@@ -168,8 +168,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         private ImmutableDictionary<string, ExchangeQuality> CalcExchangeQualities(string assetPairId,
-            ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now, string currentProcessingExchange)
+            [NotNull] ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now, string currentProcessingExchange)
         {
+            if (errors == null) throw new ArgumentNullException(nameof(errors));
             var hedgingPreferences = _hedgingPreferenceService.Get(assetPairId);
 
             ImmutableDictionary<string, ExchangeQuality> Calc(ImmutableDictionary<string, ExchangeQuality> old)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common;
+using MarginTrading.MarketMaker.Filters;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
@@ -22,10 +23,8 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     {
                         var lastElemsQueue = _lastElemsQueues.GetOrAdd(assetPairId, k => new ConcurrentQueue<(string Msg, DateTime Time)>());
                         lastElemsQueue.Enqueue((msg, time));
-                        if (lastElemsQueue.Count > 100)
-                            lastElemsQueue.TryDequeue(out var _);
-
-                        Console.WriteLine(msg);
+                        if (lastElemsQueue.Count > 100) lastElemsQueue.TryDequeue(out var _);
+                        if (TestFunctionalityFilter.TestsEnabled) Console.WriteLine(msg);
                     }
             });
         }
