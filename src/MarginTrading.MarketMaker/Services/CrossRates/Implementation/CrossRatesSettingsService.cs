@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;

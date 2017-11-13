@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
+using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
@@ -53,14 +55,15 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
             TableStorage = tableStorage;
         }
 
-        public Task InsertOrReplaceAsync(TDto entity)
+        public Task InsertOrReplaceAsync([NotNull] TDto entity)
         {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
             return TableStorage.InsertOrReplaceAsync(Convert(entity));
         }
 
         public Task InsertOrReplaceAsync(IEnumerable<TDto> entities)
         {
-            return TableStorage.InsertOrReplaceAsync(entities.Select(Convert));
+            return TableStorage.InsertOrReplaceAsync(entities.RequiredNotNullElems("entities").Select(Convert));
         }
 
         public async Task<TDto> GetAsync(TDto dto)
@@ -71,11 +74,12 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
 
         public async Task<IReadOnlyList<TDto>> GetAllAsync()
         {
-            return (await TableStorage.GetDataAsync()).Select(Convert).ToList();
+            return (await TableStorage.GetDataAsync()).Select(Convert).RequiredNotNullElems("result").ToList();
         }
 
-        public Task DeleteIfExistAsync(TDto dto)
+        public Task DeleteIfExistAsync([NotNull] TDto dto)
         {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
             var entity = Convert(dto);
             return TableStorage.DeleteIfExistAsync(entity.PartitionKey, entity.RowKey);
         }

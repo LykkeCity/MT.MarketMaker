@@ -15,22 +15,21 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             = new ReadWriteLockedDictionary<string, Orderbook>();
 
         private readonly IBestPricesService _bestPricesService;
-        private readonly IDependentCrossRatesService _dependentCrossRatesService;
+        private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
 
         public CrossRatesService(IBestPricesService bestPricesService,
-            IDependentCrossRatesService dependentCrossRatesService)
+            ICrossRateCalcInfosService crossRateCalcInfosService)
         {
             _bestPricesService = bestPricesService;
-            _dependentCrossRatesService = dependentCrossRatesService;
+            _crossRateCalcInfosService = crossRateCalcInfosService;
         }
 
         [ItemNotNull]
         public ImmutableList<Orderbook> CalcDependentOrderbooks([NotNull] Orderbook orderbook) // ex: (btcusd)
         {
-            // todo: include spot orderbooks?
             _orderbooks[orderbook.AssetPairId] = orderbook
                                                  ?? throw new ArgumentNullException(nameof(orderbook));
-            var dependent = _dependentCrossRatesService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
+            var dependent = _crossRateCalcInfosService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }
 
@@ -50,20 +49,19 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
             var bestPrices1 = _bestPricesService.Calc(sourceOrderbook1); // ex: btcusd
             var bestPrices2 = _bestPricesService.Calc(sourceOrderbook2); // ex: eurusd
-            var crossBid = GetCrossRate(bestPrices1.BestBid, bestPrices2.BestBid, info);
+            var crossBid = GetCrossRate(bestPrices1.BestBid, bestPrices2.BestBid, info); // todo: if revert - get ask
             var crossAsk = GetCrossRate(bestPrices1.BestAsk, bestPrices2.BestAsk, info);
             return new Orderbook(info.ResultingPairId,
                 ImmutableArray.Create(new OrderbookPosition(crossBid, 1)), // in future: calc whole orderbook
                 ImmutableArray.Create(new OrderbookPosition(crossAsk, 1)));
         }
 
-        // todo: reduce operations to speedup
         private static decimal GetCrossRate(decimal rate1, decimal rate2, CrossRateCalcInfo info)
         {
-            if (!info.Source1.IsCrossRateBaseAssetQuoting)
+            if (!info.Source1.IsTransitoryAssetQuoting)
                 rate1 = 1 / rate1;
 
-            if (!info.Source2.IsCrossRateBaseAssetQuoting)
+            if (!info.Source2.IsTransitoryAssetQuoting)
                 rate2 = 1 / rate2;
 
             return rate1 / rate2;

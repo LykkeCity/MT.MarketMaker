@@ -29,7 +29,7 @@ namespace MarginTrading.MarketMaker.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            RegisterDefaultImplementions(builder);
+            RegisterDefaultImplementations(builder);
 
             builder.RegisterInstance(_settings.Nested(s => s.MarginTradingMarketMaker)).SingleInstance();
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
@@ -58,14 +58,14 @@ namespace MarginTrading.MarketMaker.Modules
         /// Types like SmthRepository are also supported.
         /// Also autoregisters <see cref="IStartable"/>'s.
         /// </summary>
-        private void RegisterDefaultImplementions(ContainerBuilder builder)
+        private void RegisterDefaultImplementations(ContainerBuilder builder)
         {
             var assembly = GetType().Assembly;
             var implementations = assembly.GetTypes()
                 .Where(t => !t.IsInterface && !t.IsGenericType && (t.Name.EndsWith("Service") || t.Name.EndsWith("Repository")))
                 .SelectMany(t =>
                     t.GetInterfaces()
-                        .Where(i => i.Name.StartsWith('I') && i.Name.Substring(1) == t.Name && i.Assembly == assembly || i == typeof(IStartable))
+                        .Where(i => i.Name.StartsWith('I') && i.Assembly == assembly || i == typeof(IStartable))
                         .Select(i => (Implementation: t, Interface: i)))
                 .GroupBy(t => t.Interface)
                 .Where(gr => gr.Count() == 1 || gr.Key == typeof(IStartable))

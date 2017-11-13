@@ -21,7 +21,7 @@ namespace Tests.Services.CrossRates
         }
 
         [Test]
-        public void Always_ShouldDoSmth()
+        public void Always_ShouldReturnCorrectResults()
         {
             //arrange
 
@@ -35,9 +35,9 @@ namespace Tests.Services.CrossRates
             var btcUsdOrderbook = MakeOrderbook("BTCUSD");
 
             _testSuit
-                .Setup<IDependentCrossRatesService>(s => s.GetDependentAssetPairs("ETHBTC") == new[] {ethUsdCalcInfo})
-                .Setup<IDependentCrossRatesService>(s => s.GetDependentAssetPairs("EURUSD") == new[] {btcEurCalcInfo})
-                .Setup<IDependentCrossRatesService>(s => s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("ETHBTC") == new[] {ethUsdCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("EURUSD") == new[] {btcEurCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo})
                 .Setup<IBestPricesService>(s => s.Calc(ethBtcOrderbook) == new BestPrices(0.04m, 0.05m))
                 .Setup<IBestPricesService>(s => s.Calc(eurUsdOrderbook) == new BestPrices(1.2m, 1.3m))
                 .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600));

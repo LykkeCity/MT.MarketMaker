@@ -28,7 +28,6 @@ namespace Tests.Services.CrossRates
             {
                 BaseAssetId = "BTC",
                 Id = "BTCEUR",
-                IsDisabled = false,
                 QuotingAssetId = "EUR",
                 Source = "BTCUSD",
                 Source2 = "EURUSD"
@@ -37,7 +36,6 @@ namespace Tests.Services.CrossRates
             {
                 BaseAssetId = "BTC",
                 Id = "BTCAUD",
-                IsDisabled = false,
                 QuotingAssetId = "AUD",
                 Source = "BTCUSD",
                 Source2 = "AUDUSD"
@@ -46,7 +44,6 @@ namespace Tests.Services.CrossRates
             {
                 BaseAssetId = "ETH",
                 Id = "ETHUSD",
-                IsDisabled = false,
                 QuotingAssetId = "USD",
                 Source = "ETHBTC",
                 Source2 = "BTCUSD"
@@ -55,28 +52,24 @@ namespace Tests.Services.CrossRates
             {
                 BaseAssetId = "ETH",
                 Id = "ETHBTC",
-                IsDisabled = false,
                 QuotingAssetId = "BTC",
             },
             new AssetPairResponseModel
             {
                 BaseAssetId = "AUD",
                 Id = "AUDUSD",
-                IsDisabled = false,
                 QuotingAssetId = "USD",
             },
             new AssetPairResponseModel
             {
                 BaseAssetId = "EUR",
                 Id = "EURUSD",
-                IsDisabled = false,
                 QuotingAssetId = "USD",
             },
             new AssetPairResponseModel
             {
                 BaseAssetId = "BTC",
                 Id = "BTCUSD",
-                IsDisabled = false,
                 QuotingAssetId = "USD",
             },
         };

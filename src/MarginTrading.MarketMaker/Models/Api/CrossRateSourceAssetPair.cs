@@ -1,11 +1,11 @@
-﻿namespace MarginTrading.MarketMaker.Services.CrossRates.Models
+﻿namespace MarginTrading.MarketMaker.Models.Api
 {
-    public class CrossRateSourceAssetPair
+    public class CrossRateSourceAssetPairModel
     {
         /// <summary>
         /// Asset pair Id, ex. BTCUSD
         /// </summary>
-        public string Id { get; }
+        public string Id { get; set; }
 
         /// <summary>
         /// True if the base asset is quoting in the pair.
@@ -14,12 +14,6 @@
         /// Base asset is the one that is common in two source pairs used for cross-rate calculating.<br/>
         /// Ex: ETHUSD is calculated based on BTC from ETHBTC (will have this prop = true) and BTCUSD (will have false).
         /// </remarks>
-        public bool IsTransitoryAssetQuoting { get; }
-
-        public CrossRateSourceAssetPair(string id, bool isTransitoryAssetQuoting)
-        {
-            Id = id ?? throw new System.ArgumentNullException(nameof(id));
-            IsTransitoryAssetQuoting = isTransitoryAssetQuoting;
-        }
+        public bool IsTransitoryAssetQuoting { get; set; }
     }
 }

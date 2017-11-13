@@ -11,8 +11,9 @@ using Swashbuckle.SwaggerGen.Annotations;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
+    //note: hidden for now
     [Route("api/[controller]")]
-    public class CrossRatesSettingsController : Controller
+    internal class CrossRatesSettingsController : Controller
     {
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
         private readonly IAssetPairsSettingsService _assetPairsSettingsService;
@@ -41,6 +42,7 @@ namespace MarginTrading.MarketMaker.Controllers
             var existingCrossPairs = _dependentCrossRatesService.GetExistingCrossPairs().ToList();
             foreach (var assetPairId in existingCrossPairs)
             {
+                // it's strange
                 await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
             }
 
