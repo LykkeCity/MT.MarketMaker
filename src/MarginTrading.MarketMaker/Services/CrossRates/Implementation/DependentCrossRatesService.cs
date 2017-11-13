@@ -41,7 +41,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public IEnumerable<string> GetExistingCrossPairs()
         {
-            return _existingAssetPairs.Get().Select(gr => gr.Key);
+            return _existingAssetPairs.Get().SelectMany(gr => gr).Select(i => i.ResultingPairId).Distinct();
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
