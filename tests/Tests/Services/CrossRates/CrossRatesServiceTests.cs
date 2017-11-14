@@ -5,7 +5,6 @@ using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
-using Moq;
 using NUnit.Framework;
 
 namespace Tests.Services.CrossRates
@@ -24,41 +23,57 @@ namespace Tests.Services.CrossRates
         public void Always_ShouldReturnCorrectResults()
         {
             //arrange
-
-            var ethUsdCalcInfo = new CrossRateCalcInfo("ETHUSD", new CrossRateSourceAssetPair("ETHBTC", true),
+            var ethUsdCalcInfo = new CrossRateCalcInfo("ETHUSD",
+                new CrossRateSourceAssetPair("ETHBTC", true),
                 new CrossRateSourceAssetPair("BTCUSD", false));
-            var btcEurCalcInfo = new CrossRateCalcInfo("BTCEUR", new CrossRateSourceAssetPair("BTCUSD", true),
+            var btcEurCalcInfo = new CrossRateCalcInfo("BTCEUR",
+                new CrossRateSourceAssetPair("BTCUSD", true),
                 new CrossRateSourceAssetPair("EURUSD", true));
+            var btcChfCalcInfo = new CrossRateCalcInfo("BTCCHF",
+                new CrossRateSourceAssetPair("BTCUSD", true),
+                new CrossRateSourceAssetPair("USDCHF", false));
 
             var ethBtcOrderbook = MakeOrderbook("ETHBTC");
             var eurUsdOrderbook = MakeOrderbook("EURUSD");
+            var usdChfOrderbook = MakeOrderbook("USDCHF");
             var btcUsdOrderbook = MakeOrderbook("BTCUSD");
 
             _testSuit
                 .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("ETHBTC") == new[] {ethUsdCalcInfo})
                 .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("EURUSD") == new[] {btcEurCalcInfo})
-                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("USDCHF") == new[] {btcChfCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s =>
+                    s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo, btcChfCalcInfo})
                 .Setup<IBestPricesService>(s => s.Calc(ethBtcOrderbook) == new BestPrices(0.04m, 0.05m))
                 .Setup<IBestPricesService>(s => s.Calc(eurUsdOrderbook) == new BestPrices(1.2m, 1.3m))
+                .Setup<IBestPricesService>(s => s.Calc(usdChfOrderbook) == new BestPrices(0.98m, 0.99m))
                 .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600));
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
             var eurUsdResult = _testSuit.Sut.CalcDependentOrderbooks(eurUsdOrderbook);
+            var usdChfResult = _testSuit.Sut.CalcDependentOrderbooks(usdChfOrderbook);
             var btcUsdResult = _testSuit.Sut.CalcDependentOrderbooks(btcUsdOrderbook);
 
             //assert
             ethBtcResult.Should().BeEmpty();
             eurUsdResult.Should().BeEmpty();
+            usdChfResult.Should().BeEmpty();
+            //BTCEUR = BTCUSD * (ask EURUSD)^-1
+            //BTCCHF = BTCUSD * USDCHF
+            //ETHUSD = ETHBTC * BTCUSD
             btcUsdResult.ShouldAllBeEquivalentTo(
                 new[]
                 {
-                    new Orderbook("ETHUSD",
-                        ImmutableArray.Create(new OrderbookPosition(259.999999999999999999999922M, 1)),
-                        ImmutableArray.Create(new OrderbookPosition(329.9999999999999999999998944M, 1))),
                     new Orderbook("BTCEUR",
-                        ImmutableArray.Create(new OrderbookPosition(5416.6666666666666666666666667M, 1)),
-                        ImmutableArray.Create(new OrderbookPosition(5076.9230769230769230769230769M, 1))),
+                        ImmutableArray.Create(new OrderbookPosition(6500 * (1 / 1.3m), 1)),
+                        ImmutableArray.Create(new OrderbookPosition(6600 * (1 / 1.2m), 1))),
+                    new Orderbook("BTCCHF",
+                        ImmutableArray.Create(new OrderbookPosition(6500 * 0.98m, 1)),
+                        ImmutableArray.Create(new OrderbookPosition(6600 * 0.99m, 1))),
+                    new Orderbook("ETHUSD",
+                        ImmutableArray.Create(new OrderbookPosition(0.04m * 6500, 1)),
+                        ImmutableArray.Create(new OrderbookPosition(0.05m * 6600, 1))),
                 });
         }
 

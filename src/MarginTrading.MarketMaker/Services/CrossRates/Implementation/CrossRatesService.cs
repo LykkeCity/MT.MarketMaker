@@ -49,22 +49,25 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
             var bestPrices1 = _bestPricesService.Calc(sourceOrderbook1); // ex: btcusd
             var bestPrices2 = _bestPricesService.Calc(sourceOrderbook2); // ex: eurusd
-            var crossBid = GetCrossRate(bestPrices1.BestBid, bestPrices2.BestBid, info); // todo: if revert - get ask
-            var crossAsk = GetCrossRate(bestPrices1.BestAsk, bestPrices2.BestAsk, info);
+            var crossBid = GetCrossRate(bestPrices1, bestPrices2, info, true);
+            var crossAsk = GetCrossRate(bestPrices1, bestPrices2, info, false);
             return new Orderbook(info.ResultingPairId,
                 ImmutableArray.Create(new OrderbookPosition(crossBid, 1)), // in future: calc whole orderbook
                 ImmutableArray.Create(new OrderbookPosition(crossAsk, 1)));
         }
 
-        private static decimal GetCrossRate(decimal rate1, decimal rate2, CrossRateCalcInfo info)
+        private static decimal GetCrossRate(BestPrices bba1, BestPrices bba2, CrossRateCalcInfo info, bool bid)
         {
-            if (!info.Source1.IsTransitoryAssetQuoting)
-                rate1 = 1 / rate1;
+            var first = GetRate(bba1, bid, !info.Source1.IsTransitoryAssetQuoting);
+            var second = GetRate(bba2, bid, info.Source2.IsTransitoryAssetQuoting);
+            return first * second;
+        }
 
-            if (!info.Source2.IsTransitoryAssetQuoting)
-                rate2 = 1 / rate2;
-
-            return rate1 / rate2;
+        private static decimal GetRate(BestPrices bestPrices, bool bid, bool invert)
+        {
+            var needBid = invert ? !bid : bid;
+            var nonInverted = needBid ? bestPrices.BestBid : bestPrices.BestAsk;
+            return invert ? 1 / nonInverted : nonInverted;
         }
     }
 }

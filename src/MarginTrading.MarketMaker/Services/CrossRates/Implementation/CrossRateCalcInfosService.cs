@@ -14,7 +14,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 {
     public class CrossRateCalcInfosService : ICrossRateCalcInfosService, IStartable
     {
-        private ImmutableArray<CrossRateCalcInfo> _cache;
+        private ImmutableArray<CrossRateCalcInfo> _cache = ImmutableArray<CrossRateCalcInfo>.Empty;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _dependentAssetPairs;
 
         private readonly ICrossRateCalcInfosRepository _repository;
