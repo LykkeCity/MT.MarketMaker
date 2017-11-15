@@ -34,10 +34,10 @@ namespace MarginTrading.MarketMaker.Controllers
         public async Task<IActionResult> Set([FromBody] IReadOnlyList<CrossRateCalcInfoModel> settings)
         {
             _crossRateCalcInfosService.Set(settings.Select(Convert).ToList());
-            foreach (var assetPairId in settings.Select(s => s.ResultingPairId))
-            {
-                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
-            }
+            //foreach (var assetPairId in settings.Select(s => s.ResultingPairId))
+            //{
+            //    await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
+            //}
 
             return Ok(new {success = true });
         }
