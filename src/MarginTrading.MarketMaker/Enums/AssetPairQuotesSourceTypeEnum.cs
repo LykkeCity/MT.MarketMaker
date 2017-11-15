@@ -20,9 +20,9 @@
         /// </summary>
         Spot = 3,
 
-        /// <summary>
-        /// Quotes are provided using cross-rates from external exchanges
-        /// </summary>
-        CrossRates = 4,
+        ///// <summary>
+        ///// Quotes are provided using cross-rates from external exchanges
+        ///// </summary>
+        //CrossRates = 4,
     }
 }

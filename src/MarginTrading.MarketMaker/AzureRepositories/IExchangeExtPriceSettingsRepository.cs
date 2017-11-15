@@ -7,7 +7,6 @@ namespace MarginTrading.MarketMaker.AzureRepositories
     internal interface IExchangeExtPriceSettingsRepository : IAbstractRepository<ExchangeExtPriceSettingsEntity>
     {
         Task<IEnumerable<ExchangeExtPriceSettingsEntity>> GetAsync(string partitionKey);
-        Task InsertOrReplaceAsync(IEnumerable<ExchangeExtPriceSettingsEntity> entities);
         Task DeleteAsync(IEnumerable<ExchangeExtPriceSettingsEntity> entities);
     }
 }

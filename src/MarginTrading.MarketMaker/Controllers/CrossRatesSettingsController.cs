@@ -39,14 +39,14 @@ namespace MarginTrading.MarketMaker.Controllers
         public async Task<IActionResult> Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
         {
             _crossRatesSettingsService.Set(settings.Select(Convert).ToList());
-            var existingCrossPairs = _dependentCrossRatesService.GetExistingCrossPairs().ToList();
-            foreach (var assetPairId in existingCrossPairs)
-            {
-                // it's strange
-                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
-            }
+            //var existingCrossPairs = _dependentCrossRatesService.GetExistingCrossPairs().ToList();
+            //foreach (var assetPairId in existingCrossPairs)
+            //{
+            //    // it's strange
+            //    await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
+            //}
 
-            return Ok(new {success = true, existingCrossPairs });
+            return Ok(new {success = true });
         }
 
         /// <summary>
