@@ -70,11 +70,11 @@ namespace MarginTrading.MarketMaker.Modules
                 .GroupBy(t => t.Interface)
                 .Where(gr => gr.Count() == 1 || gr.Key == typeof(IStartable))
                 .SelectMany(gr => gr)
-                .ToList();
+                .GroupBy(t => t.Implementation, t => t.Interface);
 
-            foreach (var (impl, service) in implementations)
+            foreach (var gr in implementations)
             {
-                builder.RegisterType(impl).As(service).SingleInstance();
+                builder.RegisterType(gr.Key).As(gr.ToArray()).SingleInstance();
             }
         }
     }
