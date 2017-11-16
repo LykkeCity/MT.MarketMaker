@@ -102,7 +102,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         });
                     }
 
-                    return SendOrderCommandsAsync(orderbook.AssetPairId, commands);
+                    return SendOrderCommandsAsync(o.AssetPairId, commands);
                 }));
         }
 
