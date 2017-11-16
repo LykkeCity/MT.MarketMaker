@@ -9,9 +9,9 @@ using Common.Log;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
-using Trace = MarginTrading.MarketMaker.Infrastructure.Implemetation.Trace;
+using Trace = MarginTrading.MarketMaker.Infrastructure.Implementation.Trace;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
@@ -78,6 +78,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
         public Orderbook OnNewOrderbook(ExternalOrderbook orderbook)
         {
+            if (orderbook == null) throw new ArgumentNullException(nameof(orderbook));
             var watch = Stopwatch.StartNew();
             orderbook = _testingHelperService.ModifyOrderbookIfNeeded(orderbook);
             if (orderbook == null)
@@ -199,7 +200,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
             var bestPrices =
                 validOrderbooks.Values.ToDictionary(o => o.ExchangeName,
-                    orderbook => _bestPricesService.Calc(orderbook));
+                    orderbook => _bestPricesService.CalcExternal(orderbook));
             return _transformOrderbookService.Transform(primaryOrderbook, bestPrices);
         }
 
@@ -249,7 +250,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
 
         /// <summary>
-        ///     Detects outdates exchanges
+        ///     Detects outdated exchanges
         /// </summary>
         private (ImmutableHashSet<string>, ImmutableDictionary<string, ExternalOrderbook>)
             FindOutdated(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> orderbooksByExchanges,

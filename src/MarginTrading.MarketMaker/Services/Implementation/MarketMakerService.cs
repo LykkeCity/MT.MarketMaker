@@ -12,6 +12,7 @@ using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
@@ -27,6 +28,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         private readonly ISpotOrderCommandsGeneratorService _spotOrderCommandsGeneratorService;
         private readonly ILog _log;
         private readonly IGenerateOrderbookService _generateOrderbookService;
+        private readonly ICrossRatesService _crossRatesService;
 
         public MarketMakerService(IAssetPairsSettingsService assetPairsSettingsService,
             IRabbitMqService rabbitMqService,
@@ -34,7 +36,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             IReloadingManager<MarginTradingMarketMakerSettings> settings,
             ISpotOrderCommandsGeneratorService spotOrderCommandsGeneratorService,
             ILog log,
-            IGenerateOrderbookService generateOrderbookService)
+            IGenerateOrderbookService generateOrderbookService,
+            ICrossRatesService crossRatesService)
         {
             _assetPairsSettingsService = assetPairsSettingsService;
             _system = system;
@@ -42,6 +45,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _spotOrderCommandsGeneratorService = spotOrderCommandsGeneratorService;
             _log = log;
             _generateOrderbookService = generateOrderbookService;
+            _crossRatesService = crossRatesService;
             _messageProducer = new Lazy<IMessageProducer<OrderCommandsBatchMessage>>(() =>
                 CreateRabbitMqMessageProducer(settings, rabbitMqService));
         }
@@ -49,7 +53,6 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public Task ProcessNewExternalOrderbookAsync(ExternalExchangeOrderbookMessage orderbook)
         {
             var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPairId);
-            //Trace.Write($"MMS: Received {orderbook.AssetPairId} from {orderbook.Source}. Settings: {quotesSource.ToString()}");
             if (quotesSource != AssetPairQuotesSourceTypeEnum.External
                 || (orderbook.Bids?.Count ?? 0) == 0 || (orderbook.Asks?.Count ?? 0) == 0)
             {
@@ -65,34 +68,42 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return Task.CompletedTask;
             }
 
-            var commands = new List<OrderCommand>
-            {
-                new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
-            };
+            var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
+                .Add(externalOrderbook);
 
-            foreach (var bid in resultingOrderbook.Bids)
-            {
-                commands.Add(new OrderCommand
+            // todo: send batches of batches (because of cross-rates)
+            return Task.WhenAll(orderbooksToSend
+                .Select(o =>
                 {
-                    CommandType = OrderCommandTypeEnum.SetOrder,
-                    Direction = OrderDirectionEnum.Buy,
-                    Price = bid.Price,
-                    Volume = bid.Volume
-                });
-            }
+                    var commands = new List<OrderCommand>
+                    {
+                        new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
+                    };
 
-            foreach (var ask in resultingOrderbook.Asks)
-            {
-                commands.Add(new OrderCommand
-                {
-                    CommandType = OrderCommandTypeEnum.SetOrder,
-                    Direction = OrderDirectionEnum.Sell,
-                    Price = ask.Price,
-                    Volume = ask.Volume
-                });
-            }
+                    foreach (var bid in o.Bids)
+                    {
+                        commands.Add(new OrderCommand
+                        {
+                            CommandType = OrderCommandTypeEnum.SetOrder,
+                            Direction = OrderDirectionEnum.Buy,
+                            Price = bid.Price,
+                            Volume = bid.Volume
+                        });
+                    }
 
-            return SendOrderCommandsAsync(orderbook.AssetPairId, commands);
+                    foreach (var ask in o.Asks)
+                    {
+                        commands.Add(new OrderCommand
+                        {
+                            CommandType = OrderCommandTypeEnum.SetOrder,
+                            Direction = OrderDirectionEnum.Sell,
+                            Price = ask.Price,
+                            Volume = ask.Volume
+                        });
+                    }
+
+                    return SendOrderCommandsAsync(o.AssetPairId, commands);
+                }));
         }
 
         public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)

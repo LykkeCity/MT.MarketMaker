@@ -14,7 +14,7 @@ using Lykke.Logs;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services;

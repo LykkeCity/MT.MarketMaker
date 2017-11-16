@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace MarginTrading.MarketMaker.AzureRepositories
 {
-    internal interface IAbstractRepository<TEntity> where TEntity : ITableEntity, new()
+    public interface IAbstractRepository<TDto>
     {
-        Task InsertOrReplaceAsync(TEntity entity);
+        Task InsertOrReplaceAsync(TDto entity);
+        Task InsertOrReplaceAsync(IEnumerable<TDto> entities);
         [ItemCanBeNull]
-        Task<TEntity> GetAsync(string partitionKey, string rowKey);
-        Task<IList<TEntity>> GetAllAsync();
-        Task DeleteIfExistAsync(string partitionKey, string rowKey);
+        Task<TDto> GetAsync(TDto dto);
+        Task<IReadOnlyList<TDto>> GetAllAsync();
+        Task DeleteIfExistAsync(TDto dto);
     }
 }

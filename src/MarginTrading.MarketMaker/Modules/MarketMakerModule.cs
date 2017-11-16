@@ -1,12 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Common.Log;
+using Lykke.Service.Assets.Client.Custom;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using Rocks.Caching;
 
 namespace MarginTrading.MarketMaker.Modules
@@ -15,6 +19,7 @@ namespace MarginTrading.MarketMaker.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly ILog _log;
+        private readonly IServiceCollection _services = new ServiceCollection();
 
         public MarketMakerModule(IReloadingManager<AppSettings> settings, ILog log)
         {
@@ -24,7 +29,7 @@ namespace MarginTrading.MarketMaker.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            RegisterDefaultImplementions(builder);
+            RegisterDefaultImplementations(builder);
 
             builder.RegisterInstance(_settings.Nested(s => s.MarginTradingMarketMaker)).SingleInstance();
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
@@ -36,6 +41,12 @@ namespace MarginTrading.MarketMaker.Modules
                 .As<IRabbitMqService>().SingleInstance();
 
             builder.RegisterType<BrokerService>().As<IBrokerService>().InstancePerDependency();
+
+            _services.UseAssetsClient(AssetServiceSettings.Create(
+                new Uri(_settings.CurrentValue.MarginTradingMarketMaker.ExternalServices.AssetsServiceUrl),
+                TimeSpan.FromMinutes(5)));
+
+            builder.Populate(_services);
         }
 
         /// <summary>
@@ -47,23 +58,23 @@ namespace MarginTrading.MarketMaker.Modules
         /// Types like SmthRepository are also supported.
         /// Also autoregisters <see cref="IStartable"/>'s.
         /// </summary>
-        private void RegisterDefaultImplementions(ContainerBuilder builder)
+        private void RegisterDefaultImplementations(ContainerBuilder builder)
         {
             var assembly = GetType().Assembly;
             var implementations = assembly.GetTypes()
                 .Where(t => !t.IsInterface && !t.IsGenericType && (t.Name.EndsWith("Service") || t.Name.EndsWith("Repository")))
                 .SelectMany(t =>
                     t.GetInterfaces()
-                        .Where(i => i.Name.StartsWith('I') && i.Name.Substring(1) == t.Name && i.Assembly == assembly || i == typeof(IStartable))
+                        .Where(i => i.Name.StartsWith('I') && i.Assembly == assembly || i == typeof(IStartable))
                         .Select(i => (Implementation: t, Interface: i)))
                 .GroupBy(t => t.Interface)
                 .Where(gr => gr.Count() == 1 || gr.Key == typeof(IStartable))
                 .SelectMany(gr => gr)
-                .ToList();
+                .GroupBy(t => t.Implementation, t => t.Interface);
 
-            foreach (var (impl, service) in implementations)
+            foreach (var gr in implementations)
             {
-                builder.RegisterType(impl).As(service).SingleInstance();
+                builder.RegisterType(gr.Key).As(gr.ToArray()).SingleInstance();
             }
         }
     }

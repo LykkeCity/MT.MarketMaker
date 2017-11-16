@@ -6,9 +6,12 @@ namespace MarginTrading.MarketMaker.Services
 {
     public interface IBestPricesService
     {
-        BestPrices Calc(ExternalOrderbook orderbook);
+        BestPrices CalcExternal(ExternalOrderbook orderbook);
         
         [Pure]
         IReadOnlyDictionary<(string AssetPairId, string Exchange), BestPrices> GetLastCalculated();
+
+        [Pure]
+        BestPrices Calc(Orderbook orderbook);
     }
 }

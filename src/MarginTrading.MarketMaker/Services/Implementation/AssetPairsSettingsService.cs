@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.AzureRepositories.Entities;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
 using Rocks.Caching;
 
@@ -59,7 +59,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public async Task DeleteAsync(string assetPairId)
         {
             var keys = GetKeys(assetPairId);
-            await _assetsPairsSettingsRepository.DeleteIfExistAsync(keys.PartitionKey, keys.RowKey);
+            await _assetsPairsSettingsRepository.DeleteIfExistAsync(GenerateEntityFromKeys(keys));
             DeleteByKey(keys);
         }
 

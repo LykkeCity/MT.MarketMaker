@@ -15,6 +15,7 @@ namespace MarginTrading.MarketMaker.Models
             AssetPairId = assetPairId;
             Bids = bids;
             Asks = asks;
+            AssetPairId = assetPairId;
         }
 
         private sealed class EqualityComparer : IEqualityComparer<Orderbook>

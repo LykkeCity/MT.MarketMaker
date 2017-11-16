@@ -5,7 +5,7 @@ using MarginTrading.MarketMaker.AzureRepositories;
 using Microsoft.WindowsAzure.Storage.Table;
 using Rocks.Caching;
 
-namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
+namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class CachedEntityAccessorService<TEntity> : CachedEntityAccessorService
         where TEntity : class, ITableEntity, new()
@@ -59,7 +59,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
         public TEntity GetByKey(EntityKeys keys)
         {
             return _cacheProvider.Get(GetCacheKey(keys),
-                () => new CachableResult<TEntity>(_repository.GetAsync(keys.PartitionKey, keys.RowKey).GetAwaiter().GetResult(),
+                () => new CachableResult<TEntity>(_repository.GetAsync(GenerateEntityFromKeys(keys)).GetAwaiter().GetResult(),
                     CachingParameters));
         }
 
@@ -67,8 +67,17 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implemetation
         private Task<TEntity> GetByKeyAsync(EntityKeys keys)
         {
             return _cacheProvider.GetAsync(GetCacheKey(keys),
-                async () => new CachableResult<TEntity>(await _repository.GetAsync(keys.PartitionKey, keys.RowKey),
+                async () => new CachableResult<TEntity>(await _repository.GetAsync(GenerateEntityFromKeys(keys)),
                     CachingParameters));
+        }
+
+        protected static TEntity GenerateEntityFromKeys(EntityKeys keys)
+        {
+            return new TEntity
+            {
+                PartitionKey = keys.PartitionKey,
+                RowKey = keys.RowKey
+            };
         }
 
         private string GetCacheKey(EntityKeys keys)

@@ -39,7 +39,7 @@ namespace MarginTrading.MarketMaker.Models.Api
                 case ExchangeErrorState.Outdated:
                     return ExchangeErrorStateModel.Outdated;
                 case ExchangeErrorState.Disabled:
-                    return ExchangeErrorStateModel.Outdated;
+                    return ExchangeErrorStateModel.Disabled;
                 case null:
                     return null;
                 default:

@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.AzureRepositories.Entities;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 using MoreLinq;

@@ -1,13 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
-    public class AlertService : IAlertService
+    internal class AlertService : IAlertService
     {
         private readonly IRabbitMqService _rabbitMqService;
         private readonly IReloadingManager<MarginTradingMarketMakerSettings> _settings;

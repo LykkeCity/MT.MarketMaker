@@ -3,13 +3,15 @@ using Lykke.SettingsReader.Attributes;
 
 namespace MarginTrading.MarketMaker.Settings
 {
-    public class MarginTradingMarketMakerSettings
+    internal class MarginTradingMarketMakerSettings
     {
         public DbSettings Db { get; set; }
 
         public RabbitMqSettings RabbitMq { get; set; }
 
         public string MarketMakerId { get; set; }
+
+        public ExternalServicesSettings ExternalServices { get; set; }
 
         [CanBeNull, Optional]
         public string ApplicationInsightsKey { get; set; }

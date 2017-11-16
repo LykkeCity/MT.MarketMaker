@@ -22,11 +22,6 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
         {
             return TableStorage.GetDataAsync(partitionKey);
         }
-
-        public Task InsertOrReplaceAsync(IEnumerable<ExchangeExtPriceSettingsEntity> entities)
-        {
-            return TableStorage.InsertOrReplaceBatchAsync(entities);
-        }
         
         public Task DeleteAsync(IEnumerable<ExchangeExtPriceSettingsEntity> entities)
         {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using MarginTrading.MarketMaker.Infrastructure.Implemetation;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
@@ -26,7 +26,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         public IReadOnlyList<ExternalOrderbook> FindOutliers(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> validOrderbooks)
         {
             var bestPrices = validOrderbooks.Values
-                .Select(o => (Orderbook: o, BestPrices: _bestPricesService.Calc(o)))
+                .Select(o => (Orderbook: o, BestPrices: _bestPricesService.CalcExternal(o)))
                 .ToList();
 
             var result = new List<ExternalOrderbook>();

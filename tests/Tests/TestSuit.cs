@@ -11,12 +11,12 @@ namespace Tests
 {
     public class TestSuit<TSut> : TestSuit where TSut : class
     {
-        private readonly Lazy<TSut> _sut;
+        private Lazy<TSut> _sut;
         public TSut Sut => _sut.Value;
 
         public TestSuit()
         {
-            _sut = new Lazy<TSut>(() => Cache<TSut>.CreateInstance.Value.Invoke(this));
+            _sut = CreateLazy();
         }
 
         public TestSuit<TSut> Setup<TMocked>(Func<Mock<TMocked>, IReturnsResult<Mock<TMocked>>> setup) where TMocked : class
@@ -43,6 +43,17 @@ namespace Tests
 
             return this;
         }
+
+        public override void Reset()
+        {
+            _sut = CreateLazy();
+            base.Reset();
+        }
+
+        private Lazy<TSut> CreateLazy()
+        {
+            return new Lazy<TSut>(() => Cache<TSut>.CreateInstance.Value.Invoke(this));
+        }
     }
 
     public abstract class TestSuit
@@ -65,7 +76,7 @@ namespace Tests
             return GetMock<TMocked>().Object;
         }
 
-        public void Reset()
+        public virtual void Reset()
         {
             foreach (var p in _mocks)
             {
