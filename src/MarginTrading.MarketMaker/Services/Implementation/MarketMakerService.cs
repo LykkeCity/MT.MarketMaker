@@ -69,41 +69,9 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             }
 
             var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
-                .Add(externalOrderbook);
+                .Add(resultingOrderbook);
 
-            // todo: send batches of batches (because of cross-rates)
-            return Task.WhenAll(orderbooksToSend
-                .Select(o =>
-                {
-                    var commands = new List<OrderCommand>
-                    {
-                        new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
-                    };
-
-                    foreach (var bid in o.Bids)
-                    {
-                        commands.Add(new OrderCommand
-                        {
-                            CommandType = OrderCommandTypeEnum.SetOrder,
-                            Direction = OrderDirectionEnum.Buy,
-                            Price = bid.Price,
-                            Volume = bid.Volume
-                        });
-                    }
-
-                    foreach (var ask in o.Asks)
-                    {
-                        commands.Add(new OrderCommand
-                        {
-                            CommandType = OrderCommandTypeEnum.SetOrder,
-                            Direction = OrderDirectionEnum.Sell,
-                            Price = ask.Price,
-                            Volume = ask.Volume
-                        });
-                    }
-
-                    return SendOrderCommandsAsync(o.AssetPairId, commands);
-                }));
+            return SendOrderCommandsAsync(orderbooksToSend);
         }
 
         public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)
@@ -169,6 +137,43 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         {
             return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
                 settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
+        }
+
+        private Task SendOrderCommandsAsync(IEnumerable<Orderbook> orderbooksToSend)
+        {
+            // todo: send batches of batches (because of cross-rates)
+            return Task.WhenAll(orderbooksToSend
+                .Select(o =>
+                {
+                    var commands = new List<OrderCommand>
+                    {
+                        new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
+                    };
+
+                    foreach (var bid in o.Bids)
+                    {
+                        commands.Add(new OrderCommand
+                        {
+                            CommandType = OrderCommandTypeEnum.SetOrder,
+                            Direction = OrderDirectionEnum.Buy,
+                            Price = bid.Price,
+                            Volume = bid.Volume
+                        });
+                    }
+
+                    foreach (var ask in o.Asks)
+                    {
+                        commands.Add(new OrderCommand
+                        {
+                            CommandType = OrderCommandTypeEnum.SetOrder,
+                            Direction = OrderDirectionEnum.Sell,
+                            Price = ask.Price,
+                            Volume = ask.Volume
+                        });
+                    }
+
+                    return SendOrderCommandsAsync(o.AssetPairId, commands);
+                }));
         }
 
         private Task SendOrderCommandsAsync(string assetPairId, IReadOnlyList<OrderCommand> commands)
