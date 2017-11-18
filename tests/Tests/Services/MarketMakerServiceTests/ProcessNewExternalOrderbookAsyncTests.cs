@@ -16,9 +16,9 @@ using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;
 
-namespace Tests.Services
+namespace Tests.Services.MarketMakerServiceTests
 {
-    public class MarketMakerServiceTests
+    public class ProcessNewExternalOrderbookAsyncTests
     {
         private static readonly TestSuit<MarketMakerService> _testSuit = TestSuit.Create<MarketMakerService>();
         private static readonly DateTime _now = DateTime.UtcNow;
@@ -247,7 +247,7 @@ namespace Tests.Services
                 MakeOrderCommandsBatchMessage("dependent pair 2", 20),
                 MakeOrderCommandsBatchMessage("resulting pair", 30),
             };
-            _sentMessages.ShouldAllBeEquivalentTo(expectation);
+            AssertionExtensions.ShouldAllBeEquivalentTo<OrderCommandsBatchMessage>(_sentMessages, expectation);
         }
 
         public static OrderCommandsBatchMessage MakeOrderCommandsBatchMessage(string pairId, int m)

@@ -9,5 +9,6 @@ namespace MarginTrading.MarketMaker.Services
         Task ProcessNewExternalOrderbookAsync(ExternalExchangeOrderbookMessage orderbook);
         Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook);
         Task ProcessAssetPairSettingsAsync(AssetPairSettingsModel model);
+        Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask);
     }
 }

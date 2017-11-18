@@ -96,7 +96,7 @@ namespace Tests.Services.CrossRates
             //arrange
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
-                .Setup<IAssetsservice>(p =>
+                .Setup<IAssetsService>(p =>
                     p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
             //act
@@ -109,7 +109,7 @@ namespace Tests.Services.CrossRates
             //arrange
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
-                .Setup<IAssetsservice>(p =>
+                .Setup<IAssetsService>(p =>
                     p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
             //act
