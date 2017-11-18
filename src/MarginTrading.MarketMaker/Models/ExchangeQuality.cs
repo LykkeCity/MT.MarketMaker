@@ -1,7 +1,5 @@
 ﻿using System;
 using MarginTrading.MarketMaker.Enums;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace MarginTrading.MarketMaker.Models
 {
@@ -9,8 +7,6 @@ namespace MarginTrading.MarketMaker.Models
     {
         public string Exchange { get; }
         public decimal HedgingPreference { get; }
-
-        [JsonConverter(typeof(StringEnumConverter))]
         public ExchangeErrorState? Error { get; }
         public bool OrderbookReceived { get; }
         public DateTime? LastOrderbookReceivedTime { get; }

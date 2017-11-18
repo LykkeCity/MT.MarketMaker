@@ -1,15 +1,14 @@
 ﻿using System;
 using MarginTrading.MarketMaker.Enums;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace MarginTrading.MarketMaker.Models.Api
 {
-    public class AssetPairSettingsModel: IAssetPairSettingsEntity
+    public class AssetPairSettingsModel
     {
         public string AssetPairId { get; set; }
-        [JsonConverter(typeof(StringEnumConverter))]
-        public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; set; }
+        public AssetPairQuotesSourceTypeEnum? QuotesSourceType { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+        public decimal ManualBid { get; set; }
+        public decimal ManualAsk { get; set; }
     }
 }

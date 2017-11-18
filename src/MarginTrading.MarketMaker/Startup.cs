@@ -18,12 +18,14 @@ using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace MarginTrading.MarketMaker
@@ -54,8 +56,8 @@ namespace MarginTrading.MarketMaker
                 services.AddMvc()
                     .AddJsonOptions(options =>
                     {
-                        options.SerializerSettings.ContractResolver =
-                            new DefaultContractResolver();
+                        options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+                        options.SerializerSettings.Converters.Add(new StringEnumConverter());
                     });
 
                 services.AddSwaggerGen(options => { options.DefaultLykkeConfiguration("v1", ServiceName + " API"); });

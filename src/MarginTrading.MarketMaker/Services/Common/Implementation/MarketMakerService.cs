@@ -13,6 +13,8 @@ using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.CrossRates;
+using MarginTrading.MarketMaker.Services.ExtPrices;
+using MarginTrading.MarketMaker.Services.SpotPrices;
 using MarginTrading.MarketMaker.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
@@ -91,26 +93,26 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsModel model)
         {
             AssetPairQuotesSourceTypeEnum? quotesSourceType;
-            if (model.SetSourceType != null)
+            if (model.QuotesSourceType != null)
             {
-                quotesSourceType = model.SetSourceType.Value;
+                quotesSourceType = model.QuotesSourceType.Value;
                 if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
                 {
                     TestFunctionalityFilter.ValidateTestsEnabled();
                 }
 
                 await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(model.AssetPairId,
-                    model.SetSourceType.Value);
+                    model.QuotesSourceType.Value);
             }
             else
             {
                 quotesSourceType = _assetPairsSettingsService.GetAssetPairQuotesSource(model.AssetPairId);
             }
 
-            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.PriceForBuyOrder != null &&
-                model.PriceForSellOrder != null)
+            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.ManualBid != null &&
+                model.ManualAsk != null)
             {
-                await SendOrderCommandsAsync(model.AssetPairId, model.PriceForBuyOrder.Value, model.PriceForSellOrder.Value);
+                await SendOrderCommandsAsync(model.AssetPairId, model.ManualBid.Value, model.ManualAsk.Value);
             }
         }
 

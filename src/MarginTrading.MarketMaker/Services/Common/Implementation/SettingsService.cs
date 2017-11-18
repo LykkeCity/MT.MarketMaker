@@ -25,7 +25,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public SettingsRoot Get()
         {
-            return ValidationExtensions.RequiredNotNull<SettingsRoot>(_cache, "_cache != null");
+            return _cache.RequiredNotNull("_cache != null");
         }
 
         public void Start()

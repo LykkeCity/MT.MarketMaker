@@ -42,7 +42,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId)
         {
-            return ImmutableDictionary.GetValueOrDefault(GetAsset(assetPairId).Steps, step, true);
+            return GetAsset(assetPairId).Steps.GetValueOrDefault(step, true);
         }
 
         public string GetPresetPrimaryExchange(string assetPairId)
