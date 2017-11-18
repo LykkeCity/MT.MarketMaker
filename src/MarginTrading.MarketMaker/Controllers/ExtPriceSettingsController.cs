@@ -12,11 +12,11 @@ namespace MarginTrading.MarketMaker.Controllers
     [Route("api/[controller]")]
     public class ExtPriceSettingsController : Controller
     {
-        private readonly IPriceCalcSettingsService _priceCalcSettingsService;
+        private readonly IExtPricesSettingsService _extPricesSettingsService;
 
-        public ExtPriceSettingsController(IPriceCalcSettingsService priceCalcSettingsService)
+        public ExtPriceSettingsController(IExtPricesSettingsService extPricesSettingsService)
         {
-            _priceCalcSettingsService = priceCalcSettingsService;
+            _extPricesSettingsService = extPricesSettingsService;
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [SwaggerOperation("SetExtPriceSettings")]
         public async Task<IActionResult> Set([FromBody] IEnumerable<AssetPairExtPriceSettingsModel> settings)
         {
-            await Task.WhenAll(settings.Select(s => _priceCalcSettingsService.Set(s)));
+            await Task.WhenAll(settings.Select(s => _extPricesSettingsService.Set(s)));
             return Ok(new {success = true});
         }
 
@@ -39,7 +39,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [SwaggerOperation("GetAllExtPriceSettings")]
         public Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAll()
         {
-            return _priceCalcSettingsService.GetAllAsync();
+            return _extPricesSettingsService.GetAllAsync();
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         public Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> Get(string assetPairId)
         {
-            return _priceCalcSettingsService.GetAllAsync(assetPairId);
+            return _extPricesSettingsService.GetAllAsync(assetPairId);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [SwaggerOperation("GetAllExtHedgingPreferences")]
         public IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences()
         {
-            return _priceCalcSettingsService.GetAllHedgingPreferences();
+            return _extPricesSettingsService.GetAllHedgingPreferences();
         }
     }
 }

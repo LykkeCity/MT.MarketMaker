@@ -8,7 +8,6 @@ using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services;
-using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;

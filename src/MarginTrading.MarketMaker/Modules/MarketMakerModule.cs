@@ -9,7 +9,6 @@ using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services;
-using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Rocks.Caching;

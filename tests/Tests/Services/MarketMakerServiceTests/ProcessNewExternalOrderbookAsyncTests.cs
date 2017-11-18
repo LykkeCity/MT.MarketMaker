@@ -11,7 +11,6 @@ using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
-using MarginTrading.MarketMaker.Services.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;
