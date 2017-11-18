@@ -67,7 +67,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("")]
         [SwaggerOperation("GetAllSettings")]
-        public Task<List<AssetPairSettings>> GetAll()
+        public Task<List<AssetPairSettingsModel>> GetAll()
         {
             return _assetPairsSettingsService.GetAllPairsSourcesAsync();
         }
@@ -79,7 +79,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [Route("{assetPairId}")]
         [SwaggerOperation("GetSettings")]
         [CanBeNull]
-        public AssetPairSettings Get(string assetPairId)
+        public AssetPairSettingsModel Get(string assetPairId)
         {
             return _assetPairsSettingsService.Get(assetPairId);
         }

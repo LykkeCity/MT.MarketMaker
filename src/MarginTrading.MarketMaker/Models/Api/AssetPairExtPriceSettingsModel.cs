@@ -15,6 +15,6 @@ namespace MarginTrading.MarketMaker.Models.Api
         public RepeatedOutliersParamsModel RepeatedOutliers { get; set; }
         public IReadOnlyList<ExchangeExtPriceSettingsModel> Exchanges { get; set; }
         public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Steps { get; set; }
-        public TimeSpan? MinOrderbooksSendingPeriod { get; set; }
+        public TimeSpan MinOrderbooksSendingPeriod { get; set; }
     }
 }

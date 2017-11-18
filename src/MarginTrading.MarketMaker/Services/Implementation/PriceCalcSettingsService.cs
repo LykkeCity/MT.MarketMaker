@@ -20,8 +20,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         // do not update existing entities instances!
         private static readonly TimeSpan DefaultMinOrderbooksSendingPeriod = TimeSpan.FromSeconds(1) / 2;
 
-        private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsEntity>>
-            _exchangesCache = new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsEntity>>();
+        private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>
+            _exchangesCache = new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>();
 
         private readonly CachedEntityAccessorService<AssetPairExtPriceSettingsEntity> _assetPairsCachedAccessor;
         private readonly IExchangeExtPriceSettingsRepository _exchangesRepository;
@@ -115,7 +115,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                         .Pipe(p =>
                         {
                             // and hope races won't break anything
-                            p.Disabled = new ExchangeExtPriceSettingsEntity.DisabledSettings
+                            p.Disabled = new ExchangeExtPriceSettingsStorageModel.DisabledSettings
                             {
                                 IsTemporarilyDisabled = true,
                                 Reason = reason,
@@ -177,7 +177,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var upsertAssetPairTask = _assetPairsCachedAccessor.Upsert(entity);
 
             var exchangesEntities = model.Exchanges.Select(e => Convert(e, entity)).ToImmutableDictionary(e => e.Exchange);
-            ImmutableDictionary<string, ExchangeExtPriceSettingsEntity> oldExchangesEntities = ImmutableDictionary<string, ExchangeExtPriceSettingsEntity>.Empty;
+            ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel> oldExchangesEntities = ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty;
 
             // do not update existing entities instances!
             _exchangesCache.AddOrUpdate(entity.AssetPairId,
@@ -203,8 +203,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         private void CanPerformHedgingChanged(string assetPairId,
-            IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
-            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities, string reason)
+            IEnumerable<ExchangeExtPriceSettingsStorageModel> oldEntities,
+            IEnumerable<ExchangeExtPriceSettingsStorageModel> newEntities, string reason)
         {
             var (hedgingOn, hedgingOff) = oldEntities.FindChanges(newEntities, e => e.Exchange,
                     CanPerformHedging,
@@ -217,8 +217,8 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         private void ExchangesTemporarilyDisabledChanged(string assetPairId,
-            IEnumerable<ExchangeExtPriceSettingsEntity> oldEntities,
-            IEnumerable<ExchangeExtPriceSettingsEntity> newEntities, string reason)
+            IEnumerable<ExchangeExtPriceSettingsStorageModel> oldEntities,
+            IEnumerable<ExchangeExtPriceSettingsStorageModel> newEntities, string reason)
         {
             var (disable, enable) = oldEntities.FindChanges(newEntities, e => e.Exchange,
                     e => e.Disabled.IsTemporarilyDisabled,
@@ -229,18 +229,18 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             ExchangesTemporarilyDisabledChanged(assetPairId, enable.Select(t => t.New.Exchange), false, reason);
         }
 
-        private static bool CanPerformHedging(ExchangeExtPriceSettingsEntity e)
+        private static bool CanPerformHedging(ExchangeExtPriceSettingsStorageModel e)
         {
             return e.Hedging.DefaultPreference * (e.Hedging.IsTemporarilyUnavailable ? 0 : 1) > 0;
         }
 
-        private ImmutableDictionary<string, ExchangeExtPriceSettingsEntity> GetAllExchanges(string assetPairId)
+        private ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel> GetAllExchanges(string assetPairId)
         {
             return _exchangesCache.GetOrAdd(assetPairId,
                 k => _exchangesRepository.GetAsync(k).GetAwaiter().GetResult().ToImmutableDictionary(e => e.Exchange));
         }
 
-        private ExchangeExtPriceSettingsEntity GetExchange(string assetPairId, string exchange)
+        private ExchangeExtPriceSettingsStorageModel GetExchange(string assetPairId, string exchange)
         {
             return GetAllExchanges(assetPairId).GetValueOrDefault(exchange)
                    ?? throw new InvalidOperationException(
@@ -266,7 +266,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     .GenerateRowKey(assetPairId));
         }
 
-        private static AssetPairExtPriceSettingsModel Convert(AssetPairExtPriceSettingsEntity assetPair, IEnumerable<ExchangeExtPriceSettingsEntity> exchanges)
+        private static AssetPairExtPriceSettingsModel Convert(AssetPairExtPriceSettingsEntity assetPair, IEnumerable<ExchangeExtPriceSettingsStorageModel> exchanges)
         {
             return new AssetPairExtPriceSettingsModel
             {
@@ -342,24 +342,24 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             };
         }
 
-        private static ExchangeExtPriceSettingsEntity Convert(ExchangeExtPriceSettingsModel e, AssetPairExtPriceSettingsEntity entity)
+        private static ExchangeExtPriceSettingsStorageModel Convert(ExchangeExtPriceSettingsModel e, AssetPairExtPriceSettingsEntity entity)
         {
-            return new ExchangeExtPriceSettingsEntity
+            return new ExchangeExtPriceSettingsStorageModel
             {
                 Exchange = e.Exchange,
                 AssetPairId = entity.AssetPairId,
-                Hedging = new ExchangeExtPriceSettingsEntity.HedgingSettings
+                Hedging = new ExchangeExtPriceSettingsStorageModel.HedgingSettings
                 {
                     DefaultPreference = e.Hedging.DefaultPreference,
                     IsTemporarilyUnavailable = e.Hedging.IsTemporarilyUnavailable,
                 },
-                OrderGeneration = new ExchangeExtPriceSettingsEntity.OrderGenerationSettings
+                OrderGeneration = new ExchangeExtPriceSettingsStorageModel.OrderGenerationSettings
                 {
                     VolumeMultiplier = (double)e.OrderGeneration.VolumeMultiplier,
                     OrderRenewalDelay = e.OrderGeneration.OrderRenewalDelay,
                 },
                 OrderbookOutdatingThreshold = e.OrderbookOutdatingThreshold,
-                Disabled = new ExchangeExtPriceSettingsEntity.DisabledSettings
+                Disabled = new ExchangeExtPriceSettingsStorageModel.DisabledSettings
                 {
                     IsTemporarilyDisabled = e.Disabled.IsTemporarilyDisabled,
                     Reason = e.Disabled.Reason,

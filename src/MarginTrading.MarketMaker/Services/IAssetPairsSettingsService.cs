@@ -13,10 +13,10 @@ namespace MarginTrading.MarketMaker.Services
 
         Task SetAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum assetPairQuotesSourceType);
 
-        Task<List<AssetPairSettings>> GetAllPairsSourcesAsync();
+        Task<List<AssetPairSettingsModel>> GetAllPairsSourcesAsync();
 
         Task DeleteAsync(string assetPairId);
 
-        AssetPairSettings Get(string assetPairId);
+        AssetPairSettingsModel Get(string assetPairId);
     }
 }

@@ -11,18 +11,18 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 {
     public class TestingHelperService : ITestingHelperService
     {
-        private readonly ReadWriteLockedDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> _settings =
-            new ReadWriteLockedDictionary<(string, string), ImmutableList<TestSetting>>();
+        private readonly ReadWriteLockedDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> _settings =
+            new ReadWriteLockedDictionary<(string, string), ImmutableList<TestSettingModel>>();
 
-        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> GetAll()
+        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> GetAll()
         {
             return _settings;
         }
 
-        public ImmutableList<TestSetting> Get(string assetPairId, string exchange)
+        public ImmutableList<TestSettingModel> Get(string assetPairId, string exchange)
         {
             // ReSharper disable once AssignNullToNotNullAttribute
-            return _settings.GetOrDefault((assetPairId, exchange), k => ImmutableList<TestSetting>.Empty);
+            return _settings.GetOrDefault((assetPairId, exchange), k => ImmutableList<TestSettingModel>.Empty);
         }
 
         public void Delete(string assetPairId, string exchange)
@@ -35,7 +35,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _settings.Clear();
         }
 
-        public void Add(ImmutableList<TestSetting> settings)
+        public void Add(ImmutableList<TestSettingModel> settings)
         {
             foreach (var s in settings)
             {
@@ -75,7 +75,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         [ContractAnnotation("r:null => false")]
-        private static bool IsActive([CanBeNull] TestSetting.Range r, DateTime now)
+        private static bool IsActive([CanBeNull] TestSettingModel.Range r, DateTime now)
         {
             return r != null && (r.Start <= now || r.Start == null) && (r.End >= now || r.End == null);
         }

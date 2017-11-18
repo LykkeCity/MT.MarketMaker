@@ -25,7 +25,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpPost]
         [Route("add")]
         [SwaggerOperation("AddTestSettings")]
-        public IActionResult Add([FromBody] ImmutableList<TestSetting> settings)
+        public IActionResult Add([FromBody] ImmutableList<TestSettingModel> settings)
         {
             _testingHelperService.Add(settings);
             return Ok(new {success = true});
@@ -62,7 +62,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("")]
         [SwaggerOperation("GetAllTestSettings")]
-        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> GetAll()
+        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> GetAll()
         {
             return _testingHelperService.GetAll();
         }
@@ -73,7 +73,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("{assetPairId}/{exchange}")]
         [SwaggerOperation("GetTestSettings")]
-        public ImmutableList<TestSetting> Get(string assetPairId, string exchange)
+        public ImmutableList<TestSettingModel> Get(string assetPairId, string exchange)
         {
             return _testingHelperService.Get(assetPairId, exchange);
         }

@@ -20,9 +20,19 @@
         /// </summary>
         Spot = 3,
 
-        ///// <summary>
-        ///// Quotes are provided using cross-rates from external exchanges
-        ///// </summary>
-        //CrossRates = 4,
+        /// <summary>
+        /// Quotes are provided using cross-rates from external exchanges
+        /// </summary>
+        CrossRates = 4,
+
+        /// <summary>
+        /// Quotes are provided using sliging average from spot candles
+        /// </summary>
+        SpotAgvPrices = 5,
+
+        /// <summary>
+        /// Quotes are disabled
+        /// </summary>
+        Disabled = 6,
     }
 }

@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace MarginTrading.MarketMaker.Models.Api
 {
-    public class TestSetting
+    public class TestSettingModel
     {
         public string AssetPairId { get; set; }
         public string Exchange { get; set; }

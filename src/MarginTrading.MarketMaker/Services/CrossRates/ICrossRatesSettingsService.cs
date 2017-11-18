@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using MarginTrading.MarketMaker.Models;
+using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates
 {

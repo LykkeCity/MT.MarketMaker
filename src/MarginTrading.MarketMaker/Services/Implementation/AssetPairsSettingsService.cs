@@ -28,10 +28,10 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             return UpdateByKeyAsync(GetKeys(assetPairId), e => e.QuotesSourceType = assetPairQuotesSourceType);
         }
 
-        public async Task<List<AssetPairSettings>> GetAllPairsSourcesAsync()
+        public async Task<List<AssetPairSettingsModel>> GetAllPairsSourcesAsync()
         {
             return (await _assetsPairsSettingsRepository.GetAllAsync())
-                .Select(s => new AssetPairSettings
+                .Select(s => new AssetPairSettingsModel
                 {
                     AssetPairId = s.AssetPairId,
                     QuotesSourceType = s.QuotesSourceType,
@@ -40,7 +40,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         }
 
         [CanBeNull]
-        public AssetPairSettings Get(string assetPairId)
+        public AssetPairSettingsModel Get(string assetPairId)
         {
             var entity = GetByKey(GetKeys(assetPairId));
             if (entity == null)
@@ -48,7 +48,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return null;
             }
 
-            return new AssetPairSettings
+            return new AssetPairSettingsModel
             {
                 AssetPairId = entity.AssetPairId,
                 QuotesSourceType = entity.QuotesSourceType,

@@ -1,6 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 
-namespace MarginTrading.MarketMaker.Models
+namespace MarginTrading.MarketMaker.Models.Settings
 {
     public class CrossRatesSettings
     {
@@ -9,7 +10,7 @@ namespace MarginTrading.MarketMaker.Models
 
         public CrossRatesSettings(string baseAssetId, ImmutableArray<string> otherAssetsIds)
         {
-            BaseAssetId = baseAssetId;
+            BaseAssetId = baseAssetId ?? throw new ArgumentNullException(nameof(baseAssetId));
             OtherAssetsIds = otherAssetsIds;
         }
     }

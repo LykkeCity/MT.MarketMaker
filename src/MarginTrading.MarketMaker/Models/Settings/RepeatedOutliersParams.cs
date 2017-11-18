@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace MarginTrading.MarketMaker.Models
+namespace MarginTrading.MarketMaker.Models.Settings
 {
-    public class RepeatedOutliersParams
+    internal class RepeatedOutliersParams
     {
         public int MaxSequenceLength { get; }
         public TimeSpan MaxSequenceAge { get; }
