@@ -57,10 +57,5 @@
     <PackageReference Include="morelinq" Version="2.8.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="AzureRepositories\Entities\" />
-    <Folder Include="AzureRepositories\Implementation\" />
-  </ItemGroup>
-
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 </Project>

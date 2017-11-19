@@ -15,12 +15,12 @@ namespace MarginTrading.MarketMaker.Controllers
     public class CrossRateCalcInfosController : Controller
     {
         private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
-        private readonly IAssetPairsSettingsService _assetPairsSettingsService;
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
-        public CrossRateCalcInfosController(ICrossRateCalcInfosService crossRateCalcInfosService, IAssetPairsSettingsService assetPairsSettingsService)
+        public CrossRateCalcInfosController(ICrossRateCalcInfosService crossRateCalcInfosService, IAssetPairSourceTypeService assetPairSourceTypeService)
         {
             _crossRateCalcInfosService = crossRateCalcInfosService;
-            _assetPairsSettingsService = assetPairsSettingsService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
         }
 
         /// <summary>

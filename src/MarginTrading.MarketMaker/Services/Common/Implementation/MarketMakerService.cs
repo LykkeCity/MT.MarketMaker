@@ -5,13 +5,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using MarginTrading.MarketMaker.Services.SpotPrices;
@@ -23,7 +23,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
     {
         private const int OrdersVolume = 1000000;
 
-        private readonly IAssetPairsSettingsService _assetPairsSettingsService;
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
         private readonly Lazy<IMessageProducer<OrderCommandsBatchMessage>> _messageProducer;
         private readonly ISystem _system;
         private readonly IReloadingManager<MarginTradingMarketMakerSettings> _settings;
@@ -32,7 +32,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         private readonly IGenerateOrderbookService _generateOrderbookService;
         private readonly ICrossRatesService _crossRatesService;
 
-        public MarketMakerService(IAssetPairsSettingsService assetPairsSettingsService,
+        public MarketMakerService(IAssetPairSourceTypeService assetPairSourceTypeService,
             IRabbitMqService rabbitMqService,
             ISystem system,
             IReloadingManager<MarginTradingMarketMakerSettings> settings,
@@ -41,7 +41,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             IGenerateOrderbookService generateOrderbookService,
             ICrossRatesService crossRatesService)
         {
-            _assetPairsSettingsService = assetPairsSettingsService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
             _system = system;
             _settings = settings;
             _spotOrderCommandsGeneratorService = spotOrderCommandsGeneratorService;
@@ -54,7 +54,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public Task ProcessNewExternalOrderbookAsync(ExternalExchangeOrderbookMessage orderbook)
         {
-            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPairId);
+            var quotesSource = _assetPairSourceTypeService.Get(orderbook.AssetPairId);
             if (quotesSource != AssetPairQuotesSourceTypeEnum.External
                 || (orderbook.Bids?.Count ?? 0) == 0 || (orderbook.Asks?.Count ?? 0) == 0)
             {
@@ -78,7 +78,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)
         {
-            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPair);
+            var quotesSource = _assetPairSourceTypeService.Get(orderbook.AssetPair);
             if (quotesSource != AssetPairQuotesSourceTypeEnum.Spot || (orderbook.Prices?.Count ?? 0) == 0)
             {
                 return Task.CompletedTask;
@@ -90,41 +90,25 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             return SendOrderCommandsAsync(orderbook.AssetPair, commands);
         }
 
-        public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsModel model)
-        {
-            AssetPairQuotesSourceTypeEnum? quotesSourceType;
-            if (model.QuotesSourceType != null)
-            {
-                quotesSourceType = model.QuotesSourceType.Value;
-                if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
-                {
-                    TestFunctionalityFilter.ValidateTestsEnabled();
-                }
-
-                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(model.AssetPairId,
-                    model.QuotesSourceType.Value);
-            }
-            else
-            {
-                quotesSourceType = _assetPairsSettingsService.GetAssetPairQuotesSource(model.AssetPairId);
-            }
-
-            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.ManualBid != null &&
-                model.ManualAsk != null)
-            {
-                await SendOrderCommandsAsync(model.AssetPairId, model.ManualBid.Value, model.ManualAsk.Value);
-            }
-        }
-
         public Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask)
         {
-            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(assetPairId);
+            var quotesSource = _assetPairSourceTypeService.Get(assetPairId);
             if (quotesSource != null)
             {
                 return Task.CompletedTask;
             }
 
             return SendOrderCommandsAsync(assetPairId, bid, ask);
+        }
+
+        public async Task ProcessNewManualQuotes(string assetPairId, decimal bid, decimal ask)
+        {
+            TestFunctionalityFilter.ValidateTestsEnabled();
+            var quotesSourceType = _assetPairSourceTypeService.Get(assetPairId);
+            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
+            {
+                await SendOrderCommandsAsync(assetPairId, bid, ask);
+            }
         }
 
         private static IMessageProducer<OrderCommandsBatchMessage> CreateRabbitMqMessageProducer(
@@ -212,7 +196,9 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public void Dispose()
         {
-            var tasks = Enumerable.Select<AssetPairSettingsModel, Task>(_assetPairsSettingsService.GetAllPairsSourcesAsync().GetAwaiter().GetResult(), p => SendOrderCommandsAsync(p.AssetPairId, new []{ new OrderCommand { CommandType = OrderCommandTypeEnum.DeleteOrder } }))
+            var tasks = _assetPairSourceTypeService.Get()
+                .Select(p => SendOrderCommandsAsync(p.Key,
+                    new[] {new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}}))
                 .ToArray();
             Task.WaitAll(tasks);
         }

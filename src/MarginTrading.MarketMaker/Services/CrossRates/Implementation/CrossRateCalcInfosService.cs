@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using Autofac;
 using JetBrains.Annotations;
-using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;

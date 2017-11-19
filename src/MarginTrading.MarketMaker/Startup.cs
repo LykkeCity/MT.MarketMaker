@@ -60,7 +60,11 @@ namespace MarginTrading.MarketMaker
                         options.SerializerSettings.Converters.Add(new StringEnumConverter());
                     });
 
-                services.AddSwaggerGen(options => { options.DefaultLykkeConfiguration("v1", ServiceName + " API"); });
+                services.AddSwaggerGen(options =>
+                {
+                    options.DefaultLykkeConfiguration("v1", ServiceName + " API");
+                    options.OperationFilter<CustomOperationIdOperationFilter>();
+                });
 
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();

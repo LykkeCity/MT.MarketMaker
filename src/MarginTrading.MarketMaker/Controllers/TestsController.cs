@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -14,18 +15,21 @@ namespace MarginTrading.MarketMaker.Controllers
     public class TestsController : Controller
     {
         private readonly ITestingHelperService _testingHelperService;
+        private readonly IMarketMakerService _marketMakerService;
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
-        public TestsController(ITestingHelperService testingHelperService)
+        public TestsController(ITestingHelperService testingHelperService, IMarketMakerService marketMakerService,
+            IAssetPairSourceTypeService assetPairSourceTypeService)
         {
             _testingHelperService = testingHelperService;
+            _marketMakerService = marketMakerService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
         }
 
         /// <summary>
         ///     Adds settings
         /// </summary>
-        [HttpPost]
-        [Route("add")]
-        [SwaggerOperation("AddTestSettings")]
+        [HttpPut]
         public IActionResult Add([FromBody] ImmutableList<TestSettingModel> settings)
         {
             _testingHelperService.Add(settings);
@@ -36,9 +40,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// <summary>
         ///     Deletes settings
         /// </summary>
-        [HttpPost]
-        [Route("delete")]
-        [SwaggerOperation("DeleteAllTestSettings")]
+        [HttpDelete]
         public IActionResult DeleteAll()
         {
             _testingHelperService.DeleteAll();
@@ -48,9 +50,8 @@ namespace MarginTrading.MarketMaker.Controllers
         /// <summary>
         ///     Deletes settings
         /// </summary>
-        [HttpPost]
-        [Route("delete/{assetPairId}/{exchange}")]
-        [SwaggerOperation("DeleteTestSettings")]
+        [HttpDelete]
+        [Route("{assetPairId}/{exchange}")]
         public IActionResult Delete(string assetPairId, string exchange)
         {
             _testingHelperService.Delete(assetPairId, exchange);
@@ -61,9 +62,7 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Gets all existing settings
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetAllTestSettings")]
-        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> GetAll()
+        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> List()
         {
             return _testingHelperService.GetAll();
         }
@@ -73,10 +72,19 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}/{exchange}")]
-        [SwaggerOperation("GetTestSettings")]
         public ImmutableList<TestSettingModel> Get(string assetPairId, string exchange)
         {
             return _testingHelperService.Get(assetPairId, exchange);
+        }
+
+        [HttpPost]
+        [Route("manual-price/{assetPairId}")]
+        public async Task<IActionResult> SetManualPrice(string assetPairId, decimal bid, decimal ask)
+        {
+            await _assetPairSourceTypeService.UpdateAssetPairQuotesSourceAsync(assetPairId,
+                AssetPairQuotesSourceTypeEnum.Manual);
+            await _marketMakerService.ProcessNewManualQuotes(assetPairId, bid, ask);
+            return Ok(new {success = true});
         }
     }
 }
