@@ -23,21 +23,12 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>
             _exchangesCache = new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>();
 
-        private readonly CachedEntityAccessorService<AssetPairExtPriceSettingsEntity> _assetPairsCachedAccessor;
-        private readonly IExchangeExtPriceSettingsRepository _exchangesRepository;
-        private readonly IAssetsPairsExtPriceSettingsRepository _assetPairsRepository;
         private readonly IAlertService _alertService;
 
         public ExtPricesSettingsService(ICacheProvider cache,
-            IAssetsPairsExtPriceSettingsRepository assetPairsRepository,
-            IExchangeExtPriceSettingsRepository exchangesRepository,
             IAlertService alertService)
         {
-            _exchangesRepository = exchangesRepository;
             _alertService = alertService;
-            _assetPairsRepository = assetPairsRepository;
-            _assetPairsCachedAccessor =
-                new CachedEntityAccessorService<AssetPairExtPriceSettingsEntity>(cache, assetPairsRepository);
         }
 
         public bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId)

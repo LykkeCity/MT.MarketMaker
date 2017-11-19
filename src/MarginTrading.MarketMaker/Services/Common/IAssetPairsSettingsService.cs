@@ -10,13 +10,8 @@ namespace MarginTrading.MarketMaker.Services.Common
     {
         [CanBeNull]
         AssetPairQuotesSourceTypeEnum? GetAssetPairQuotesSource(string assetPairId);
-
         Task SetAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum assetPairQuotesSourceType);
-
         Task<List<AssetPairSettingsModel>> GetAllPairsSourcesAsync();
-
-        Task DeleteAsync(string assetPairId);
-
         AssetPairSettingsModel Get(string assetPairId);
     }
 }

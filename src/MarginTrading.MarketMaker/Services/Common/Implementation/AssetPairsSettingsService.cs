@@ -1,29 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using MarginTrading.MarketMaker.AzureRepositories.Entities;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
-using Rocks.Caching;
+using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
-    internal class AssetPairsSettingsService : CachedEntityAccessorService<AssetPairSettingsEntity>,
-        IAssetPairsSettingsService
+    internal class AssetPairsSettingsService : IAssetPairsSettingsService
     {
-        private readonly IAssetsPairsSettingsRepository _assetsPairsSettingsRepository;
+        private readonly ISettingsRootService _settingsRootService;
 
-        public AssetPairsSettingsService(ICacheProvider cache,
-            IAssetsPairsSettingsRepository assetsPairsSettingsRepository)
-            : base(cache, assetsPairsSettingsRepository)
+        public AssetPairsSettingsService(ISettingsRootService settingsRootService)
         {
-            _assetsPairsSettingsRepository = assetsPairsSettingsRepository;
+            _settingsRootService = settingsRootService;
         }
 
         public Task SetAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum assetPairQuotesSourceType)
         {
-            return UpdateByKeyAsync(GetKeys(assetPairId), e => e.QuotesSourceType = assetPairQuotesSourceType);
+            var oldPairSettings = _settingsRootService.Get().AssetPairs.GetValueOrDefault(assetPairId);
+            var pairSettings = new AssetPairSettings(assetPairQuotesSourceType, oldPairSettings?.ExtPriceSettings, oldPairSettings?.CrossRateCalcInfo);
+            _settingsRootService.Set()
         }
 
         public async Task<List<AssetPairSettingsModel>> GetAllPairsSourcesAsync()
@@ -54,23 +51,10 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             };
         }
 
-        public async Task DeleteAsync(string assetPairId)
-        {
-            var keys = GetKeys(assetPairId);
-            await _assetsPairsSettingsRepository.DeleteIfExistAsync(CachedEntityAccessorService<AssetPairSettingsEntity>.GenerateEntityFromKeys(keys));
-            DeleteByKey(keys);
-        }
-
         public AssetPairQuotesSourceTypeEnum? GetAssetPairQuotesSource(string assetPairId)
         {
             var entity = GetByKey(GetKeys(assetPairId));
             return entity?.QuotesSourceType;
-        }
-
-        private static CachedEntityAccessorService.EntityKeys GetKeys(string assetPairId)
-        {
-            return new CachedEntityAccessorService.EntityKeys(AssetPairSettingsEntity.GeneratePartitionKey(), AssetPairSettingsEntity
-                .GenerateRowKey(assetPairId));
         }
     }
 }

@@ -3,7 +3,7 @@ using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common
 {
-    internal interface ISettingsService
+    internal interface ISettingsRootService
     {
         Task Set(SettingsRoot settings);
         SettingsRoot Get();

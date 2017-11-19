@@ -35,7 +35,6 @@ namespace MarginTrading.MarketMaker.Modules
             builder.RegisterInstance(_settings.Nested(s => s.MarginTradingMarketMaker)).SingleInstance();
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
             builder.RegisterType<SystemService>().As<ISystem>().SingleInstance();
-            builder.RegisterType<MemoryCacheProvider>().As<ICacheProvider>().SingleInstance();
 
             builder.RegisterInstance(new RabbitMqService(_log,
                     _settings.Nested(s => s.MarginTradingMarketMaker.Db.QueuePersistanceRepositoryConnString)))

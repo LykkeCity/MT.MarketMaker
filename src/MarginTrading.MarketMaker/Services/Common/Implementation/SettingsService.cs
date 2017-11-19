@@ -7,12 +7,12 @@ using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
-    internal class SettingsService : IStartable, ISettingsService
+    internal class SettingsRootService : IStartable, ISettingsRootService
     {
         private readonly ISettingsStorage _settingsStorage;
         private SettingsRoot _cache;
 
-        public SettingsService(ISettingsStorage settingsStorage)
+        public SettingsRootService(ISettingsStorage settingsStorage)
         {
             _settingsStorage = settingsStorage;
         }
