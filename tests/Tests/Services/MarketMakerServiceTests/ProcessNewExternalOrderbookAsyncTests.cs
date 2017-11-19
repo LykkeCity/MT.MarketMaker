@@ -10,7 +10,10 @@ using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
+using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;
@@ -45,7 +48,7 @@ namespace Tests.Services.MarketMakerServiceTests
         {
             //arrange
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource("pair") == configuredSource);
+                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == configuredSource);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -66,8 +69,8 @@ namespace Tests.Services.MarketMakerServiceTests
         public async Task IfBidsNull_ShouldSkip()
         {
             //arrange
-            _testSuit.Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External);
+            _testSuit.Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -89,8 +92,8 @@ namespace Tests.Services.MarketMakerServiceTests
         {
             //arrange
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External);
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -112,8 +115,8 @@ namespace Tests.Services.MarketMakerServiceTests
         {
             //arrange
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External);
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -135,8 +138,8 @@ namespace Tests.Services.MarketMakerServiceTests
         {
             //arrange
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External);
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
                 AssetPairId = "pair",
@@ -177,8 +180,8 @@ namespace Tests.Services.MarketMakerServiceTests
                 ImmutableArray.Create(new OrderbookPosition(5, 6), new OrderbookPosition(7, 8)));
 
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External)
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IGenerateOrderbookService>(s => s.OnNewOrderbook(externalOrderbook.Equivalent()) == null);
 
@@ -226,8 +229,8 @@ namespace Tests.Services.MarketMakerServiceTests
                 ImmutableArray.Create(new OrderbookPosition(35, 36), new OrderbookPosition(37, 38)));
 
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s =>
-                    s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.External)
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IGenerateOrderbookService>(s =>
                     s.OnNewOrderbook(externalOrderbook.Equivalent()) == resultingOrderbook)

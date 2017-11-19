@@ -8,6 +8,8 @@ using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
+using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;
@@ -44,7 +46,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
 
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource("pair") == sourceType)
+                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == sourceType)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});
@@ -62,7 +64,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
 
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource("pair") == null)
+                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == null)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});
