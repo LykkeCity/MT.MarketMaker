@@ -26,7 +26,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public IReadOnlyList<ExternalOrderbook> FindOutliers(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> validOrderbooks)
         {
             var bestPrices = validOrderbooks.Values
-                .Select<ExternalOrderbook, (ExternalOrderbook Orderbook, BestPrices BestPrices)>(o => (Orderbook: o, BestPrices: _bestPricesService.CalcExternal(o)))
+                .Select(o => (Orderbook: o, BestPrices: _bestPricesService.CalcExternal(o)))
                 .ToList();
 
             var result = new List<ExternalOrderbook>();

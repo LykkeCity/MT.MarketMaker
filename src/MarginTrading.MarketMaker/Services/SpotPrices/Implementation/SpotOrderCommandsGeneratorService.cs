@@ -110,8 +110,8 @@ namespace MarginTrading.MarketMaker.Services.SpotPrices.Implementation
                 Bid = bid,
             };
 
-            var orders = Enumerable.Where(new[] {feedData, pendingFeedData}, d => d != null)
-                .Select(rate => CreateCommand(rate, ordersVolume)).ToList<OrderCommand>();
+            var orders = new[] {feedData, pendingFeedData}.Where(d => d != null)
+                .Select(rate => CreateCommand(rate, ordersVolume)).ToList();
 
 
             AppendDeleteCommands(orders);

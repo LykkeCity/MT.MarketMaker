@@ -25,14 +25,14 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             message.MarketMakerId = GetMarketMakerId();
             _rabbitMqService.GetProducer<PrimaryExchangeSwitchedMessage>(
-                    ReloadingManagerExtensions.Nested<MarginTradingMarketMakerSettings, RabbitConnectionSettings>(_settings, s => s.RabbitMq.Publishers.PrimaryExchangeSwitched), false)
+                    _settings.Nested(s => s.RabbitMq.Publishers.PrimaryExchangeSwitched), false)
                 .ProduceAsync(message);
         }
 
         public void StopOrAllowNewTrades(string assetPairId, string reason, bool stop)
         {
             _rabbitMqService.GetProducer<StopOrAllowNewTradesMessage>(
-                    ReloadingManagerExtensions.Nested<MarginTradingMarketMakerSettings, RabbitConnectionSettings>(_settings, s => s.RabbitMq.Publishers.StopNewTrades), false)
+                    _settings.Nested(s => s.RabbitMq.Publishers.StopNewTrades), false)
                 .ProduceAsync(new StopOrAllowNewTradesMessage
                 {
                     AssetPairId = assetPairId,
@@ -54,7 +54,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             AlertRiskOfficer(null, "Market maker started");
             _rabbitMqService.GetProducer<StartedMessage>(
-                    ReloadingManagerExtensions.Nested<MarginTradingMarketMakerSettings, RabbitConnectionSettings>(_settings, s => s.RabbitMq.Publishers.Started), true)
+                    _settings.Nested(s => s.RabbitMq.Publishers.Started), true)
                 .ProduceAsync(new StartedMessage {MarketMakerId = GetMarketMakerId()});
         }
 
@@ -63,7 +63,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return Task.WhenAll(
                 AlertRiskOfficer(null, "Market maker stopping"),
                 _rabbitMqService.GetProducer<StoppingMessage>(
-                        ReloadingManagerExtensions.Nested<MarginTradingMarketMakerSettings, RabbitConnectionSettings>(_settings, s => s.RabbitMq.Publishers.Stopping), true)
+                        _settings.Nested(s => s.RabbitMq.Publishers.Stopping), true)
                     .ProduceAsync(new StoppingMessage {MarketMakerId = GetMarketMakerId()}));
         }
 

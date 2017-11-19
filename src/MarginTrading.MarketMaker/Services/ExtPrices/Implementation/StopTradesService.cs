@@ -75,7 +75,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 if (state.FreshOrderbooksState != null)
                 {
                     reason +=
-                        $"Found {state.FreshOrderbooksState.FreshOrderbooksKeys.Length} fresh orderbooks: {JsonSerialisersExt.ToJson(state.FreshOrderbooksState.FreshOrderbooksKeys)}. ";
+                        $"Found {state.FreshOrderbooksState.FreshOrderbooksKeys.Length} fresh orderbooks: {state.FreshOrderbooksState.FreshOrderbooksKeys.ToJson()}. ";
                 }
 
                 reason = reason ?? "Everything is ok";

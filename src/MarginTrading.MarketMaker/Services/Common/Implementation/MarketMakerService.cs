@@ -145,7 +145,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             // todo: send batches of batches (because of cross-rates)
             return Task.WhenAll(orderbooksToSend
-                .Select<Orderbook, Task>(o =>
+                .Select(o =>
                 {
                     var commands = new List<OrderCommand>
                     {

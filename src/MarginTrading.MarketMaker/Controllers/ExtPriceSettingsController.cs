@@ -3,10 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -21,14 +19,22 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Inserts or updates settings for an asset pair
+        /// Inserts settings for an asset pair
+        /// </summary>
+        [HttpPut]
+        public async Task<IActionResult> Add(AssetPairExtPriceSettingsModel setting)
+        {
+            await _extPricesSettingsService.AddAsync(setting);
+            return Ok(new {success = true});
+        }
+
+        /// <summary>
+        /// Updates settings for an asset pair
         /// </summary>
         [HttpPost]
-        [Route("set")]
-        [SwaggerOperation("SetExtPriceSettings")]
-        public async Task<IActionResult> Set([FromBody] IEnumerable<AssetPairExtPriceSettingsModel> settings)
+        public async Task<IActionResult> Update(AssetPairExtPriceSettingsModel setting)
         {
-            await Task.WhenAll(settings.Select(s => _extPricesSettingsService.Set(s)));
+            await _extPricesSettingsService.UpdateAsync(setting);
             return Ok(new {success = true});
         }
 
@@ -36,11 +42,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all existing settings
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetAllExtPriceSettings")]
-        public Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAll()
+        public IReadOnlyList<AssetPairExtPriceSettingsModel> List()
         {
-            return _extPricesSettingsService.GetAllAsync();
+            return _extPricesSettingsService.Get(); AUTOMAP
         }
 
         /// <summary>
@@ -48,11 +52,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
-        [SwaggerOperation("GetExtPriceSettings")]
         [CanBeNull]
-        public Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> Get(string assetPairId)
+        public AssetPairExtPriceSettingsModel Get(string assetPairId)
         {
-            return _extPricesSettingsService.GetAllAsync(assetPairId);
+            return _extPricesSettingsService.Get(assetPairId); AUTOMAP
         }
 
         /// <summary>
@@ -60,10 +63,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("hedging-preferences")]
-        [SwaggerOperation("GetAllExtHedgingPreferences")]
-        public IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences()
+        public IReadOnlyList<HedgingPreferenceModel> GetHedgingPreferences()
         {
-            return _extPricesSettingsService.GetAllHedgingPreferences();
+            _extPricesSettingsService.Get().SelectMany(ap =>
+                ap.Values.Select(e => AUTOMAP)).ToList();
         }
     }
 }

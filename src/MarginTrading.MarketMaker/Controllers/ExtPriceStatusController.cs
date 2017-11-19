@@ -3,9 +3,8 @@ using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -23,11 +22,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all status
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetAllExtPriceStatuses")]
-        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> GetAllStatuses()
+        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> List()
         {
-            return _extPricesStatusService.GetAll();
+            return _extPricesStatusService.Get();
         }
 
         /// <summary>
@@ -35,9 +32,8 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
-        [SwaggerOperation("GetExtPriceStatus")]
         [CanBeNull]
-        public IReadOnlyList<ExtPriceStatusModel> GetStatus(string assetPairId)
+        public IReadOnlyList<ExtPriceStatusModel> Get(string assetPairId)
         {
             return _extPricesStatusService.Get(assetPairId);
         }
@@ -47,7 +43,6 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("logs")]
-        [SwaggerOperation("GetLogs")]
         [CanBeNull]
         public string GetLogs()
         {
@@ -59,7 +54,6 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("logs/{contains}")]
-        [SwaggerOperation("GetLogsFiltered")]
         [CanBeNull]
         public string GetLogsFiltered(string contains)
         {

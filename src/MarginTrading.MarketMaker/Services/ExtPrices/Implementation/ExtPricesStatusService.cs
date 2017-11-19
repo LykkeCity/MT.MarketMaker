@@ -18,23 +18,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             _bestPricesService = bestPricesService;
         }
 
-        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> GetAll()
+        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> Get()
         {
             var qualities = _primaryExchangeService.GetQualities();
             var primaryExchanges = _primaryExchangeService.GetLastPrimaryExchanges();
-            var result = Enumerable.ToDictionary<KeyValuePair<string, ImmutableDictionary<string, ExchangeQuality>>, string, IReadOnlyList<ExtPriceStatusModel>>(qualities, p => p.Key,
+            var result = qualities.ToDictionary(p => p.Key,
                 p =>
                 {
                     var primary = primaryExchanges.GetValueOrDefault(p.Key);
-                    return (IReadOnlyList<ExtPriceStatusModel>) Enumerable.Select<ExchangeQuality, ExtPriceStatusModel>(p.Value.Values, q => new ExtPriceStatusModel
-                        {
-                            Exchange = q.Exchange,
-                            Error = ExtPriceStatusModel.ConvertErrorStateModel(q.Error),
-                            OrderbookReceived = q.OrderbookReceived,
-                            HedgingPreference = q.HedgingPreference,
-                            IsPrimary = q.Exchange == primary,
-                            LastOrderbookReceivedTime = q.LastOrderbookReceivedTime,
-                        }).ToList();
+                    return (IReadOnlyList<ExtPriceStatusModel>) p.Value.Values.Select(AUTOMAP).ToList();
                 });
 
             var bestPrices = _bestPricesService.GetLastCalculated();
@@ -44,8 +36,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 {
                     if (bestPrices.TryGetValue((asset.Key, exchange.Exchange), out var bestPrice))
                     {
-                        exchange.BestPrices =
-                            new BestPricesModel {BestBid = bestPrice.BestBid, BestAsk = bestPrice.BestAsk};
+                        exchange.BestPrices = AUTOMAP;
                     }
                 }
             }
@@ -55,7 +46,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public IReadOnlyList<ExtPriceStatusModel> Get(string assetPairId)
         {
-            return GetAll().GetValueOrDefault(assetPairId, ImmutableArray<ExtPriceStatusModel>.Empty);
+            return Get().GetValueOrDefault(assetPairId, ImmutableArray<ExtPriceStatusModel>.Empty);
         }
     }
 }

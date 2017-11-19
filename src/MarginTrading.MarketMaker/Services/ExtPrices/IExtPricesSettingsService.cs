@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices
 {
@@ -16,13 +16,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         RepeatedOutliersParams GetRepeatedOutliersParams(string assetPairId);
         decimal GetOutlierThreshold(string assetPairId);
         ImmutableDictionary<string, decimal> GetHedgingPreferences(string assetPairId);
-        Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null);
-        Task Set(AssetPairExtPriceSettingsModel model);
         (decimal Bid, decimal Ask) GetPriceMarkups(string assetPairId);
-        IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences();
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
         void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
         bool IsExchangeConfigured(string assetPairId, string exchange);
         TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId);
+
+        Task AddAsync(AssetPairExtPriceSettings setting);
+        Task UpdateAsync(AssetPairExtPriceSettings setting);
+        ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
+        AssetPairExtPriceSettings Get(string assetPairId);
     }
 }

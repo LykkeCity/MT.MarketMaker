@@ -112,7 +112,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
             {
                 _log.WriteWarningAsync(nameof(GenerateOrderbookService), null,
-                    $"{primaryExchange} not found in allOrderbooks ({JsonSerialisersExt.ToJson(allOrderbooks.Keys)})");
+                    $"{primaryExchange} not found in allOrderbooks ({allOrderbooks.Keys.ToJson()})");
                 return (null, primaryExchange);
             }
 
@@ -199,7 +199,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             }
 
             var bestPrices =
-                validOrderbooks.Values.ToDictionary<ExternalOrderbook, string, BestPrices>(o => o.ExchangeName,
+                validOrderbooks.Values.ToDictionary(o => o.ExchangeName,
                     orderbook => _bestPricesService.CalcExternal(orderbook));
             return _transformOrderbookService.Transform(primaryOrderbook, bestPrices);
         }
@@ -241,7 +241,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (ImmutableHashSet<string>.Empty, freshOrderbooks);
             }
 
-            var outliersExchanges = Enumerable.Select<ExternalOrderbook, string>(_outliersOrderbooksService.FindOutliers(assetPairId, freshOrderbooks), o => o.ExchangeName)
+            var outliersExchanges = _outliersOrderbooksService.FindOutliers(assetPairId, freshOrderbooks).Select(o => o.ExchangeName)
                 .ToImmutableHashSet();
             var freshNotOutlierOrderbooks = freshOrderbooks.RemoveRange(outliersExchanges);
             return (outliersExchanges, freshNotOutlierOrderbooks);

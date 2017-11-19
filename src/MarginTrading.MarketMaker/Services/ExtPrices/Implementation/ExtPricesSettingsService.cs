@@ -17,9 +17,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
     internal class ExtPricesSettingsService : IExtPricesSettingsService
     {
-        // do not update existing entities instances!
         private static readonly TimeSpan DefaultMinOrderbooksSendingPeriod = TimeSpan.FromSeconds(1) / 2;
 
+        // do not update existing entities instances!
         private readonly ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>
             _exchangesCache = new ReadWriteLockedDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>>();
 
@@ -64,7 +64,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public ImmutableDictionary<string, decimal> GetHedgingPreferences(string assetPairId)
         {
-            return ImmutableDictionary.ToImmutableDictionary<KeyValuePair<string, ExchangeExtPriceSettingsStorageModel>, string, decimal>(GetAllExchanges(assetPairId), e => e.Key,
+            return GetAllExchanges(assetPairId).ToImmutableDictionary(e => e.Key,
                 e => e.Value.Hedging.IsTemporarilyUnavailable ? 0m : (decimal) e.Value.Hedging.DefaultPreference);
         }
 
@@ -74,21 +74,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return ((decimal) markups.Bid, (decimal) markups.Ask);
         }
 
-        public IReadOnlyList<HedgingPreferenceModel> GetAllHedgingPreferences()
-        {
-            return Enumerable.SelectMany<ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>, HedgingPreferenceModel>(_exchangesCache.Values, ap =>
-                Enumerable.Select<ExchangeExtPriceSettingsStorageModel, HedgingPreferenceModel>(ap.Values, e => new HedgingPreferenceModel
-                {
-                    AssetPairId = e.AssetPairId,
-                    Exchange = e.Exchange,
-                    Preference = (decimal) e.Hedging.DefaultPreference,
-                    HedgingTemporarilyDisabled = e.Hedging.IsTemporarilyUnavailable,
-                })).ToList();
-        }
-
         public ImmutableHashSet<string> GetDisabledExchanges(string assetPairId)
         {
-            return Enumerable.Where<KeyValuePair<string, ExchangeExtPriceSettingsStorageModel>>(GetAllExchanges(assetPairId), p => p.Value.Disabled.IsTemporarilyDisabled).Select(p => p.Key)
+            return GetAllExchanges(assetPairId).Where(p => p.Value.Disabled.IsTemporarilyDisabled).Select(p => p.Key)
                 .ToImmutableHashSet();
         }
 
@@ -102,7 +90,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 (k, old) =>
                 {
                     //todo: replace with copying
-                    var toUpdate = Enumerable.Where<ExchangeExtPriceSettingsStorageModel>(old.Values, o => exchanges.Contains(o.Exchange))
+                    var toUpdate = old.Values.Where(o => exchanges.Contains(o.Exchange))
                         .Pipe(p =>
                         {
                             // and hope races won't break anything
@@ -138,7 +126,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public bool IsExchangeConfigured(string assetPairId, string exchange)
         {
-            return ImmutableDictionary.GetValueOrDefault<string, ExchangeExtPriceSettingsStorageModel>(GetAllExchanges(assetPairId), exchange) != null;
+            return GetAllExchanges(assetPairId).GetValueOrDefault(exchange) != null;
         }
 
         public TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId)
@@ -146,7 +134,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return GetAsset(assetPairId).MinOrderbooksSendingPeriod ?? DefaultMinOrderbooksSendingPeriod;
         }
 
-        public async Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> GetAllAsync(string assetPairId = null)
+        public async AssetPairExtPriceSettingsModel Get(string assetPairId = null)
         {
             IEnumerable<AssetPairExtPriceSettingsEntity> assetPairsEntities;
             if (assetPairId == null)
@@ -167,7 +155,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             var upsertAssetPairTask = _assetPairsCachedAccessor.Upsert(entity);
 
-            var exchangesEntities = model.Exchanges.Select<ExchangeExtPriceSettingsModel, ExchangeExtPriceSettingsStorageModel>(e => Convert(e, entity)).ToImmutableDictionary(e => e.Exchange);
+            var exchangesEntities = model.Exchanges.Select(e => Convert(e, entity)).ToImmutableDictionary(e => e.Exchange);
             ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel> oldExchangesEntities = ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty;
 
             // do not update existing entities instances!
@@ -182,7 +170,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     oldExchangesEntities = old;
                     Task.WaitAll(
                         _exchangesRepository.InsertOrReplaceAsync(exchangesEntities.Values),
-                        _exchangesRepository.DeleteAsync(Enumerable.Where<ExchangeExtPriceSettingsStorageModel>(old.Values, o =>
+                        _exchangesRepository.DeleteAsync(old.Values.Where(o =>
                             !exchangesEntities.ContainsKey(o.Exchange))));
                     return exchangesEntities;
                 });
@@ -233,7 +221,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         private ExchangeExtPriceSettingsStorageModel GetExchange(string assetPairId, string exchange)
         {
-            return ImmutableDictionary.GetValueOrDefault<string, ExchangeExtPriceSettingsStorageModel>(GetAllExchanges(assetPairId), exchange)
+            return GetAllExchanges(assetPairId).GetValueOrDefault(exchange)
                    ?? throw new InvalidOperationException(
                        $"Settings for exchange {exchange} for asset pair {assetPairId} not found");
         }

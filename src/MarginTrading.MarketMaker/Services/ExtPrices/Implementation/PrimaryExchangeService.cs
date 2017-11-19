@@ -37,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         [Pure]
         public IReadOnlyDictionary<string, string> GetLastPrimaryExchanges()
         {
-            return ImmutableDictionary.ToImmutableDictionary<string, string>(_primaryExchanges);
+            return _primaryExchanges.ToImmutableDictionary();
         }
 
         [Pure]
@@ -49,7 +49,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         [Pure]
         public IReadOnlyDictionary<string, ImmutableDictionary<string, ExchangeQuality>> GetQualities()
         {
-            return ImmutableDictionary.ToImmutableDictionary<string, ImmutableDictionary<string, ExchangeQuality>>(_exchangesQualities);
+            return _exchangesQualities.ToImmutableDictionary();
         }
 
         public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors,
@@ -123,7 +123,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 new PrimaryExchangeSwitchedMessage
                 {
                     AssetPairId = assetPairId,
-                    AllExchangesStates = ImmutableArray.ToImmutableArray<ExchangeQualityMessage>(exchangeQualities.Values.Select(Convert)),
+                    AllExchangesStates = exchangeQualities.Values.Select(Convert).ToImmutableArray(),
                     NewPrimaryExchange = Convert(newPrimary),
                 });
             _alertService.AlertRiskOfficer(assetPairId, alertMessage(newPrimary));
@@ -174,7 +174,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var hedgingPreferences = _hedgingPreferenceService.Get(assetPairId);
 
             ImmutableDictionary<string, ExchangeQuality> Calc(ImmutableDictionary<string, ExchangeQuality> old)
-                => ImmutableDictionary.ToImmutableDictionary<KeyValuePair<string, decimal>, string, ExchangeQuality>(hedgingPreferences, p => p.Key,
+                => hedgingPreferences.ToImmutableDictionary(p => p.Key,
                         p =>
                         {
                             var orderbookReceived = errors.TryGetValue(p.Key, out var state);

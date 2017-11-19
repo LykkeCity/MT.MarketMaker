@@ -2,7 +2,7 @@
 
 namespace MarginTrading.MarketMaker.Models.Settings
 {
-    internal class RepeatedOutliersParams
+    public class RepeatedOutliersParams
     {
         public int MaxSequenceLength { get; }
         public TimeSpan MaxSequenceAge { get; }
