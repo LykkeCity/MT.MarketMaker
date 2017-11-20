@@ -25,30 +25,23 @@ namespace Tests.Services.AvgSpotRates
         public async Task Always_ShouldSendRates()
         {
             //arrange
-            var bidHistory = new CandlesHistoryResponseModel
+            var history = new CandlesHistoryResponseModel
             {
                 History = new[] {new Candle {Open = 10, Close = 20}, new Candle {Open = 30, Close = 40}}
-            };
-            var askHistory = new CandlesHistoryResponseModel
-            {
-                History = new[] {new Candle {Open = 50, Close = 60}, new Candle {Open = 70, Close = 80}}
             };
             var now = DateTime.UtcNow;
             _testSuit
                 .Setup<ISystem>(s => s.UtcNow == now)
                 .Setup<ICandleshistoryservice>(s =>
-                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", PriceType.Bid, TimeInterval.Min5,
-                        now.AddHours(-12), now, null, default) == bidHistory.ToResponse<object>())
-                .Setup<ICandleshistoryservice>(s =>
-                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", PriceType.Ask, TimeInterval.Min5,
-                        now.AddHours(-12), now, null, default) == askHistory.ToResponse<object>())
-                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 65) == Task.CompletedTask);
+                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", PriceType.Mid, TimeInterval.Min5,
+                        now.AddHours(-12), now, null, default) == history.ToResponse<object>())
+                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25) == Task.CompletedTask);
 
             //act
             await _testSuit.Sut.Execute();
 
             //assert
-            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 65), Times.Once);
+            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25), Times.Once);
         }
     }
 }
