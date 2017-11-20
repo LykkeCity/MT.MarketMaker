@@ -88,7 +88,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             return SendOrderCommandsAsync(orderbook.AssetPair, commands);
         }
 
-        public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsModel model)
+        public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsInputModel model)
         {
             AssetPairQuotesSourceTypeEnum? quotesSourceType;
             if (model.SetSourceType != null)
