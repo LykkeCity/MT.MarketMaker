@@ -5,9 +5,9 @@ using Newtonsoft.Json.Converters;
 namespace MarginTrading.MarketMaker.Models.Api
 {
     /// <summary>
-    /// Message for controlling asset pair settings
+    /// Dto for controlling asset pair settings
     /// </summary>
-    public class AssetPairSettingsModel
+    public class AssetPairSettingsInputModel
     {
         /// <summary>
         /// Asset pair id
