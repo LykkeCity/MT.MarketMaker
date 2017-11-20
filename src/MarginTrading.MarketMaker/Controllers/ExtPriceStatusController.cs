@@ -5,7 +5,7 @@ using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.SwaggerGen.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {

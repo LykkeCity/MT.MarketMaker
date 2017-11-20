@@ -14,14 +14,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 {
     internal class DependentCrossRatesService : IDependentCrossRatesService
     {
-        private readonly IAssetsservice _assetsService;
+        private readonly IAssetsService _assetsService;
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
         private readonly ISystem _system;
         private readonly ICachedCalculation<Dictionary<string, AssetPairResponseModel>> _assetPairs;
         private readonly ICachedCalculation<ImmutableHashSet<(string, string)>> _configuredCrossPairs;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _existingAssetPairs;
 
-        public DependentCrossRatesService(IAssetsservice assetsService,
+        public DependentCrossRatesService(IAssetsService assetsService,
             ICrossRatesSettingsService crossRatesSettingsService, ISystem system)
         {
             _assetsService = assetsService;

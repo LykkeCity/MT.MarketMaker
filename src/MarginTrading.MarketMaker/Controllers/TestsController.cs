@@ -4,7 +4,7 @@ using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.SwaggerGen.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -20,7 +20,7 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Adds settings
+        ///     Adds settings
         /// </summary>
         [HttpPost]
         [Route("add")]
@@ -33,7 +33,7 @@ namespace MarginTrading.MarketMaker.Controllers
 
 
         /// <summary>
-        /// Deletes settings
+        ///     Deletes settings
         /// </summary>
         [HttpPost]
         [Route("delete")]
@@ -45,7 +45,7 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Deletes settings
+        ///     Deletes settings
         /// </summary>
         [HttpPost]
         [Route("delete/{assetPairId}/{exchange}")]
@@ -57,15 +57,18 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Gets all existing settings
+        ///     Gets all existing settings
         /// </summary>
         [HttpGet]
         [Route("")]
         [SwaggerOperation("GetAllTestSettings")]
-        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> GetAll() => _testingHelperService.GetAll();
+        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> GetAll()
+        {
+            return _testingHelperService.GetAll();
+        }
 
         /// <summary>
-        /// Get settings
+        ///     Get settings
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}/{exchange}")]

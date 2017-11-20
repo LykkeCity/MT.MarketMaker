@@ -110,26 +110,19 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.PriceForBuyOrder != null &&
                 model.PriceForSellOrder != null)
             {
-                var commands = new[]
-                {
-                    new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder},
-                    new OrderCommand
-                    {
-                        CommandType = OrderCommandTypeEnum.SetOrder,
-                        Direction = OrderDirectionEnum.Sell,
-                        Price = model.PriceForSellOrder.Value,
-                        Volume = OrdersVolume
-                    },
-                    new OrderCommand
-                    {
-                        CommandType = OrderCommandTypeEnum.SetOrder,
-                        Direction = OrderDirectionEnum.Buy,
-                        Price = model.PriceForBuyOrder.Value,
-                        Volume = OrdersVolume
-                    },
-                };
-                await SendOrderCommandsAsync(model.AssetPairId, commands);
+                await SendOrderCommandsAsync(model.AssetPairId, model.PriceForBuyOrder.Value, model.PriceForSellOrder.Value);
             }
+        }
+
+        public Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask)
+        {
+            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(assetPairId);
+            if (quotesSource != AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
+            {
+                return Task.CompletedTask;
+            }
+
+            return SendOrderCommandsAsync(assetPairId, bid, ask);
         }
 
         private static IMessageProducer<OrderCommandsBatchMessage> CreateRabbitMqMessageProducer(
@@ -137,6 +130,29 @@ namespace MarginTrading.MarketMaker.Services.Implementation
         {
             return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
                 settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
+        }
+
+        private Task SendOrderCommandsAsync(string assetPairId, decimal bid, decimal ask)
+        {
+            var commands = new[]
+            {
+                new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder},
+                new OrderCommand
+                {
+                    CommandType = OrderCommandTypeEnum.SetOrder,
+                    Direction = OrderDirectionEnum.Buy,
+                    Price = bid,
+                    Volume = OrdersVolume
+                },
+                new OrderCommand
+                {
+                    CommandType = OrderCommandTypeEnum.SetOrder,
+                    Direction = OrderDirectionEnum.Sell,
+                    Price = ask,
+                    Volume = OrdersVolume
+                },
+            };
+            return SendOrderCommandsAsync(assetPairId, commands);
         }
 
         private Task SendOrderCommandsAsync(IEnumerable<Orderbook> orderbooksToSend)
