@@ -1,10 +1,12 @@
 ﻿using System.Collections.Immutable;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
+using Moq;
 using NUnit.Framework;
 
 namespace Tests.Services.CrossRates
@@ -20,7 +22,7 @@ namespace Tests.Services.CrossRates
         }
 
         [Test]
-        public void Always_ShouldReturnCorrectResults()
+        public void IfSourceIsCrossRates_ShouldReturnCorrectResults()
         {
             //arrange
             var ethUsdCalcInfo = new CrossRateCalcInfo("ETHUSD",
@@ -47,7 +49,8 @@ namespace Tests.Services.CrossRates
                 .Setup<IBestPricesService>(s => s.Calc(ethBtcOrderbook) == new BestPrices(0.04m, 0.05m))
                 .Setup<IBestPricesService>(s => s.Calc(eurUsdOrderbook) == new BestPrices(1.2m, 1.3m))
                 .Setup<IBestPricesService>(s => s.Calc(usdChfOrderbook) == new BestPrices(0.98m, 0.99m))
-                .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600));
+                .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600))
+                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeEnum.CrossRates);
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
@@ -75,6 +78,46 @@ namespace Tests.Services.CrossRates
                         ImmutableArray.Create(new OrderbookPosition(0.04m * 6500, 1)),
                         ImmutableArray.Create(new OrderbookPosition(0.05m * 6600, 1))),
                 });
+        }
+
+        [Test]
+        public void IfSourceIsNotCrossRates_ShouldNotCalculateCrossRates()
+        {
+            //arrange
+            var ethUsdCalcInfo = new CrossRateCalcInfo("ETHUSD",
+                new CrossRateSourceAssetPair("ETHBTC", true),
+                new CrossRateSourceAssetPair("BTCUSD", false));
+            var btcEurCalcInfo = new CrossRateCalcInfo("BTCEUR",
+                new CrossRateSourceAssetPair("BTCUSD", true),
+                new CrossRateSourceAssetPair("EURUSD", true));
+            var btcChfCalcInfo = new CrossRateCalcInfo("BTCCHF",
+                new CrossRateSourceAssetPair("BTCUSD", true),
+                new CrossRateSourceAssetPair("USDCHF", false));
+
+            var ethBtcOrderbook = MakeOrderbook("ETHBTC");
+            var eurUsdOrderbook = MakeOrderbook("EURUSD");
+            var usdChfOrderbook = MakeOrderbook("USDCHF");
+            var btcUsdOrderbook = MakeOrderbook("BTCUSD");
+
+            _testSuit
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("ETHBTC") == new[] {ethUsdCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("EURUSD") == new[] {btcEurCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("USDCHF") == new[] {btcChfCalcInfo})
+                .Setup<ICrossRateCalcInfosService>(s =>
+                    s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo, btcChfCalcInfo})
+                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeEnum.External);
+
+            //act
+            var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
+            var eurUsdResult = _testSuit.Sut.CalcDependentOrderbooks(eurUsdOrderbook);
+            var usdChfResult = _testSuit.Sut.CalcDependentOrderbooks(usdChfOrderbook);
+            var btcUsdResult = _testSuit.Sut.CalcDependentOrderbooks(btcUsdOrderbook);
+
+            //assert
+            ethBtcResult.Should().BeEmpty();
+            eurUsdResult.Should().BeEmpty();
+            usdChfResult.Should().BeEmpty();
+            btcUsdResult.Should().BeEmpty();
         }
 
         private static Orderbook MakeOrderbook(string assetPairId)
