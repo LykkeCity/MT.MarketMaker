@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.ExtPrices;
@@ -19,23 +18,13 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Inserts settings for an asset pair
-        /// </summary>
-        [HttpPut]
-        public async Task<IActionResult> Add(AssetPairExtPriceSettingsModel setting)
-        {
-            await _extPricesSettingsService.AddAsync(setting);
-            return Ok(new {success = true});
-        }
-
-        /// <summary>
         /// Updates settings for an asset pair
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Update(AssetPairExtPriceSettingsModel setting)
+        public IActionResult Update(AssetPairExtPriceSettingsModel setting)
         {
-            await _extPricesSettingsService.UpdateAsync(setting);
-            return Ok(new {success = true});
+            _extPricesSettingsService.Update(setting); AUTOMAP
+            return Ok(new { success = true });
         }
 
         /// <summary>
@@ -65,8 +54,14 @@ namespace MarginTrading.MarketMaker.Controllers
         [Route("hedging-preferences")]
         public IReadOnlyList<HedgingPreferenceModel> GetHedgingPreferences()
         {
-            _extPricesSettingsService.Get().SelectMany(ap =>
-                ap.Values.Select(e => AUTOMAP)).ToList();
+            return _extPricesSettingsService.Get().SelectMany(ap =>
+                ap.Value.Exchanges.Select(e => new HedgingPreferenceModel
+                {
+                    AssetPairId = ap.Key,
+                    Exchange = e.Key,
+                    HedgingTemporarilyDisabled = e.Value.Hedging.IsTemporarilyUnavailable,
+                    Preference = e.Value.Hedging.DefaultPreference,
+                })).ToList();
         }
     }
 }

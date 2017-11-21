@@ -15,7 +15,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             return _extPricesSettingsService.GetDisabledExchanges(assetPairId);
         }
-                 
+
         public void Disable(string assetPairId, ImmutableHashSet<string> exchanges, string reason)
         {
             _extPricesSettingsService.ChangeExchangesTemporarilyDisabled(assetPairId, exchanges, true, reason);

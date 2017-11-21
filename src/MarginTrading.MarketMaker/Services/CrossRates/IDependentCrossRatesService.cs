@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates
@@ -7,5 +8,6 @@ namespace MarginTrading.MarketMaker.Services.CrossRates
     {
         IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId);
         IEnumerable<string> GetExistingCrossPairs();
+        [CanBeNull] CrossRateCalcInfo GetForResultingPairId(string assetPairId);
     }
 }

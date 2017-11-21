@@ -2,7 +2,9 @@
 using System.Linq;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -14,16 +16,16 @@ namespace MarginTrading.MarketMaker.Controllers
     internal class CrossRatesSettingsController : Controller
     {
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
-        private readonly IAssetPairsSettingsService _assetPairsSettingsService;
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
         private readonly IDependentCrossRatesService _dependentCrossRatesService;
 
         public CrossRatesSettingsController(
             ICrossRatesSettingsService crossRatesSettingsService,
-            IAssetPairsSettingsService assetPairsSettingsService,
+            IAssetPairSourceTypeService assetPairSourceTypeService,
             IDependentCrossRatesService dependentCrossRatesService)
         {
             _crossRatesSettingsService = crossRatesSettingsService;
-            _assetPairsSettingsService = assetPairsSettingsService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
             _dependentCrossRatesService = dependentCrossRatesService;
         }
 

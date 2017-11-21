@@ -21,12 +21,12 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             _crossRateCalcInfosService = crossRateCalcInfosService;
         }
 
-        public void AddAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public void AddAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
-            _settingsRootService.Add(assetPairId, new AssetPairSettings(sourceType, _extPricesSettingsService.GetDefault(), _crossRateCalcInfosService.GetDefault()));
+            _settingsRootService.Add(assetPairId, new AssetPairSettings(sourceType, _extPricesSettingsService.GetDefault(), _crossRateCalcInfosService.GetDefault(assetPairId)));
         }
 
-        public void UpdateAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public void UpdateAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
             _settingsRootService.Update(assetPairId,
                 old => new AssetPairSettings(sourceType, old.ExtPriceSettings,

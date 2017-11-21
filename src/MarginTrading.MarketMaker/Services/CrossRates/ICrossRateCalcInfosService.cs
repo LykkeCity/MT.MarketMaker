@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates
@@ -6,10 +8,9 @@ namespace MarginTrading.MarketMaker.Services.CrossRates
     public interface ICrossRateCalcInfosService
     {
         void Update(CrossRateCalcInfo info);
-        IReadOnlyList<CrossRateCalcInfo> Get();
+        ImmutableDictionary<string, CrossRateCalcInfo> Get();
         IEnumerable<CrossRateCalcInfo> GetDependentAssetPairs(string assetPairId);
-        CrossRateCalcInfo GetDefault();
-        CrossRateCalcInfo Get(string assetPairId);
-        void Add(CrossRateCalcInfo info);
+        CrossRateCalcInfo GetDefault(string assetPairId);
+        [CanBeNull] CrossRateCalcInfo Get(string assetPairId);
     }
 }

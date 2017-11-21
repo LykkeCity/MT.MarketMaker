@@ -24,16 +24,6 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        ///     Add setting for a resulting cross-pair
-        /// </summary>
-        [HttpPut]
-        public IActionResult Add([FromBody] CrossRateCalcInfoModel settings)
-        {
-            _crossRateCalcInfosService.Add(Convert(settings));
-            return Ok(new { success = true });
-        }
-
-        /// <summary>
         ///     Update setting for a resulting cross-pair
         /// </summary>
         [HttpPost]
@@ -49,7 +39,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         public IEnumerable<CrossRateCalcInfoModel> List()
         {
-            return _crossRateCalcInfosService.Get().Select(Convert);
+            return _crossRateCalcInfosService.Get().Values.Select(Convert);
         }
 
         /// <summary>

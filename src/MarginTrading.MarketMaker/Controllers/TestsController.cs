@@ -81,7 +81,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [Route("manual-price/{assetPairId}")]
         public async Task<IActionResult> SetManualPrice(string assetPairId, decimal bid, decimal ask)
         {
-            await _assetPairSourceTypeService.UpdateAssetPairQuotesSourceAsync(assetPairId,
+            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId,
                 AssetPairQuotesSourceTypeEnum.Manual);
             await _marketMakerService.ProcessNewManualQuotes(assetPairId, bid, ask);
             return Ok(new {success = true});

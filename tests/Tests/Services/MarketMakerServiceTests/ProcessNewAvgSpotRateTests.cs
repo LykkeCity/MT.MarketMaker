@@ -66,7 +66,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
 
             _testSuit
-                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
+                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});

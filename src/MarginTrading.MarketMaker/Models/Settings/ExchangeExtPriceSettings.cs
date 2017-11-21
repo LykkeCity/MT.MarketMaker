@@ -32,10 +32,10 @@ namespace MarginTrading.MarketMaker.Models.Settings
 
         public class HedgingSettings
         {
-            public double DefaultPreference { get; }
+            public decimal DefaultPreference { get; }
             public bool IsTemporarilyUnavailable { get; }
 
-            public HedgingSettings(double defaultPreference, bool isTemporarilyUnavailable)
+            public HedgingSettings(decimal defaultPreference, bool isTemporarilyUnavailable)
             {
                 DefaultPreference = defaultPreference;
                 IsTemporarilyUnavailable = isTemporarilyUnavailable;
@@ -44,10 +44,10 @@ namespace MarginTrading.MarketMaker.Models.Settings
 
         public class OrderGenerationSettings
         {
-            public double VolumeMultiplier { get; }
+            public decimal VolumeMultiplier { get; }
             public TimeSpan OrderRenewalDelay { get; }
 
-            public OrderGenerationSettings(double volumeMultiplier, TimeSpan orderRenewalDelay)
+            public OrderGenerationSettings(decimal volumeMultiplier, TimeSpan orderRenewalDelay)
             {
                 VolumeMultiplier = volumeMultiplier;
                 OrderRenewalDelay = orderRenewalDelay;

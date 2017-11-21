@@ -7,8 +7,8 @@ namespace MarginTrading.MarketMaker.Services.Common
 {
     public interface IAssetPairSourceTypeService
     {
-        void AddAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
-        void UpdateAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
+        void AddAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
+        void UpdateAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
         ImmutableDictionary<string, AssetPairQuotesSourceTypeEnum> Get();
         [CanBeNull] AssetPairQuotesSourceTypeEnum? Get(string assetPairId);
     }

@@ -7,14 +7,14 @@ namespace MarginTrading.MarketMaker.Models.Settings
     public class AssetPairExtPriceSettings
     {
         public string PresetDefaultExchange { get; }
-        public double OutlierThreshold { get; }
+        public decimal OutlierThreshold { get; }
         public TimeSpan MinOrderbooksSendingPeriod { get; }
         public MarkupsParams Markups { get; }
         public RepeatedOutliersParams RepeatedOutliers { get; }
         public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Steps { get; }
         public ImmutableDictionary<string, ExchangeExtPriceSettings> Exchanges { get; }
 
-        public AssetPairExtPriceSettings(string presetDefaultExchange, double outlierThreshold,
+        public AssetPairExtPriceSettings(string presetDefaultExchange, decimal outlierThreshold,
             TimeSpan minOrderbooksSendingPeriod, MarkupsParams markups, RepeatedOutliersParams repeatedOutliers,
             ImmutableDictionary<OrderbookGeneratorStepEnum, bool> steps,
             ImmutableDictionary<string, ExchangeExtPriceSettings> exchanges)
@@ -31,10 +31,10 @@ namespace MarginTrading.MarketMaker.Models.Settings
 
         public class MarkupsParams
         {
-            public double Bid { get; }
-            public double Ask { get; }
+            public decimal Bid { get; }
+            public decimal Ask { get; }
 
-            public MarkupsParams(double bid, double ask)
+            public MarkupsParams(decimal bid, decimal ask)
             {
                 Bid = bid;
                 Ask = ask;
@@ -45,10 +45,10 @@ namespace MarginTrading.MarketMaker.Models.Settings
         {
             public int MaxSequenceLength { get; }
             public TimeSpan MaxSequenceAge { get; }
-            public double MaxAvg { get; }
+            public decimal MaxAvg { get; }
             public TimeSpan MaxAvgAge { get; }
 
-            public RepeatedOutliersParams(int maxSequenceLength, TimeSpan maxSequenceAge, double maxAvg,
+            public RepeatedOutliersParams(int maxSequenceLength, TimeSpan maxSequenceAge, decimal maxAvg,
                 TimeSpan maxAvgAge)
             {
                 MaxSequenceLength = maxSequenceLength;

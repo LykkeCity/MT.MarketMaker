@@ -2,7 +2,7 @@
 {
     public class HedgingSettingsModel
     {
-        public double DefaultPreference { get; set; }
+        public decimal DefaultPreference { get; set; }
         public bool IsTemporarilyUnavailable { get; set; }
     }
 }

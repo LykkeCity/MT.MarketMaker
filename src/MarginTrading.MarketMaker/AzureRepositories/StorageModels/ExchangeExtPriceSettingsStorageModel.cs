@@ -17,13 +17,13 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
 
         public class HedgingSettings
         {
-            public double DefaultPreference { get; set; }
+            public decimal DefaultPreference { get; set; }
             public bool IsTemporarilyUnavailable { get; set; }
         }
 
         public class OrderGenerationSettings
         {
-            public double VolumeMultiplier { get; set; }
+            public decimal VolumeMultiplier { get; set; }
             public TimeSpan OrderRenewalDelay { get; set; }
         }
     }

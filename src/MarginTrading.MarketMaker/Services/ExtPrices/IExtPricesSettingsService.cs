@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading.Tasks;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models.Settings;
 
@@ -18,12 +16,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         ImmutableDictionary<string, decimal> GetHedgingPreferences(string assetPairId);
         (decimal Bid, decimal Ask) GetPriceMarkups(string assetPairId);
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
-        Task ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
-        bool IsExchangeConfigured(string assetPairId, string exchange);
+        void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
+        bool IsExchangeConfigured(string assetPairId, string exchangeName);
         TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId);
 
-        Task AddAsync(AssetPairExtPriceSettings setting);
-        Task UpdateAsync(AssetPairExtPriceSettings setting);
+        void Update(AssetPairExtPriceSettings setting);
         ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
         AssetPairExtPriceSettings Get(string assetPairId);
         AssetPairExtPriceSettings GetDefault();

@@ -5,6 +5,7 @@ using Lykke.Service.CandlesHistory.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation;
+using MarginTrading.MarketMaker.Services.Common;
 using NUnit.Framework;
 using Moq;
 

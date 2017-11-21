@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Autofac;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
@@ -18,17 +17,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
     {
         private readonly ISettingsRootService _settingsRootService;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _dependentAssetPairs;
+        private readonly IDependentCrossRatesService _dependentCrossRatesService;
 
-
-        public CrossRateCalcInfosService(ISettingsRootService settingsRootService)
+        public CrossRateCalcInfosService(ISettingsRootService settingsRootService,
+            IDependentCrossRatesService dependentCrossRatesService)
         {
             _settingsRootService = settingsRootService;
+            _dependentCrossRatesService = dependentCrossRatesService;
             _dependentAssetPairs = DependentAssetPairsCache();
-        }
-
-        public void Add(CrossRateCalcInfo info)
-        {
-            _settingsRootService.Add(info.ResultingPairId, new AssetPairSettings(AssetPairQuotesSourceTypeEnum.CrossRates, old.ExtPriceSettings, info));
         }
 
         public void Update([NotNull] CrossRateCalcInfo info)
@@ -37,8 +33,11 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                 old => new AssetPairSettings(old.QuotesSourceType, old.ExtPriceSettings, info));
         }
 
-        public IReadOnlyList<CrossRateCalcInfo> Get()
+        public ImmutableDictionary<string, CrossRateCalcInfo> Get()
         {
+            return _settingsRootService.Get().AssetPairs
+                .Where(s => s.Value.QuotesSourceType == AssetPairQuotesSourceTypeEnum.CrossRates)
+                .ToImmutableDictionary(s => s.Key, s => s.Value.CrossRateCalcInfo.RequiredNotNull(nameof(s.Value.CrossRateCalcInfo)));
         }
 
         [ItemNotNull]
@@ -48,20 +47,21 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _dependentAssetPairs.Get()[assetPairId].RequiredNotNullElems("result");
         }
 
-        public CrossRateCalcInfo GetDefault()
+        public CrossRateCalcInfo GetDefault(string assetPairId)
         {
-
+            return _dependentCrossRatesService.GetForResultingPairId(assetPairId) ??
+                new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false), new CrossRateSourceAssetPair(string.Empty, false));
         }
 
         public CrossRateCalcInfo Get(string assetPairId)
         {
-            throw new NotImplementedException();
+            return _settingsRootService.Get(assetPairId)?.CrossRateCalcInfo.RequiredNotNull(nameof(CrossRateCalcInfo));
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> DependentAssetPairsCache()
         {
             return Calculate.Cached(Get, ReferenceEquals,
-                src => src.SelectMany(i => new[] { (i.Source1.Id, i), (i.Source2.Id, i) })
+                src => src.SelectMany(i => new[] {(i.Value.Source1.Id, i.Value), (i.Value.Source2.Id, i.Value)})
                     .ToLookup());
         }
     }

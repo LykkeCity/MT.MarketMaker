@@ -42,10 +42,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPut]
         [Route("{assetPairId}")]
-        public async Task<IActionResult> Add(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Add(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
-            await _assetPairSourceTypeService.AddAssetPairQuotesSourceAsync(assetPairId, sourceType);
-            return Ok(new {success = true});
+            _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
+            return Ok(new { success = true });
         }
 
         /// <summary>
@@ -53,10 +53,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public async Task<IActionResult> Update(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Update(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
-            await _assetPairSourceTypeService.UpdateAssetPairQuotesSourceAsync(assetPairId, sourceType);
-            return Ok(new {success = true});
+            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId, sourceType);
+            return Ok(new { success = true });
         }
     }
 }

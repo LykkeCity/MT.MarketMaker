@@ -12,7 +12,6 @@ using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.Extensions.DependencyInjection;
-using Rocks.Caching;
 
 namespace MarginTrading.MarketMaker.Modules
 {
