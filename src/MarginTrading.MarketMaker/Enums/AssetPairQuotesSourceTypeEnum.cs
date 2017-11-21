@@ -26,7 +26,7 @@
         CrossRates = 4,
 
         /// <summary>
-        /// Quotes are provided using sliging average from spot candles
+        /// Quotes are provided using sliding average from spot candles
         /// </summary>
         SpotAgvPrices = 5,
 

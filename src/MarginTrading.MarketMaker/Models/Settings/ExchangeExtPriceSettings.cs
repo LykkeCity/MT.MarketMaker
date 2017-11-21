@@ -2,7 +2,7 @@
 
 namespace MarginTrading.MarketMaker.Models.Settings
 {
-    internal class ExchangeExtPriceSettings
+    public class ExchangeExtPriceSettings
     {
         public TimeSpan OrderbookOutdatingThreshold { get; }
         public DisabledSettings Disabled { get; }

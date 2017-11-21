@@ -1,15 +1,18 @@
 ﻿using System;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common
 {
+    /// <remarks>
+    /// No async here because of a lock inside
+    /// </remarks>
     internal interface ISettingsRootService
     {
-        Task Set(SettingsRoot settings);
+        void Set(SettingsRoot settings);
         SettingsRoot Get();
         [CanBeNull] AssetPairSettings Get(string assetPairId);
-        Task Set(string assetPairId, Func<AssetPairSettings, AssetPairSettings> changeFunc);
+        void Update(string assetPairId, Func<AssetPairSettings, AssetPairSettings> changeFunc);
+        void Add(string assetPairId, AssetPairSettings settings);
     }
 }

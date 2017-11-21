@@ -7,6 +7,7 @@ using Lykke.Service.CandlesHistory.Client;
 using Lykke.Service.CandlesHistory.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
+using MarginTrading.MarketMaker.Services.Common;
 
 namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
 {

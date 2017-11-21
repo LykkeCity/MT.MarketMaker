@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
+using MarginTrading.MarketMaker.Services.CrossRates;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
@@ -11,31 +11,26 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
     internal class AssetPairSourceTypeService : IAssetPairSourceTypeService
     {
         private readonly ISettingsRootService _settingsRootService;
+        private readonly IExtPricesSettingsService _extPricesSettingsService;
+        private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
 
-        public AssetPairSourceTypeService(ISettingsRootService settingsRootService)
+        public AssetPairSourceTypeService(ISettingsRootService settingsRootService, IExtPricesSettingsService extPricesSettingsService, ICrossRateCalcInfosService crossRateCalcInfosService)
         {
             _settingsRootService = settingsRootService;
+            _extPricesSettingsService = extPricesSettingsService;
+            _crossRateCalcInfosService = crossRateCalcInfosService;
         }
 
-        public Task AddAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public void AddAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
-            return _settingsRootService.Set(assetPairId,
-                old =>
-                {
-                    old.RequiredEqualsTo(null, nameof(old));
-                    return new AssetPairSettings(sourceType, null, null);
-                });
+            _settingsRootService.Add(assetPairId, new AssetPairSettings(sourceType, _extPricesSettingsService.GetDefault(), _crossRateCalcInfosService.GetDefault()));
         }
 
-        public Task UpdateAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public void UpdateAssetPairQuotesSourceAsync(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
-            return _settingsRootService.Set(assetPairId,
-                old =>
-                {
-                    old.RequiredNotNull(nameof(old));
-                    return new AssetPairSettings(sourceType, old.ExtPriceSettings,
-                        old.CrossRateCalcInfo);
-                });
+            _settingsRootService.Update(assetPairId,
+                old => new AssetPairSettings(sourceType, old.ExtPriceSettings,
+                    old.CrossRateCalcInfo));
         }
 
         public ImmutableDictionary<string, AssetPairQuotesSourceTypeEnum> Get()

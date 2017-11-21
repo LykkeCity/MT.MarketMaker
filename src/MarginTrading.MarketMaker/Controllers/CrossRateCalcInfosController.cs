@@ -24,14 +24,22 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        ///     Replaces all existing settings.
+        ///     Add setting for a resulting cross-pair
+        /// </summary>
+        [HttpPut]
+        public IActionResult Add([FromBody] CrossRateCalcInfoModel settings)
+        {
+            _crossRateCalcInfosService.Add(Convert(settings));
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        ///     Update setting for a resulting cross-pair
         /// </summary>
         [HttpPost]
-        [Route("set")]
-        [SwaggerOperation("SetCrossRateCalcInfos")]
-        public IActionResult Set([FromBody] IReadOnlyList<CrossRateCalcInfoModel> settings)
+        public IActionResult Update([FromBody] CrossRateCalcInfoModel settings)
         {
-            _crossRateCalcInfosService.Set(settings.Select(Convert).ToList());
+            _crossRateCalcInfosService.Update(Convert(settings));
             return Ok(new { success = true });
         }
 
@@ -39,11 +47,18 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Gets all existing settings
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetCrossRateCalcInfos")]
-        public IEnumerable<CrossRateCalcInfoModel> Get()
+        public IEnumerable<CrossRateCalcInfoModel> List()
         {
             return _crossRateCalcInfosService.Get().Select(Convert);
+        }
+
+        /// <summary>
+        ///     Gets all existing settings
+        /// </summary>
+        [HttpGet]
+        public CrossRateCalcInfoModel Get(string assetPairId)
+        {
+            return Convert(_crossRateCalcInfosService.Get(assetPairId));
         }
 
         private static CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)

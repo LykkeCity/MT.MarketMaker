@@ -18,7 +18,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         ImmutableDictionary<string, decimal> GetHedgingPreferences(string assetPairId);
         (decimal Bid, decimal Ask) GetPriceMarkups(string assetPairId);
         ImmutableHashSet<string> GetDisabledExchanges(string assetPairId);
-        void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
+        Task ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason);
         bool IsExchangeConfigured(string assetPairId, string exchange);
         TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId);
 
@@ -26,5 +26,6 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         Task UpdateAsync(AssetPairExtPriceSettings setting);
         ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
         AssetPairExtPriceSettings Get(string assetPairId);
+        AssetPairExtPriceSettings GetDefault();
     }
 }
