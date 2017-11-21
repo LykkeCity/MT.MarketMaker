@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using AutoMapper;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 
@@ -10,12 +12,14 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     {
         private readonly IPrimaryExchangeService _primaryExchangeService;
         private readonly IBestPricesService _bestPricesService;
+        private readonly IConvertService _convertService;
 
         public ExtPricesStatusService(IPrimaryExchangeService primaryExchangeService,
-            IBestPricesService bestPricesService)
+            IBestPricesService bestPricesService, IConvertService convertService)
         {
             _primaryExchangeService = primaryExchangeService;
             _bestPricesService = bestPricesService;
+            _convertService = convertService;
         }
 
         public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> Get()
@@ -34,7 +38,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             {
                 foreach (var exchange in asset.Value)
                 {
-                    if (bestPrices.TryGetValue((asset.Key, exchange.Exchange), out var bestPrice))
+                    if (bestPrices.TryGetValue((asset.Key, exchange.ExchangeName), out var bestPrice))
                     {
                         exchange.BestPrices = Convert(bestPrice);
                     }
@@ -49,14 +53,18 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return Get().GetValueOrDefault(assetPairId, ImmutableArray<ExtPriceStatusModel>.Empty);
         }
 
-        private BestPricesModel Convert(BestPrices exchangeName)
+        private BestPricesModel Convert(BestPrices bestPrices)
         {
-            AUTOMAP
+            return _convertService.Convert<BestPrices, BestPricesModel>(bestPrices);
         }
 
         private ExtPriceStatusModel Convert(string exchangeName, ExchangeQuality exchangeQuality, bool isPrimary)
         {
-            AUTOMAP
+            var model = _convertService.Convert<ExchangeQuality, ExtPriceStatusModel>(exchangeQuality,
+                o => o.ConfigureMap(MemberList.Source));
+            model.ExchangeName = exchangeName;
+            model.IsPrimary = isPrimary;
+            return model;
         }
     }
 }

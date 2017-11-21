@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.ExtPrices;
@@ -12,24 +14,27 @@ namespace MarginTrading.MarketMaker.Controllers
     public class ExtPriceSettingsController : Controller
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
+        private readonly IConvertService _convertService;
 
-        public ExtPriceSettingsController(IExtPricesSettingsService extPricesSettingsService)
+        public ExtPriceSettingsController(IExtPricesSettingsService extPricesSettingsService,
+            IConvertService convertService)
         {
             _extPricesSettingsService = extPricesSettingsService;
+            _convertService = convertService;
         }
 
         /// <summary>
-        /// Updates settings for an asset pair
+        ///     Updates settings for an asset pair
         /// </summary>
         [HttpPost]
         public IActionResult Update(AssetPairExtPriceSettingsModel setting)
         {
             _extPricesSettingsService.Update(setting.AssetPairId, Convert(setting), "settings was manually changed");
-            return Ok(new { success = true });
+            return Ok(new {success = true});
         }
 
         /// <summary>
-        /// Gets all existing settings
+        ///     Gets all existing settings
         /// </summary>
         [HttpGet]
         public IReadOnlyList<AssetPairExtPriceSettingsModel> List()
@@ -38,7 +43,7 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Gets settings for a single asset pair
+        ///     Gets settings for a single asset pair
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
@@ -49,7 +54,7 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        /// Gets all hedging preferences
+        ///     Gets all hedging preferences
         /// </summary>
         [HttpGet]
         [Route("hedging-preferences")]
@@ -67,12 +72,16 @@ namespace MarginTrading.MarketMaker.Controllers
 
         private AssetPairExtPriceSettingsModel Convert(string assetPairId, AssetPairExtPriceSettings setting)
         {
-            AUTOMAP
+            var model = _convertService.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(setting,
+                o => o.ConfigureMap(MemberList.Source));
+            model.AssetPairId = assetPairId;
+            return model;
         }
 
-        private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel setting)
+        private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)
         {
-            AUTOMAP
+            return _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
+                o => o.ConfigureMap(MemberList.Destination));
         }
     }
 }

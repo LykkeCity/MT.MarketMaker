@@ -4,7 +4,7 @@ namespace MarginTrading.MarketMaker.Models.Api
 {
     public class ExtPriceStatusModel
     {
-        public string Exchange { get; set; }
+        public string ExchangeName { get; set; }
         public BestPricesModel BestPrices { get; set; }
         public decimal HedgingPreference { get; set; }
         public bool OrderbookReceived { get; set; }

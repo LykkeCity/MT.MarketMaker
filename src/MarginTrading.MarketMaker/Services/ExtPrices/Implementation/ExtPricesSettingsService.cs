@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Models.Settings;
-using MoreLinq;
 using MarginTrading.MarketMaker.Services.Common;
+using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
@@ -17,11 +16,14 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     {
         private readonly IAlertService _alertService;
         private readonly ISettingsRootService _settingsRootService;
+        private readonly IConvertService _convertService;
 
-        public ExtPricesSettingsService(IAlertService alertService, ISettingsRootService settingsRootService)
+        public ExtPricesSettingsService(IAlertService alertService, ISettingsRootService settingsRootService,
+            IConvertService convertService)
         {
             _alertService = alertService;
             _settingsRootService = settingsRootService;
+            _convertService = convertService;
         }
 
         public bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId)
@@ -73,16 +75,22 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 .ToImmutableHashSet();
         }
 
-        public void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges, bool disable, string reason)
+        public void ChangeExchangesTemporarilyDisabled(string assetPairId, ImmutableHashSet<string> exchanges,
+            bool disable, string reason)
         {
             if (exchanges.Count == 0)
                 return;
 
+            //todo: test
             UpdateExchanges(assetPairId, exchanges,
-                old => new ExchangeExtPriceSettings(disabled: new ExchangeExtPriceSettings.DisabledSettings(disable, reason), ), reason);
+                old => _convertService.Clone(old, op => op.ConfigureMap()
+                    .ForMember(s => s.Disabled,
+                        o => o.ResolveUsing(s => new ExchangeDisabledSettings(disable, reason)))),
+                reason);
         }
 
-        private void ExchangesStateChanged(string assetPairId, IEnumerable<string> exchanges, string stateChangeDescription, string reason)
+        private void ExchangesStateChanged(string assetPairId, IEnumerable<string> exchanges,
+            string stateChangeDescription, string reason)
         {
             var exchangesStr = string.Join(", ", exchanges);
             if (exchangesStr == string.Empty)
@@ -92,7 +100,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             var ending = exchangesStr.Contains(',') ? "s" : "";
 
-            _alertService.AlertRiskOfficer(assetPairId, $"Exchange{ending} {exchangesStr} for {assetPairId} became {stateChangeDescription} because {reason}");
+            _alertService.AlertRiskOfficer(assetPairId,
+                $"Exchange{ending} {exchangesStr} for {assetPairId} became {stateChangeDescription} because {reason}");
         }
 
         public bool IsExchangeConfigured(string assetPairId, string exchangeName)
@@ -124,14 +133,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             return new AssetPairExtPriceSettings("",
                 0.05m, TimeSpan.FromSeconds(0.5), new AssetPairExtPriceSettings.MarkupsParams(0, 0),
-                new AssetPairExtPriceSettings.RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
+                new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
                     TimeSpan.FromMinutes(5)),
                 GetDefaultSteps(), ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty);
         }
 
         private static bool CanPerformHedging(KeyValuePair<string, ExchangeExtPriceSettings> keyValuePair)
         {
-            return keyValuePair.Value.Hedging.DefaultPreference * (keyValuePair.Value.Hedging.IsTemporarilyUnavailable ? 0 : 1) > 0;
+            return keyValuePair.Value.Hedging.DefaultPreference *
+                   (keyValuePair.Value.Hedging.IsTemporarilyUnavailable ? 0 : 1) > 0;
         }
 
         private ImmutableDictionary<string, ExchangeExtPriceSettings> GetAllExchanges(string assetPairId)
@@ -144,7 +154,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             return TryGetExchange(assetPairId, exchangeName)
                    ?? throw new ArgumentException(
-                       $"Settings for exchange {exchangeName} for asset pair {assetPairId} not found", nameof(exchangeName));
+                       $"Settings for exchange {exchangeName} for asset pair {assetPairId} not found",
+                       nameof(exchangeName));
         }
 
         [CanBeNull]
@@ -188,14 +199,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private void UpdateExchanges(string assetPairId, IEnumerable<string> exchangeNames,
             Func<ExchangeExtPriceSettings, ExchangeExtPriceSettings> changeFunc, string reason)
         {
-
             var exchangesHashSet = exchangeNames.ToImmutableHashSet();
             Update(assetPairId, old =>
             {
                 var newExchanges = old.Exchanges
                     .SetItems(old.Exchanges.Where(o => exchangesHashSet.Contains(o.Key))
                         .Select(s => KeyValuePair.Create(s.Key, changeFunc(s.Value))));
-                return new AssetPairExtPriceSettings(exchanges: newExchanges, );
+                //todo: test
+                return _convertService.Clone(old, op => op.ConfigureMap()
+                    .ForMember(s => s.Exchanges, o => o.ResolveUsing(s => newExchanges)));
             }, reason);
         }
 
@@ -226,7 +238,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ExchangesStateChanged(assetPairId, enable.Select(t => t.Key), "enabled", reason);
         }
 
-        private static ImmutableDictionary<OrderbookGeneratorStepEnum, bool> ConvertSteps(ImmutableDictionary<OrderbookGeneratorStepEnum, bool> steps)
+        private static ImmutableDictionary<OrderbookGeneratorStepEnum, bool> ConvertSteps(
+            ImmutableDictionary<OrderbookGeneratorStepEnum, bool> steps)
         {
             return GetDefaultSteps().SetItems(steps);
         }

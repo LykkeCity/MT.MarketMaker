@@ -5,15 +5,15 @@ namespace MarginTrading.MarketMaker.Models
 {
     public class ExchangeQuality
     {
-        public string Exchange { get; }
+        public string ExchangeName { get; }
         public decimal HedgingPreference { get; }
         public ExchangeErrorState? Error { get; }
         public bool OrderbookReceived { get; }
         public DateTime? LastOrderbookReceivedTime { get; }
 
-        public ExchangeQuality(string exchange, decimal hedgingPreference, ExchangeErrorState? error, bool orderbookReceived, DateTime? lastOrderbookReceivedTime)
+        public ExchangeQuality(string exchangeName, decimal hedgingPreference, ExchangeErrorState? error, bool orderbookReceived, DateTime? lastOrderbookReceivedTime)
         {
-            Exchange = exchange;
+            ExchangeName = exchangeName;
             HedgingPreference = hedgingPreference;
             Error = error;
             OrderbookReceived = orderbookReceived;
@@ -22,7 +22,7 @@ namespace MarginTrading.MarketMaker.Models
 
         public override string ToString()
         {
-            return $"{Exchange} ({Error?.ToString() ?? "NoOrderbook"}, {HedgingPreference:P2})";
+            return $"{ExchangeName} ({Error?.ToString() ?? "NoOrderbook"}, {HedgingPreference:P2})";
         }
     }
 }

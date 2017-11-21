@@ -64,9 +64,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now, currentProcessingExchange);
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
-            _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.Exchange, now,
+            _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.ExchangeName, now,
                 primaryQuality.HedgingPreference, primaryQuality.Error);
-            return primaryQuality.Error == ExchangeErrorState.Outlier ? null : primaryQuality.Exchange;
+            return primaryQuality.Error == ExchangeErrorState.Outlier ? null : primaryQuality.ExchangeName;
         }
 
         private ExchangeQuality CheckPrimaryStatusAndSwitchIfNeeded(string assetPairId,
@@ -79,7 +79,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             {
                 var result = SwitchPrimaryExchange(assetPairId, null, exchangeQualities,
                     newPrimary =>
-                        $"{newPrimary.Exchange} has been chosen as an initial primary exchange for {assetPairId}. " +
+                        $"{newPrimary.ExchangeName} has been chosen as an initial primary exchange for {assetPairId}. " +
                         $"It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
                 return result;
             }
@@ -100,7 +100,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         newPrimary =>
                             $"Primary exchange {originalPrimaryExchange} for {assetPairId} was changed.\r\n" +
                             $"It had error state \"{primaryError}\" and hedging preference \"{primaryPreference}\".\r\n" +
-                            $"New primary exchange: \"{newPrimary.Exchange}\". It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
+                            $"New primary exchange: \"{newPrimary.ExchangeName}\". It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
                     return primaryQuality;
             }
         }
@@ -110,15 +110,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             Func<ExchangeQuality, string> alertMessage)
         {
             var newPrimary = ChooseBackupExchange(assetPairId, exchangeQualities);
-            if (newPrimary.Exchange == oldPrimary?.Exchange)
+            if (newPrimary.ExchangeName == oldPrimary?.ExchangeName)
             {
                 Trace.Write(assetPairId + " warn trace",
-                    $"Current exchange {oldPrimary.Exchange} for {assetPairId} is bad, but switch failed. " +
+                    $"Current exchange {oldPrimary.ExchangeName} for {assetPairId} is bad, but switch failed. " +
                     "Exchanges: " + GetExchangesQualitiesString(exchangeQualities.Values));
                 return oldPrimary;
             }
 
-            _primaryExchanges[assetPairId] = newPrimary.Exchange;
+            _primaryExchanges[assetPairId] = newPrimary.ExchangeName;
             _alertService.AlertPrimaryExchangeSwitched(
                 new PrimaryExchangeSwitchedMessage
                 {
@@ -147,7 +147,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             var primary = allHedgingPriorities[ExchangeErrorState.Valid]
                 .OrderByDescending(p => p.HedgingPreference)
-                .ThenBy(p => p.Exchange)
+                .ThenBy(p => p.ExchangeName)
                 .FirstOrDefault();
 
             if (primary != null && primary.HedgingPreference > 0)
@@ -157,7 +157,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             foreach (var state in new[] {ExchangeErrorState.Valid, ExchangeErrorState.Outlier})
             {
-                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).ThenBy(p => p.Exchange).FirstOrDefault();
+                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).ThenBy(p => p.ExchangeName).FirstOrDefault();
                 if (primary != null)
                 {
                     return primary;
@@ -203,7 +203,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ImmutableDictionary<string, ExchangeQuality> exchangeQualities)
         {
             var hasChanges = oldQualities?.Values
-                                 .FindChanges(exchangeQualities.Values, q => q.Exchange, q => q.ToString(),
+                                 .FindChanges(exchangeQualities.Values, q => q.ExchangeName, q => q.ToString(),
                                      (o, n) => o == n).Any()
                              ?? true;
             if (hasChanges)
@@ -230,7 +230,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return new ExchangeQualityMessage
             {
                 Error = quality.Error,
-                Exchange = quality.Exchange,
+                ExchangeName = quality.ExchangeName,
                 HedgingPreference = quality.HedgingPreference,
                 OrderbookReceived = quality.OrderbookReceived,
             };

@@ -1,13 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
-using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -15,12 +12,13 @@ namespace MarginTrading.MarketMaker.Controllers
     public class CrossRateCalcInfosController : Controller
     {
         private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
-        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
+        private readonly IConvertService _convertService;
 
-        public CrossRateCalcInfosController(ICrossRateCalcInfosService crossRateCalcInfosService, IAssetPairSourceTypeService assetPairSourceTypeService)
+        public CrossRateCalcInfosController(ICrossRateCalcInfosService crossRateCalcInfosService,
+            IConvertService convertService)
         {
             _crossRateCalcInfosService = crossRateCalcInfosService;
-            _assetPairSourceTypeService = assetPairSourceTypeService;
+            _convertService = convertService;
         }
 
         /// <summary>
@@ -30,7 +28,7 @@ namespace MarginTrading.MarketMaker.Controllers
         public IActionResult Update([FromBody] CrossRateCalcInfoModel settings)
         {
             _crossRateCalcInfosService.Update(Convert(settings));
-            return Ok(new { success = true });
+            return Ok(new {success = true});
         }
 
         /// <summary>
@@ -51,31 +49,14 @@ namespace MarginTrading.MarketMaker.Controllers
             return Convert(_crossRateCalcInfosService.Get(assetPairId));
         }
 
-        private static CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)
+        private CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)
         {
-            AUTOMAP
-            return new CrossRateCalcInfoModel
-            {
-                ResultingPairId = settings.ResultingPairId,
-                Source1 = new CrossRateSourceAssetPairModel
-                {
-                    Id = settings.Source1.Id,
-                    IsTransitoryAssetQuoting = settings.Source1.IsTransitoryAssetQuoting,
-                },
-                Source2 = new CrossRateSourceAssetPairModel
-                {
-                    Id = settings.Source2.Id,
-                    IsTransitoryAssetQuoting = settings.Source2.IsTransitoryAssetQuoting,
-                }
-            };
+            return _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
         }
 
-        private static CrossRateCalcInfo Convert(CrossRateCalcInfoModel model)
+        private CrossRateCalcInfo Convert(CrossRateCalcInfoModel model)
         {
-            AUTOMAP
-            return new CrossRateCalcInfo(model.ResultingPairId,
-                new CrossRateSourceAssetPair(model.Source1.Id, model.Source1.IsTransitoryAssetQuoting),
-                new CrossRateSourceAssetPair(model.Source2.Id, model.Source2.IsTransitoryAssetQuoting));
+            return _convertService.Convert<CrossRateCalcInfoModel, CrossRateCalcInfo>(model);
         }
     }
 }
