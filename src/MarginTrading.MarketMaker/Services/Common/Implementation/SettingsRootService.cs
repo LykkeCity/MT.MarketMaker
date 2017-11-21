@@ -34,7 +34,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             if (settings == null) throw new ArgumentNullException(nameof(settings));
             lock (_updateLock)
             {
-                _settingsStorage.Set(settings);
+                _settingsStorage.Write(settings);
                 _cache = settings;
             }
         }
@@ -63,14 +63,15 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             {
                 var oldSettings = Get();
                 var settings = changeFunc(oldSettings);
-                _settingsStorage.Set(settings);
+                _settingsStorage.Write(settings);
                 _cache = settings;
             }
         }
 
         public void Start()
         {
-            _cache = _settingsStorage.Get().GetAwaiter().GetResult();
+            _cache = _settingsStorage.Read()
+                ?? new SettingsRoot(ImmutableDictionary<string, AssetPairSettings>.Empty);
         }
     }
 }
