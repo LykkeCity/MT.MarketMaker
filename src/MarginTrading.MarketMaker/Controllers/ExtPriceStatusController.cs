@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
@@ -63,7 +64,8 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         public IEnumerable<LogModel> GetLogsFiltered(string contains)
         {
-            return Trace.GetLast().Where(l => l.Group.Contains(contains) || l.Message.Contains(contains));
+            return Trace.GetLast().Where(l =>
+                (l.Group + '\t' + l.Message).IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }
