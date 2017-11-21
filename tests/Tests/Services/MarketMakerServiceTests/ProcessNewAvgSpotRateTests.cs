@@ -41,6 +41,8 @@ namespace Tests.Services.MarketMakerServiceTests
         [TestCase(AssetPairQuotesSourceTypeEnum.Manual)]
         [TestCase(AssetPairQuotesSourceTypeEnum.External)]
         [TestCase(AssetPairQuotesSourceTypeEnum.Spot)]
+        [TestCase(AssetPairQuotesSourceTypeEnum.Disabled)]
+        [TestCase(AssetPairQuotesSourceTypeEnum.CrossRates)]
         public async Task IfPairSourceNotNull_ShouldSkip(AssetPairQuotesSourceTypeEnum sourceType)
         {
             //arrange
@@ -59,12 +61,12 @@ namespace Tests.Services.MarketMakerServiceTests
         }
 
         [Test]
-        public async Task IfPairSourceNull_ShouldSendValidMessage()
+        public async Task IfPairSourceIsSpotAgvPrices_ShouldSendValidMessage()
         {
             //arrange
 
             _testSuit
-                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == null)
+                .Setup<IAssetPairsSettingsService>(s => s.GetAssetPairQuotesSource("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});

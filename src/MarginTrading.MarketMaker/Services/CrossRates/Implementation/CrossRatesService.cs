@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
@@ -16,12 +17,15 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         private readonly IBestPricesService _bestPricesService;
         private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
+        private readonly IAssetPairsSettingsService _assetPairsSettingsService;
 
         public CrossRatesService(IBestPricesService bestPricesService,
-            ICrossRateCalcInfosService crossRateCalcInfosService)
+            ICrossRateCalcInfosService crossRateCalcInfosService,
+            IAssetPairsSettingsService assetPairsSettingsService)
         {
             _bestPricesService = bestPricesService;
             _crossRateCalcInfosService = crossRateCalcInfosService;
+            _assetPairsSettingsService = assetPairsSettingsService;
         }
 
         [ItemNotNull]
@@ -29,7 +33,9 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         {
             _orderbooks[orderbook.AssetPairId] = orderbook
                                                  ?? throw new ArgumentNullException(nameof(orderbook));
-            var dependent = _crossRateCalcInfosService.GetDependentAssetPairs(orderbook.AssetPairId); // ex: btceur
+            var dependent = _crossRateCalcInfosService.GetDependentAssetPairs(orderbook.AssetPairId)
+                .Where(p => _assetPairsSettingsService.GetAssetPairQuotesSource(p.ResultingPairId) ==
+                            AssetPairQuotesSourceTypeEnum.CrossRates); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }
 

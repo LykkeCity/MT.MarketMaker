@@ -31,10 +31,9 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
         {
             var now = _system.UtcNow;
             const string assetPairId = "LKKUSD";
-            var avgBid = await GetAvg(assetPairId, PriceType.Bid, now);
-            var avgAsk = await GetAvg(assetPairId, PriceType.Ask, now);
-            await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avgBid, avgAsk);
-            Trace.Write(assetPairId + " trace", $"Avg quotes for {assetPairId} sent", new {avgBid, avgAsk});
+            var avg = await GetAvg(assetPairId, PriceType.Mid, now);
+            await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avg, avg);
+            Trace.Write(assetPairId + " trace", $"Avg quotes for {assetPairId} sent: {avg}");
         }
 
         private async Task<decimal> GetAvg(string assetPairId, PriceType priceType, DateTime now)
