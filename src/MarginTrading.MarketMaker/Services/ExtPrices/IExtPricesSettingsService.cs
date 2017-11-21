@@ -20,7 +20,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         bool IsExchangeConfigured(string assetPairId, string exchangeName);
         TimeSpan GetMinOrderbooksSendingPeriod(string assetPairId);
 
-        void Update(AssetPairExtPriceSettings setting);
+        void Update(string assetPairId, AssetPairExtPriceSettings setting, string reason);
         ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
         AssetPairExtPriceSettings Get(string assetPairId);
         AssetPairExtPriceSettings GetDefault();

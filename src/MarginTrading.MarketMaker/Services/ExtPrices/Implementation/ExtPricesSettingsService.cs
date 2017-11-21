@@ -52,7 +52,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public decimal GetOutlierThreshold(string assetPairId)
         {
-            return (decimal) GetAsset(assetPairId).OutlierThreshold;
+            return GetAsset(assetPairId).OutlierThreshold;
         }
 
         public ImmutableDictionary<string, decimal> GetHedgingPreferences(string assetPairId)
@@ -64,7 +64,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public (decimal Bid, decimal Ask) GetPriceMarkups(string assetPairId)
         {
             var markups = GetAsset(assetPairId).Markups;
-            return ((decimal) markups.Bid, (decimal) markups.Ask);
+            return (markups.Bid, markups.Ask);
         }
 
         public ImmutableHashSet<string> GetDisabledExchanges(string assetPairId)
@@ -105,9 +105,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return GetAsset(assetPairId).MinOrderbooksSendingPeriod;
         }
 
-        public void Update(AssetPairExtPriceSettings setting)
+        public void Update(string assetPairId, AssetPairExtPriceSettings setting, string reason)
         {
-            throw new NotImplementedException();
+            Update(assetPairId, old => setting, reason);
         }
 
         public ImmutableDictionary<string, AssetPairExtPriceSettings> Get()
@@ -123,7 +123,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public AssetPairExtPriceSettings GetDefault()
         {
             return new AssetPairExtPriceSettings("",
-                0.05m, TimeSpan.FromSeconds(1 / 2), new AssetPairExtPriceSettings.MarkupsParams(0, 0),
+                0.05m, TimeSpan.FromSeconds(0.5), new AssetPairExtPriceSettings.MarkupsParams(0, 0),
                 new AssetPairExtPriceSettings.RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
                     TimeSpan.FromMinutes(5)),
                 GetDefaultSteps(), ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty);

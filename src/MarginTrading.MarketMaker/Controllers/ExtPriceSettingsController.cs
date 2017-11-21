@@ -2,6 +2,7 @@
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpPost]
         public IActionResult Update(AssetPairExtPriceSettingsModel setting)
         {
-            _extPricesSettingsService.Update(setting); AUTOMAP
+            _extPricesSettingsService.Update(setting.AssetPairId, Convert(setting), "settings was manually changed");
             return Ok(new { success = true });
         }
 
@@ -33,7 +34,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         public IReadOnlyList<AssetPairExtPriceSettingsModel> List()
         {
-            return _extPricesSettingsService.Get(); AUTOMAP
+            return _extPricesSettingsService.Get().Select(p => Convert(p.Key, p.Value)).ToList();
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         public AssetPairExtPriceSettingsModel Get(string assetPairId)
         {
-            return _extPricesSettingsService.Get(assetPairId); AUTOMAP
+            return Convert(assetPairId, _extPricesSettingsService.Get(assetPairId));
         }
 
         /// <summary>
@@ -62,6 +63,16 @@ namespace MarginTrading.MarketMaker.Controllers
                     HedgingTemporarilyDisabled = e.Value.Hedging.IsTemporarilyUnavailable,
                     Preference = e.Value.Hedging.DefaultPreference,
                 })).ToList();
+        }
+
+        private AssetPairExtPriceSettingsModel Convert(string assetPairId, AssetPairExtPriceSettings setting)
+        {
+            AUTOMAP
+        }
+
+        private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel setting)
+        {
+            AUTOMAP
         }
     }
 }

@@ -22,11 +22,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             var qualities = _primaryExchangeService.GetQualities();
             var primaryExchanges = _primaryExchangeService.GetLastPrimaryExchanges();
-            var result = qualities.ToDictionary(p => p.Key,
-                p =>
+            var result = qualities.ToDictionary(pair => pair.Key,
+                pair =>
                 {
-                    var primary = primaryExchanges.GetValueOrDefault(p.Key);
-                    return (IReadOnlyList<ExtPriceStatusModel>) p.Value.Values.Select(AUTOMAP).ToList();
+                    var primary = primaryExchanges.GetValueOrDefault(pair.Key);
+                    return (IReadOnlyList<ExtPriceStatusModel>)pair.Value.Select(p => Convert(p.Key, p.Value, primary == p.Key)).ToList();
                 });
 
             var bestPrices = _bestPricesService.GetLastCalculated();
@@ -36,7 +36,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 {
                     if (bestPrices.TryGetValue((asset.Key, exchange.Exchange), out var bestPrice))
                     {
-                        exchange.BestPrices = AUTOMAP;
+                        exchange.BestPrices = Convert(bestPrice);
                     }
                 }
             }
@@ -47,6 +47,16 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public IReadOnlyList<ExtPriceStatusModel> Get(string assetPairId)
         {
             return Get().GetValueOrDefault(assetPairId, ImmutableArray<ExtPriceStatusModel>.Empty);
+        }
+
+        private BestPricesModel Convert(BestPrices exchangeName)
+        {
+            AUTOMAP
+        }
+
+        private ExtPriceStatusModel Convert(string exchangeName, ExchangeQuality exchangeQuality, bool isPrimary)
+        {
+            AUTOMAP
         }
     }
 }

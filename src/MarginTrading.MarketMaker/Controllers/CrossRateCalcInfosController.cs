@@ -53,6 +53,7 @@ namespace MarginTrading.MarketMaker.Controllers
 
         private static CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)
         {
+            AUTOMAP
             return new CrossRateCalcInfoModel
             {
                 ResultingPairId = settings.ResultingPairId,
@@ -71,6 +72,7 @@ namespace MarginTrading.MarketMaker.Controllers
 
         private static CrossRateCalcInfo Convert(CrossRateCalcInfoModel model)
         {
+            AUTOMAP
             return new CrossRateCalcInfo(model.ResultingPairId,
                 new CrossRateSourceAssetPair(model.Source1.Id, model.Source1.IsTransitoryAssetQuoting),
                 new CrossRateSourceAssetPair(model.Source2.Id, model.Source2.IsTransitoryAssetQuoting));
