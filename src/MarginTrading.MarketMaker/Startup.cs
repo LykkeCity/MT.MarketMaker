@@ -17,7 +17,6 @@ using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Modules;
-using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;

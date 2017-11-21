@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.AzureRepositories

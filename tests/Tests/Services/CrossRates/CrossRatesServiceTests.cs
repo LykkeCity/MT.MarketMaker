@@ -2,7 +2,6 @@
 using FluentAssertions;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
