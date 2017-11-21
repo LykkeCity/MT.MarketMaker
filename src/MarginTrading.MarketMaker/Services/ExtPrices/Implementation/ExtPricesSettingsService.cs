@@ -121,12 +121,13 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public ImmutableDictionary<string, AssetPairExtPriceSettings> Get()
         {
-            throw new NotImplementedException();
+            return _settingsRootService.Get().AssetPairs
+                .ToImmutableDictionary(a => a.Key, a => a.Value.ExtPriceSettings);
         }
 
         public AssetPairExtPriceSettings Get(string assetPairId)
         {
-            throw new NotImplementedException();
+            return _settingsRootService.Get(assetPairId)?.ExtPriceSettings;
         }
 
         public AssetPairExtPriceSettings GetDefault()

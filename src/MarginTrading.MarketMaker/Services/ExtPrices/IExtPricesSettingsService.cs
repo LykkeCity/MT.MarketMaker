@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models.Settings;
 
@@ -22,7 +23,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
 
         void Update(string assetPairId, AssetPairExtPriceSettings setting, string reason);
         ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
-        AssetPairExtPriceSettings Get(string assetPairId);
+        [CanBeNull] AssetPairExtPriceSettings Get(string assetPairId);
         AssetPairExtPriceSettings GetDefault();
     }
 }
