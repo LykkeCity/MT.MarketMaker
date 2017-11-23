@@ -122,7 +122,14 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 return Task.CompletedTask;
             }
 
-            return SendOrderCommandsAsync(assetPairId, bid, ask);
+            var resultingOrderbook = new Orderbook(assetPairId,
+                ImmutableArray.Create(new OrderbookPosition(bid, OrdersVolume)),
+                ImmutableArray.Create(new OrderbookPosition(ask, OrdersVolume)));
+
+            var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
+                .Add(resultingOrderbook);
+
+            return SendOrderCommandsAsync(orderbooksToSend);
         }
 
         private static IMessageProducer<OrderCommandsBatchMessage> CreateRabbitMqMessageProducer(
