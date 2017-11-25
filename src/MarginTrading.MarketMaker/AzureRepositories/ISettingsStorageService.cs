@@ -3,7 +3,7 @@ using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.AzureRepositories
 {
-    internal interface ISettingsStorage
+    internal interface ISettingsStorageService
     {
         [CanBeNull] SettingsRoot Read();
         void Write(SettingsRoot model);

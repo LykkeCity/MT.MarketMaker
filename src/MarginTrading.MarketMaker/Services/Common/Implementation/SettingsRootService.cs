@@ -10,13 +10,13 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
     internal class SettingsRootService : IStartable, ISettingsRootService
     {
-        private readonly ISettingsStorage _settingsStorage;
+        private readonly ISettingsStorageService _settingsStorageService;
         [CanBeNull] private SettingsRoot _cache;
         private static readonly object _updateLock = new object();
 
-        public SettingsRootService(ISettingsStorage settingsStorage)
+        public SettingsRootService(ISettingsStorageService settingsStorageService)
         {
-            _settingsStorage = settingsStorage;
+            _settingsStorageService = settingsStorageService;
         }
 
         public SettingsRoot Get()
@@ -34,7 +34,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             if (settings == null) throw new ArgumentNullException(nameof(settings));
             lock (_updateLock)
             {
-                _settingsStorage.Write(settings);
+                _settingsStorageService.Write(settings);
                 _cache = settings;
             }
         }
@@ -63,14 +63,14 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             {
                 var oldSettings = Get();
                 var settings = changeFunc(oldSettings);
-                _settingsStorage.Write(settings);
+                _settingsStorageService.Write(settings);
                 _cache = settings;
             }
         }
 
         public void Start()
         {
-            _cache = _settingsStorage.Read()
+            _cache = _settingsStorageService.Read()
                 ?? new SettingsRoot(ImmutableDictionary<string, AssetPairSettings>.Empty);
         }
     }

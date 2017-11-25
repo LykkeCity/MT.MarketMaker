@@ -4,19 +4,20 @@ using AzureStorage.Blob;
 using Common;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Models.Settings;
+using MarginTrading.MarketMaker.Settings;
 using Newtonsoft.Json;
 
 namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
 {
-    internal class SettingsStorage : ISettingsStorage
+    internal class SettingsStorageService : ISettingsStorageService
     {
         private readonly IBlobStorage _blobStorage;
         private const string BlobContainer = "MtMmSettings";
         private const string Key = "SettingsRoot";
 
-        public SettingsStorage(IReloadingManager<string> connectionString)
+        public SettingsStorageService(IReloadingManager<MarginTradingMarketMakerSettings> settings)
         {
-            _blobStorage = AzureBlobStorage.Create(connectionString);
+            _blobStorage = AzureBlobStorage.Create(settings.Nested(s => s.Db.ConnectionString));
         }
 
         public SettingsRoot Read()

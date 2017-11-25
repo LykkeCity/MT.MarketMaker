@@ -53,9 +53,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public void AlertStarted()
         {
             AlertRiskOfficer(null, "Market maker started");
+            var startedMessage = new StartedMessage {MarketMakerId = GetMarketMakerId()};
             _rabbitMqService.GetProducer<StartedMessage>(
                     _settings.Nested(s => s.RabbitMq.Publishers.Started), true)
-                .ProduceAsync(new StartedMessage {MarketMakerId = GetMarketMakerId()});
+                .ProduceAsync(startedMessage);
         }
 
         public Task AlertStopping()

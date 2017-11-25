@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using AzureStorage.Blob;
 using Common;
@@ -86,7 +87,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                         publisher.DisableInMemoryQueuePersistence();
 
                     return publisher
-                        .SetSerializer(new JsonMessageSerializer<TMessage>(JsonSerializerSettings))
+                        .SetSerializer(new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings))
                         .SetLogger(_logger)
                         .Start();
                 });
