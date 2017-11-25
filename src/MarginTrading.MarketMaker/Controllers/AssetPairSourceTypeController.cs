@@ -20,9 +20,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all existing settings
         /// </summary>
         [HttpGet]
-        public ImmutableDictionary<string, AssetPairQuotesSourceTypeEnum> List()
+        public ImmutableDictionary<string, string> List()
         {
-            return _assetPairSourceTypeService.Get();
+            return _assetPairSourceTypeService.Get().ToImmutableDictionary(d => d.Key, d => d.Value.ToString());
         }
 
         /// <summary>
@@ -31,9 +31,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         [HttpGet]
         [Route("{assetPairId}")]
-        public AssetPairQuotesSourceTypeEnum? Get(string assetPairId)
+        public string Get(string assetPairId)
         {
-            return _assetPairSourceTypeService.Get(assetPairId);
+            return _assetPairSourceTypeService.Get(assetPairId).ToString();
         }
 
         /// <summary>

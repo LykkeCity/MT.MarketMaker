@@ -9,13 +9,13 @@ namespace MarginTrading.MarketMaker.Models.Settings
         public string PresetDefaultExchange { get; }
         public decimal OutlierThreshold { get; }
         public TimeSpan MinOrderbooksSendingPeriod { get; }
-        public MarkupsParams Markups { get; }
+        public AssetPairMarkupsParams Markups { get; }
         public RepeatedOutliersParams RepeatedOutliers { get; }
         public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Steps { get; }
         public ImmutableDictionary<string, ExchangeExtPriceSettings> Exchanges { get; }
 
         public AssetPairExtPriceSettings(string presetDefaultExchange, decimal outlierThreshold,
-            TimeSpan minOrderbooksSendingPeriod, MarkupsParams markups, RepeatedOutliersParams repeatedOutliers,
+            TimeSpan minOrderbooksSendingPeriod, AssetPairMarkupsParams markups, RepeatedOutliersParams repeatedOutliers,
             ImmutableDictionary<OrderbookGeneratorStepEnum, bool> steps,
             ImmutableDictionary<string, ExchangeExtPriceSettings> exchanges)
         {
@@ -27,18 +27,6 @@ namespace MarginTrading.MarketMaker.Models.Settings
             Markups = markups ?? throw new ArgumentNullException(nameof(markups));
             RepeatedOutliers = repeatedOutliers ?? throw new ArgumentNullException(nameof(repeatedOutliers));
             Steps = steps ?? throw new ArgumentNullException(nameof(steps));
-        }
-
-        public class MarkupsParams
-        {
-            public decimal Bid { get; }
-            public decimal Ask { get; }
-
-            public MarkupsParams(decimal bid, decimal ask)
-            {
-                Bid = bid;
-                Ask = ask;
-            }
         }
     }
 }

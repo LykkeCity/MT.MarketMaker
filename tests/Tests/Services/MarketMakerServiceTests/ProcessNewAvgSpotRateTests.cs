@@ -63,7 +63,6 @@ namespace Tests.Services.MarketMakerServiceTests
         public async Task IfPairSourceIsSpotAgvPrices_ShouldSendValidMessage()
         {
             //arrange
-
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
                 .Setup<ISystem>(s => s.UtcNow == _now)

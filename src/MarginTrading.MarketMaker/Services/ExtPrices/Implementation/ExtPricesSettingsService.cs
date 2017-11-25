@@ -133,7 +133,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public AssetPairExtPriceSettings GetDefault()
         {
             return new AssetPairExtPriceSettings("",
-                0.05m, TimeSpan.FromSeconds(0.5), new AssetPairExtPriceSettings.MarkupsParams(0, 0),
+                0.05m, TimeSpan.FromSeconds(0.5), new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
                     TimeSpan.FromMinutes(5)),
                 GetDefaultSteps(), ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty);

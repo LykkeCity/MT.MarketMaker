@@ -92,7 +92,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask)
         {
             var quotesSource = _assetPairSourceTypeService.Get(assetPairId);
-            if (quotesSource != null)
+            if (quotesSource != AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
             {
                 return Task.CompletedTask;
             }
