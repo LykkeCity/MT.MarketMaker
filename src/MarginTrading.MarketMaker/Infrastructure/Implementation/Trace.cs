@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using MarginTrading.MarketMaker.Filters;
+using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
@@ -39,12 +40,12 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             Write(msgGroup, msg + ": " + obj.ToJson());
         }
 
-        public static IReadOnlyList<string> GetLast()
+        public static List<LogModel> GetLast()
         {
             return _lastElemsQueues.ToArray()
-                .SelectMany(q => q.Value.ToArray().Select(t => (q.Key, t.Msg, t.Time)))
+                .SelectMany(q => q.Value.ToArray().Select(t =>
+                    new LogModel {Time = t.Time, Group = q.Key, Message = t.Msg}))
                 .OrderByDescending(t => t.Time)
-                .Select(t => $"{t.Time:s}\t{t.Key}\t{t.Msg}")
                 .ToList();
         }
     }

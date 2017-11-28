@@ -69,8 +69,101 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             }
 
             var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
-                .Add(externalOrderbook);
+                .Add(resultingOrderbook);
 
+            return SendOrderCommandsAsync(orderbooksToSend);
+        }
+
+        public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)
+        {
+            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPair);
+            if (quotesSource != AssetPairQuotesSourceTypeEnum.Spot || (orderbook.Prices?.Count ?? 0) == 0)
+            {
+                return Task.CompletedTask;
+            }
+
+            var commands = _spotOrderCommandsGeneratorService.GenerateOrderCommands(orderbook.AssetPair, orderbook.IsBuy,
+                orderbook.Prices[0].Price, OrdersVolume);
+
+            return SendOrderCommandsAsync(orderbook.AssetPair, commands);
+        }
+
+        public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsInputModel model)
+        {
+            AssetPairQuotesSourceTypeEnum? quotesSourceType;
+            if (model.SetSourceType != null)
+            {
+                quotesSourceType = model.SetSourceType.Value;
+                if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
+                {
+                    TestFunctionalityFilter.ValidateTestsEnabled();
+                }
+
+                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(model.AssetPairId,
+                    model.SetSourceType.Value);
+            }
+            else
+            {
+                quotesSourceType = _assetPairsSettingsService.GetAssetPairQuotesSource(model.AssetPairId);
+            }
+
+            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.PriceForBuyOrder != null &&
+                model.PriceForSellOrder != null)
+            {
+                await SendOrderCommandsAsync(model.AssetPairId, model.PriceForBuyOrder.Value, model.PriceForSellOrder.Value);
+            }
+        }
+
+        public Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask)
+        {
+            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(assetPairId);
+            if (quotesSource != AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
+            {
+                return Task.CompletedTask;
+            }
+
+            var resultingOrderbook = new Orderbook(assetPairId,
+                ImmutableArray.Create(new OrderbookPosition(bid, OrdersVolume)),
+                ImmutableArray.Create(new OrderbookPosition(ask, OrdersVolume)));
+
+            var orderbooksToSend = _crossRatesService.CalcDependentOrderbooks(resultingOrderbook)
+                .Add(resultingOrderbook);
+
+            return SendOrderCommandsAsync(orderbooksToSend);
+        }
+
+        private static IMessageProducer<OrderCommandsBatchMessage> CreateRabbitMqMessageProducer(
+            IReloadingManager<MarginTradingMarketMakerSettings> settings, IRabbitMqService rabbitMqService)
+        {
+            return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
+                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
+        }
+
+        private Task SendOrderCommandsAsync(string assetPairId, decimal bid, decimal ask)
+        {
+            var commands = new[]
+            {
+                new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder},
+                new OrderCommand
+                {
+                    CommandType = OrderCommandTypeEnum.SetOrder,
+                    Direction = OrderDirectionEnum.Buy,
+                    Price = bid,
+                    Volume = OrdersVolume
+                },
+                new OrderCommand
+                {
+                    CommandType = OrderCommandTypeEnum.SetOrder,
+                    Direction = OrderDirectionEnum.Sell,
+                    Price = ask,
+                    Volume = OrdersVolume
+                },
+            };
+            return SendOrderCommandsAsync(assetPairId, commands);
+        }
+
+        private Task SendOrderCommandsAsync(IEnumerable<Orderbook> orderbooksToSend)
+        {
             // todo: send batches of batches (because of cross-rates)
             return Task.WhenAll(orderbooksToSend
                 .Select(o =>
@@ -104,71 +197,6 @@ namespace MarginTrading.MarketMaker.Services.Implementation
 
                     return SendOrderCommandsAsync(o.AssetPairId, commands);
                 }));
-        }
-
-        public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)
-        {
-            var quotesSource = _assetPairsSettingsService.GetAssetPairQuotesSource(orderbook.AssetPair);
-            if (quotesSource != AssetPairQuotesSourceTypeEnum.Spot || (orderbook.Prices?.Count ?? 0) == 0)
-            {
-                return Task.CompletedTask;
-            }
-
-            var commands = _spotOrderCommandsGeneratorService.GenerateOrderCommands(orderbook.AssetPair, orderbook.IsBuy,
-                orderbook.Prices[0].Price, OrdersVolume);
-
-            return SendOrderCommandsAsync(orderbook.AssetPair, commands);
-        }
-
-        public async Task ProcessAssetPairSettingsAsync(AssetPairSettingsModel model)
-        {
-            AssetPairQuotesSourceTypeEnum? quotesSourceType;
-            if (model.SetSourceType != null)
-            {
-                quotesSourceType = model.SetSourceType.Value;
-                if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
-                {
-                    TestFunctionalityFilter.ValidateTestsEnabled();
-                }
-
-                await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(model.AssetPairId,
-                    model.SetSourceType.Value);
-            }
-            else
-            {
-                quotesSourceType = _assetPairsSettingsService.GetAssetPairQuotesSource(model.AssetPairId);
-            }
-
-            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual && model.PriceForBuyOrder != null &&
-                model.PriceForSellOrder != null)
-            {
-                var commands = new[]
-                {
-                    new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder},
-                    new OrderCommand
-                    {
-                        CommandType = OrderCommandTypeEnum.SetOrder,
-                        Direction = OrderDirectionEnum.Sell,
-                        Price = model.PriceForSellOrder.Value,
-                        Volume = OrdersVolume
-                    },
-                    new OrderCommand
-                    {
-                        CommandType = OrderCommandTypeEnum.SetOrder,
-                        Direction = OrderDirectionEnum.Buy,
-                        Price = model.PriceForBuyOrder.Value,
-                        Volume = OrdersVolume
-                    },
-                };
-                await SendOrderCommandsAsync(model.AssetPairId, commands);
-            }
-        }
-
-        private static IMessageProducer<OrderCommandsBatchMessage> CreateRabbitMqMessageProducer(
-            IReloadingManager<MarginTradingMarketMakerSettings> settings, IRabbitMqService rabbitMqService)
-        {
-            return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
-                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
         }
 
         private Task SendOrderCommandsAsync(string assetPairId, IReadOnlyList<OrderCommand> commands)

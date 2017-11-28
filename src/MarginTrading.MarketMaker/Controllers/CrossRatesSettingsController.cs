@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.SwaggerGen.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -31,22 +29,14 @@ namespace MarginTrading.MarketMaker.Controllers
 
         /// <summary>
         ///     Replaces all existing settings.
-        ///     Warning: changes also AssetPairQuotesSourceType to CrossRates for the specified assets pairs.
         /// </summary>
         [HttpPost]
         [Route("set")]
         [SwaggerOperation("SetCrossRatesSettings")]
-        public async Task<IActionResult> Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
+        public IActionResult Set([FromBody] IEnumerable<CrossRatesSettingsModel> settings)
         {
             _crossRatesSettingsService.Set(settings.Select(Convert).ToList());
-            //var existingCrossPairs = _dependentCrossRatesService.GetExistingCrossPairs().ToList();
-            //foreach (var assetPairId in existingCrossPairs)
-            //{
-            //    // it's strange
-            //    await _assetPairsSettingsService.SetAssetPairQuotesSourceAsync(assetPairId, AssetPairQuotesSourceTypeEnum.CrossRates);
-            //}
-
-            return Ok(new {success = true });
+            return Ok(new {success = true});
         }
 
         /// <summary>

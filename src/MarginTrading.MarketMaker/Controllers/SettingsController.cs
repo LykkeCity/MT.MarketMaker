@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.SwaggerGen.Annotations;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -26,7 +27,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpPost]
         [Route("set")]
         [SwaggerOperation("SetSettings")]
-        public async Task<IActionResult> Set([FromBody] AssetPairSettingsModel settings)
+        public async Task<IActionResult> Set([FromBody] AssetPairSettingsInputModel settings)
         {
             await _marketMakerService.ProcessAssetPairSettingsAsync(settings);
             return Ok(new {success = true});
@@ -38,7 +39,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpPost]
         [Route("set-array")]
         [SwaggerOperation("SetSettingsArray")]
-        public async Task<IActionResult> Set([FromBody] IReadOnlyList<AssetPairSettingsModel> settings)
+        public async Task<IActionResult> Set([FromBody] IReadOnlyList<AssetPairSettingsInputModel> settings)
         {
             foreach (var setting in settings)
             {
@@ -67,9 +68,15 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("")]
         [SwaggerOperation("GetAllSettings")]
-        public Task<List<AssetPairSettings>> GetAll()
+        public async Task<List<AssetPairSettingsOutputModel>> GetAll()
         {
-            return _assetPairsSettingsService.GetAllPairsSourcesAsync();
+            return (await _assetPairsSettingsService.GetAllPairsSourcesAsync())
+                .Select(s => new AssetPairSettingsOutputModel
+                {
+                    AssetPairId = s.AssetPairId,
+                    QuotesSourceType = s.QuotesSourceType.ToString(),
+                }).ToList();
+
         }
 
         /// <summary>
@@ -79,9 +86,14 @@ namespace MarginTrading.MarketMaker.Controllers
         [Route("{assetPairId}")]
         [SwaggerOperation("GetSettings")]
         [CanBeNull]
-        public AssetPairSettings Get(string assetPairId)
+        public AssetPairSettingsOutputModel Get(string assetPairId)
         {
-            return _assetPairsSettingsService.Get(assetPairId);
+            var source = _assetPairsSettingsService.Get(assetPairId);
+            return new AssetPairSettingsOutputModel
+            {
+                AssetPairId = source.AssetPairId,
+                QuotesSourceType = source.QuotesSourceType.ToString(),
+            };
         }
     }
 }

@@ -1,5 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using FluentAssertions;
+using FluentAssertions.Equivalency;
 using Microsoft.Rest;
+using Moq;
 
 namespace Tests
 {
@@ -13,6 +17,28 @@ namespace Tests
         public static Task<HttpOperationResponse<T>> ToResponse<T>(this T obj)
         {
             return Task.FromResult(new HttpOperationResponse<T> {Body = obj});
+        }
+
+        public static T Equivalent<T>(this T o)
+        {
+            return o.Equivalent(op => op);
+        }
+
+        public static T Equivalent<T>(this T o, Func<EquivalencyAssertionOptions<T>, EquivalencyAssertionOptions<T>> config)
+        {
+            return Match.Create<T>(s =>
+            {
+                try
+                {
+                    s.ShouldBeEquivalentTo(o, config);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return false;
+                }
+            });
         }
     }
 }

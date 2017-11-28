@@ -3,7 +3,8 @@ using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
-using Lykke.Service.Assets.Client.Custom;
+using Lykke.Service.Assets.Client;
+using Lykke.Service.CandlesHistory.Client;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
@@ -42,9 +43,13 @@ namespace MarginTrading.MarketMaker.Modules
 
             builder.RegisterType<BrokerService>().As<IBrokerService>().InstancePerDependency();
 
-            _services.UseAssetsClient(AssetServiceSettings.Create(
+            _services.RegisterAssetsClient(AssetServiceSettings.Create(
                 new Uri(_settings.CurrentValue.MarginTradingMarketMaker.ExternalServices.AssetsServiceUrl),
                 TimeSpan.FromMinutes(5)));
+            builder.RegisterInstance(
+                    new Candleshistoryservice(new Uri(_settings.CurrentValue.CandlesHistoryServiceClient.ServiceUrl)))
+                .As<ICandleshistoryservice>()
+                .SingleInstance();
 
             builder.Populate(_services);
         }

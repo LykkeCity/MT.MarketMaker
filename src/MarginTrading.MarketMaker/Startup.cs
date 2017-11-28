@@ -96,7 +96,7 @@ namespace MarginTrading.MarketMaker
 
                 app.UseMvc();
                 app.UseSwagger();
-                app.UseSwaggerUi();
+                app.UseSwaggerUI(a => a.SwaggerEndpoint("/swagger/v1/swagger.json", "Main Swagger"));
 
                 appLifetime.ApplicationStarted.Register(() => StartApplication().Wait());
                 appLifetime.ApplicationStopping.Register(() => StopApplication().Wait());
