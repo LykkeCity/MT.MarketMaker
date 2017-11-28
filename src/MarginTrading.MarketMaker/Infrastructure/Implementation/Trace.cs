@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MarginTrading.MarketMaker.Filters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
@@ -46,12 +47,12 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             Write(msgGroup, msg + ": " + JsonConvert.SerializeObject(obj, JsonSerializerSettings));
         }
 
-        public static IReadOnlyList<string> GetLast()
+        public static List<LogModel> GetLast()
         {
             return _lastElemsQueues.ToArray()
-                .SelectMany(q => q.Value.ToArray().Select(t => (q.Key, t.Msg, t.Time)))
+                .SelectMany(q => q.Value.ToArray().Select(t =>
+                    new LogModel {Time = t.Time, Group = q.Key, Message = t.Msg}))
                 .OrderByDescending(t => t.Time)
-                .Select(t => $"{t.Time:s}\t{t.Key}\t{t.Msg}")
                 .ToList();
         }
     }

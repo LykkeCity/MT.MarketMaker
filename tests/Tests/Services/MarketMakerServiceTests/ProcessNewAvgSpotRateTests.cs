@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Common;
 using FluentAssertions;
@@ -9,6 +10,8 @@ using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
+using MarginTrading.MarketMaker.Models;
+using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
 using NUnit.Framework;
@@ -45,7 +48,6 @@ namespace Tests.Services.MarketMakerServiceTests
         public async Task IfPairSourceNotNull_ShouldSkip(AssetPairQuotesSourceTypeEnum sourceType)
         {
             //arrange
-
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == sourceType)
                 .Setup<ISystem>(s => s.UtcNow == _now)
@@ -63,11 +65,24 @@ namespace Tests.Services.MarketMakerServiceTests
         public async Task IfPairSourceIsSpotAgvPrices_ShouldSendValidMessage()
         {
             //arrange
+            var resultingOrderbook = new Orderbook("pair",
+                ImmutableArray.Create(new OrderbookPosition(1, 1000000)),
+                ImmutableArray.Create(new OrderbookPosition(2, 1000000)));
+
+            var crossOrderbooks = ImmutableList.Create(
+                new Orderbook("cross pair 1",
+                    ImmutableArray.Create(new OrderbookPosition(11, 1000010)),
+                    ImmutableArray.Create(new OrderbookPosition(12, 1000010))),
+                new Orderbook("cross pair 2",
+                    ImmutableArray.Create(new OrderbookPosition(21, 1000020)),
+                    ImmutableArray.Create(new OrderbookPosition(22, 1000020))));
+
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
-                    s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});
+                    s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"})
+                .Setup<ICrossRatesService>(s => s.CalcDependentOrderbooks(resultingOrderbook.Equivalent()) == crossOrderbooks);
 
             //act
             await _testSuit.Sut.ProcessNewAvgSpotRate("pair", 1, 2);
@@ -76,6 +91,8 @@ namespace Tests.Services.MarketMakerServiceTests
             var expectation = new List<OrderCommandsBatchMessage>
             {
                 MakeOrderCommandsBatchMessage("pair", 0),
+                MakeOrderCommandsBatchMessage("cross pair 1", 10),
+                MakeOrderCommandsBatchMessage("cross pair 2", 20),
             };
             _sentMessages.ShouldAllBeEquivalentTo(expectation);
         }
@@ -89,8 +106,8 @@ namespace Tests.Services.MarketMakerServiceTests
                 Commands = new List<OrderCommand>
                 {
                     new OrderCommand{CommandType = OrderCommandTypeEnum.DeleteOrder},
-                    new OrderCommand{CommandType = OrderCommandTypeEnum.SetOrder, Price = m + 1, Volume = 1000000, Direction = OrderDirectionEnum.Buy},
-                    new OrderCommand{CommandType = OrderCommandTypeEnum.SetOrder, Price = m + 2, Volume = 1000000, Direction = OrderDirectionEnum.Sell},
+                    new OrderCommand{CommandType = OrderCommandTypeEnum.SetOrder, Price = m + 1, Volume = 1000000 + m, Direction = OrderDirectionEnum.Buy},
+                    new OrderCommand{CommandType = OrderCommandTypeEnum.SetOrder, Price = m + 2, Volume = 1000000 + m, Direction = OrderDirectionEnum.Sell},
                 },
                 MarketMakerId = "mm id",
             };

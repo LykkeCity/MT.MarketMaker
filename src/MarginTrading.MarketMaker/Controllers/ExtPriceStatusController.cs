@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
@@ -44,9 +45,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs")]
         [CanBeNull]
-        public string GetLogs()
+        public List<LogModel> GetLogs()
         {
-            return string.Join("\r\n", Trace.GetLast());
+            return Trace.GetLast();
         }
 
         /// <summary>
@@ -55,9 +56,10 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs/{contains}")]
         [CanBeNull]
-        public string GetLogsFiltered(string contains)
+        public IEnumerable<LogModel> GetLogsFiltered(string contains)
         {
-            return string.Join("\r\n", Trace.GetLast().Where(l => l.Contains(contains)));
+            return Trace.GetLast().Where(l =>
+                (l.Group + '\t' + l.Message).IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0);
         }
     }
 }
