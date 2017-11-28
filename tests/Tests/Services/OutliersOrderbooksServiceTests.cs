@@ -2,14 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using Common;
-using FluentAssertions;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services;
 using MarginTrading.MarketMaker.Services.Implementation;
-using Moq;
-using MoreLinq;
 using NUnit.Framework;
 
 namespace Tests.Services
@@ -29,14 +25,18 @@ namespace Tests.Services
             foreach (var (threshold, result) in others)
                 yield return new TestCaseData(prices, threshold).Returns(result);
         }
-
+        
         public static IEnumerable<TestCaseData> GetCases() {
 
-            return
-                // encompassing, odd exchanges count
+            return new [] {
+                // last exchange encompassing all, odd exchanges count
                 GetCasesForPrices(new decimal[] {100, 101, 102, 103, 100, 103, 99, 101, 70, 110},
-                    (0.02m, new[] {2, 5}), (0.03m, new[] {5}), (0.3m, new[] {5}), (0.301m, new int[0]))
-                ;
+                    (0.02m, new[] {2, 5}), (0.03m, new[] {5}), (0.3m, new[] {5}), (0.301m, new int[0])),
+                GetCasesForPrices(new decimal[] {100, 101, 102, 103, 100, 103, 99, 101, 110, 111},
+                    (0.019m, new[] {1, 2, 4, 5}), (0.02m, new[] {2, 5}), (0.021m, new[] {5}), (0.10m, new[] {5}), (0.101m, new int[0])),
+                GetCasesForPrices(new decimal[] {100, 101, 102, 103, 100, 103, 99, 101, 50, 51},
+                    (0.50m, new[] {5}), (0.501m, new int[0])),
+                }.SelectMany(c => c);
         }
 
         [TestCaseSource(nameof(GetCases))]

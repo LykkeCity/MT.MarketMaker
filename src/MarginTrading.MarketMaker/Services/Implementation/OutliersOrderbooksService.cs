@@ -5,6 +5,7 @@ using System.Linq;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
+using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
@@ -36,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     Bid = bestPrices.BestBid,
                     Ask = bestPrices.BestAsk,
                 };
-            }).ToList();
+            }).OrderBy(c => c.Orderbook.ExchangeName).ToList();
 
             foreach (var context in contexts)
             {
@@ -84,7 +85,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             var result = new List<ExternalOrderbook>();
             foreach (var context in contexts)
             {
-                if (context.BidRelativeDiff >= relativeThreshold)
+                if (Math.Abs(context.BidRelativeDiff) >= relativeThreshold)
                 {
                     Trace.Write(assetPairId + " err trace", "Outlier (bid)", new
                     {
@@ -101,7 +102,7 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                     });
                     result.Add(context.Orderbook);
                 }
-                else if (context.AskRelativeDiff >= relativeThreshold)
+                else if (Math.Abs(context.AskRelativeDiff) >= relativeThreshold)
                 {
                     Trace.Write(assetPairId + " err trace", "Outlier (ask)", new
                     {
@@ -120,9 +121,6 @@ namespace MarginTrading.MarketMaker.Services.Implementation
                 }
             }
 
-#if DEBUG
-            Trace.Write(contexts);
-#endif
             return result;
         }
 
