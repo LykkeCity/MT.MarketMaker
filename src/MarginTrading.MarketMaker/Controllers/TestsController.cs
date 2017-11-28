@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Models.Api;
@@ -30,8 +32,9 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Adds settings
         /// </summary>
         [HttpPut]
-        public IActionResult Add([FromBody] ImmutableList<TestSettingModel> settings)
+        public IActionResult Add([NotNull] [FromBody] ImmutableList<TestSettingModel> settings)
         {
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             _testingHelperService.Add(settings);
             return Ok(new {success = true});
         }
@@ -52,8 +55,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpDelete]
         [Route("{assetPairId}/{exchange}")]
-        public IActionResult Delete(string assetPairId, string exchange)
+        public IActionResult Delete([NotNull] string assetPairId, [NotNull] string exchange)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            if (exchange == null) throw new ArgumentNullException(nameof(exchange));
             _testingHelperService.Delete(assetPairId, exchange);
             return Ok(new {success = true});
         }
@@ -72,15 +77,18 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}/{exchange}")]
-        public ImmutableList<TestSettingModel> Get(string assetPairId, string exchange)
+        public ImmutableList<TestSettingModel> Get([NotNull] string assetPairId, [NotNull] string exchange)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            if (exchange == null) throw new ArgumentNullException(nameof(exchange));
             return _testingHelperService.Get(assetPairId, exchange);
         }
 
         [HttpPost]
         [Route("manual-price/{assetPairId}")]
-        public async Task<IActionResult> SetManualPrice(string assetPairId, decimal bid, decimal ask)
+        public async Task<IActionResult> SetManualPrice([NotNull] string assetPairId, decimal bid, decimal ask)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId,
                 AssetPairQuotesSourceTypeEnum.Manual);
             await _marketMakerService.ProcessNewManualQuotes(assetPairId, bid, ask);

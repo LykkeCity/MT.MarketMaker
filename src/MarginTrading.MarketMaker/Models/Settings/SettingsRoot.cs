@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 
 namespace MarginTrading.MarketMaker.Models.Settings
 {
-    internal class SettingsRoot
+    public class SettingsRoot
     {
-        public ImmutableDictionary<string, AssetPairSettings> AssetPairs;
+        public ImmutableDictionary<string, AssetPairSettings> AssetPairs { get; }
 
         public SettingsRoot(ImmutableDictionary<string, AssetPairSettings> assetPairs)
         {

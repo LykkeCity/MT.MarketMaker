@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.Common;
@@ -14,21 +13,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
     internal class ExtPricesSettingsService : IExtPricesSettingsService
     {
+        private const bool DefaultStepEnabled = true;
         private readonly IAlertService _alertService;
         private readonly ISettingsRootService _settingsRootService;
-        private readonly IConvertService _convertService;
 
-        public ExtPricesSettingsService(IAlertService alertService, ISettingsRootService settingsRootService,
-            IConvertService convertService)
+        public ExtPricesSettingsService(IAlertService alertService, ISettingsRootService settingsRootService)
         {
             _alertService = alertService;
             _settingsRootService = settingsRootService;
-            _convertService = convertService;
         }
 
         public bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId)
         {
-            return GetAsset(assetPairId).Steps.GetValueOrDefault(step, true);
+            return GetAsset(assetPairId).Steps.GetValueOrDefault(step, DefaultStepEnabled);
         }
 
         public string GetPresetPrimaryExchange(string assetPairId)
@@ -81,11 +78,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             if (exchanges.Count == 0)
                 return;
 
-            //todo: test
             UpdateExchanges(assetPairId, exchanges,
-                old => _convertService.Clone(old, op => op.ConfigureMap()
-                    .ForMember(s => s.Disabled,
-                        o => o.ResolveUsing(s => new ExchangeDisabledSettings(disable, reason)))),
+                old => new ExchangeExtPriceSettings(old.OrderbookOutdatingThreshold,
+                    new ExchangeDisabledSettings(disable, reason), old.Hedging, old.OrderGeneration),
                 reason);
         }
 
@@ -114,15 +109,46 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return GetAsset(assetPairId).MinOrderbooksSendingPeriod;
         }
 
-        public void Update(string assetPairId, AssetPairExtPriceSettings setting, string reason)
+        public void UpdateWithoutExchanges(string assetPairId, AssetPairExtPriceSettings setting, string reason)
         {
-            Update(assetPairId, old => setting, reason);
+            Update(assetPairId, old => AssetPairExtPriceSettings.Change(setting, old.Exchanges), reason);
         }
 
         public ImmutableDictionary<string, AssetPairExtPriceSettings> Get()
         {
             return _settingsRootService.Get().AssetPairs
                 .ToImmutableDictionary(a => a.Key, a => a.Value.ExtPriceSettings);
+        }
+
+        [CanBeNull]
+        public ExchangeExtPriceSettings Get(string assetPairId, string exchangeName)
+        {
+            return TryGetExchange(assetPairId, exchangeName);
+        }
+
+        [CanBeNull]
+        public ExchangeExtPriceSettings Add(string assetPairId, string exchangeName, string reason)
+        {
+            var newExchange = GetDefaultExchange();
+            Update(assetPairId, old => AssetPairExtPriceSettings.Change(old,
+                old.Exchanges.Add(exchangeName, newExchange)), reason);
+            return newExchange;
+        }
+
+        public void Update(string assetPairId, string exchangeName, ExchangeExtPriceSettings settings, string reason)
+        {
+            if (TryGetExchange(assetPairId, exchangeName) == null)
+                throw new Exception($"Exchange {exchangeName} already exist for asset pair {assetPairId}");
+
+            Update(assetPairId, old => AssetPairExtPriceSettings.Change(old,
+                old.Exchanges.SetItem(exchangeName, settings)), reason);
+        }
+
+        [CanBeNull]
+        public ImmutableDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettings>> GetExchanges()
+        {
+            return _settingsRootService.Get().AssetPairs
+                .ToImmutableDictionary(a => a.Key, a => a.Value.ExtPriceSettings.Exchanges);
         }
 
         public AssetPairExtPriceSettings Get(string assetPairId)
@@ -137,6 +163,13 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
                     TimeSpan.FromMinutes(5)),
                 GetDefaultSteps(), ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty);
+        }
+
+        private static ExchangeExtPriceSettings GetDefaultExchange()
+        {
+            return new ExchangeExtPriceSettings(TimeSpan.FromSeconds(30), new ExchangeDisabledSettings(false, ""),
+                new ExchangeHedgingSettings(0, false),
+                new ExchangeOrderGenerationSettings(1, TimeSpan.FromSeconds(10)));
         }
 
         private static bool CanPerformHedging(KeyValuePair<string, ExchangeExtPriceSettings> keyValuePair)
@@ -206,9 +239,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 var newExchanges = old.Exchanges
                     .SetItems(old.Exchanges.Where(o => exchangesHashSet.Contains(o.Key))
                         .Select(s => KeyValuePair.Create(s.Key, changeFunc(s.Value))));
-                //todo: test
-                return _convertService.Clone(old, op => op.ConfigureMap()
-                    .ForMember(s => s.Exchanges, o => o.ResolveUsing(s => newExchanges)));
+                return AssetPairExtPriceSettings.Change(old, newExchanges);
             }, reason);
         }
 
@@ -239,16 +270,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ExchangesStateChanged(assetPairId, enable.Select(t => t.Key), "enabled", reason);
         }
 
-        private static ImmutableDictionary<OrderbookGeneratorStepEnum, bool> ConvertSteps(
-            ImmutableDictionary<OrderbookGeneratorStepEnum, bool> steps)
-        {
-            return GetDefaultSteps().SetItems(steps);
-        }
-
-        private static ImmutableDictionary<OrderbookGeneratorStepEnum, bool> GetDefaultSteps()
+        public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> GetDefaultSteps()
         {
             return Enum.GetValues(typeof(OrderbookGeneratorStepEnum)).Cast<OrderbookGeneratorStepEnum>()
-                .ToImmutableDictionary(e => e, e => true);
+                .ToImmutableDictionary(e => e, e => DefaultStepEnabled);
         }
     }
 }

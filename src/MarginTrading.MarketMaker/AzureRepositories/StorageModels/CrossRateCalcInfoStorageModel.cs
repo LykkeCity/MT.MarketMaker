@@ -2,6 +2,8 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
 {
     internal class CrossRateCalcInfoStorageModel
     {
+        public string ResultingPairId { get; set; }
+        
         public CrossRateSourceAssetPair Source1 { get; set; }
             = new CrossRateSourceAssetPair();
 

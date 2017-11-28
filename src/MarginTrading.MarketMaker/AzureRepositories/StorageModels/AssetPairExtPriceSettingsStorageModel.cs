@@ -15,6 +15,9 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
         public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Steps { get; set; }
             = ImmutableDictionary<OrderbookGeneratorStepEnum, bool>.Empty;
 
+        public ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel> Exchanges { get; set; }
+            = ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty;
+
         public class MarkupsParams
         {
             public decimal Bid { get; set; }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using AutoMapper;
 
 namespace MarginTrading.MarketMaker.Infrastructure
@@ -7,6 +8,5 @@ namespace MarginTrading.MarketMaker.Infrastructure
     {
         TResult Convert<TSource, TResult>(TSource source, Action<IMappingOperationOptions<TSource, TResult>> opts);
         TResult Convert<TSource, TResult>(TSource source);
-        T Clone<T>(T source, Action<IMappingOperationOptions<T, T>> opts);
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.CrossRates;
@@ -25,8 +27,9 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Update setting for a resulting cross-pair
         /// </summary>
         [HttpPost]
-        public IActionResult Update([FromBody] CrossRateCalcInfoModel settings)
+        public IActionResult Update([NotNull] [FromBody] CrossRateCalcInfoModel settings)
         {
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             _crossRateCalcInfosService.Update(Convert(settings));
             return Ok(new {success = true});
         }
@@ -44,8 +47,10 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Gets all existing settings
         /// </summary>
         [HttpGet]
-        public CrossRateCalcInfoModel Get(string assetPairId)
+        [Route("{assetPairId}")]
+        public CrossRateCalcInfoModel Get([NotNull] string assetPairId)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             return Convert(_crossRateCalcInfosService.Get(assetPairId));
         }
 

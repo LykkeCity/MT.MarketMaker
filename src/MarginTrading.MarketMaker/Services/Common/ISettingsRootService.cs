@@ -7,7 +7,7 @@ namespace MarginTrading.MarketMaker.Services.Common
     /// <remarks>
     /// No async here because of a lock inside
     /// </remarks>
-    internal interface ISettingsRootService
+    public interface ISettingsRootService
     {
         void Set(SettingsRoot settings);
         SettingsRoot Get();

@@ -28,5 +28,11 @@ namespace MarginTrading.MarketMaker.Models.Settings
             RepeatedOutliers = repeatedOutliers ?? throw new ArgumentNullException(nameof(repeatedOutliers));
             Steps = steps ?? throw new ArgumentNullException(nameof(steps));
         }
+
+        public static AssetPairExtPriceSettings Change(AssetPairExtPriceSettings src, ImmutableDictionary<string, ExchangeExtPriceSettings> exchanges)
+        {
+            return new AssetPairExtPriceSettings(src.PresetDefaultExchange, src.OutlierThreshold,
+                src.MinOrderbooksSendingPeriod, src.Markups, src.RepeatedOutliers, src.Steps, exchanges);
+        }
     }
 }

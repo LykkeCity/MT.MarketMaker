@@ -3,7 +3,7 @@ using MarginTrading.MarketMaker.Services.CrossRates.Models;
 
 namespace MarginTrading.MarketMaker.Models.Settings
 {
-    internal class AssetPairSettings
+    public class AssetPairSettings
     {
         public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; }
         public AssetPairExtPriceSettings ExtPriceSettings { get; }

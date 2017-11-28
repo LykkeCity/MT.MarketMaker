@@ -1,17 +1,19 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class AssetPairSourceTypeController : Controller
+    public class AssetPairController : Controller
     {
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
-        public AssetPairSourceTypeController(IAssetPairSourceTypeService assetPairSourceTypeService)
+        public AssetPairController(IAssetPairSourceTypeService assetPairSourceTypeService)
         {
             _assetPairSourceTypeService = assetPairSourceTypeService;
         }
@@ -20,9 +22,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all existing settings
         /// </summary>
         [HttpGet]
-        public ImmutableDictionary<string, string> List()
+        public ImmutableDictionary<string, AssetPairModel> List()
         {
-            return _assetPairSourceTypeService.Get().ToImmutableDictionary(d => d.Key, d => d.Value.ToString());
+            return _assetPairSourceTypeService.Get()
+                .ToImmutableDictionary(d => d.Key, d => new AssetPairModel {SourceType = d.Value.ToString()});
         }
 
         /// <summary>
@@ -31,9 +34,10 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         [HttpGet]
         [Route("{assetPairId}")]
-        public string Get(string assetPairId)
+        public AssetPairModel Get([NotNull] string assetPairId)
         {
-            return _assetPairSourceTypeService.Get(assetPairId).ToString();
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            return new AssetPairModel {SourceType = _assetPairSourceTypeService.Get(assetPairId).ToString()};
         }
 
         /// <summary>
@@ -41,8 +45,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPut]
         [Route("{assetPairId}")]
-        public IActionResult Add(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
             return Ok(new { success = true });
         }
@@ -52,8 +57,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public IActionResult Update(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Update([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId, sourceType);
             return Ok(new { success = true });
         }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using JetBrains.Annotations;
@@ -27,9 +28,10 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Updates settings for an asset pair
         /// </summary>
         [HttpPost]
-        public IActionResult Update(AssetPairExtPriceSettingsModel setting)
+        public IActionResult Update([NotNull] AssetPairExtPriceSettingsModel setting)
         {
-            _extPricesSettingsService.Update(setting.AssetPairId, Convert(setting), "settings was manually changed");
+            if (setting == null) throw new ArgumentNullException(nameof(setting));
+            _extPricesSettingsService.UpdateWithoutExchanges(setting.AssetPairId, Convert(setting), "settings was manually changed");
             return Ok(new {success = true});
         }
 
@@ -48,8 +50,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("{assetPairId}")]
         [CanBeNull]
-        public AssetPairExtPriceSettingsModel Get(string assetPairId)
+        public AssetPairExtPriceSettingsModel Get([NotNull] string assetPairId)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             return Convert(assetPairId, _extPricesSettingsService.Get(assetPairId));
         }
 
@@ -70,18 +73,24 @@ namespace MarginTrading.MarketMaker.Controllers
                 })).ToList();
         }
 
-        private AssetPairExtPriceSettingsModel Convert(string assetPairId, AssetPairExtPriceSettings setting)
+        [CanBeNull]
+        private AssetPairExtPriceSettingsModel Convert(string assetPairId, [CanBeNull] AssetPairExtPriceSettings setting)
         {
+            if (setting == null)
+                return null;
+            
             var model = _convertService.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(setting,
                 o => o.ConfigureMap(MemberList.Source));
             model.AssetPairId = assetPairId;
+            model.Steps = _extPricesSettingsService.GetDefaultSteps().SetItems(setting.Steps);
             return model;
         }
 
         private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)
         {
-            return _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
+            var settings = _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
                 o => o.ConfigureMap(MemberList.Destination));
+            return settings;
         }
     }
 }

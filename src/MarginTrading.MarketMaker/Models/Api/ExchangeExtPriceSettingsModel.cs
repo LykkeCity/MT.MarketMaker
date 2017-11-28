@@ -4,6 +4,7 @@ namespace MarginTrading.MarketMaker.Models.Api
 {
     public class ExchangeExtPriceSettingsModel
     {
+        public string AssetPairId { get; set; }
         public string ExchangeName { get; set; }
         public TimeSpan OrderbookOutdatingThreshold { get; set; }
         public DisabledSettingsModel Disabled { get; set; } = new DisabledSettingsModel();
