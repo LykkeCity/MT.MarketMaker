@@ -34,22 +34,24 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             _stopTradesService = stopTradesService;
         }
 
-        [Pure]
         public IReadOnlyDictionary<string, string> GetLastPrimaryExchanges()
         {
             return _primaryExchanges.ToImmutableDictionary();
         }
 
-        [Pure]
         public string GetLastPrimaryExchange(string assetPairId)
         {
             return _primaryExchanges.GetOrDefault(assetPairId);
         }
 
-        [Pure]
         public IReadOnlyDictionary<string, ImmutableDictionary<string, ExchangeQuality>> GetQualities()
         {
             return _exchangesQualities.ToImmutableDictionary();
+        }
+
+        public ImmutableDictionary<string, ExchangeQuality> GetQualities(string assetPairId)
+        {
+            return _exchangesQualities.GetValueOrDefault(assetPairId, ImmutableDictionary<string, ExchangeQuality>.Empty);
         }
 
         public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors,
