@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
+using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.Implementation
 {
@@ -23,67 +25,122 @@ namespace MarginTrading.MarketMaker.Services.Implementation
             _primaryExchangeService = primaryExchangeService;
         }
 
-        public IReadOnlyList<ExternalOrderbook> FindOutliers(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> validOrderbooks)
+        public IReadOnlyList<ExternalOrderbook> FindOutliers(string assetPairId,
+            ImmutableDictionary<string, ExternalOrderbook> validOrderbooks)
         {
-            var bestPrices = validOrderbooks.Values
-                .Select(o => (Orderbook: o, BestPrices: _bestPricesService.CalcExternal(o)))
-                .ToList();
-
-            var result = new List<ExternalOrderbook>();
-            var medianBid = GetMedian(bestPrices.Select(p => p.BestPrices.BestBid), true);
-            var medianAsk = GetMedian(bestPrices.Select(p => p.BestPrices.BestAsk), false);
-            var threshold = GetOutlierThreshold(assetPairId);
-            foreach (var (orderbook, prices) in bestPrices)
+            var contexts = validOrderbooks.Values.Select(o =>
             {
-                if (Math.Abs(prices.BestBid - medianBid) > threshold * medianBid)
+                var bestPrices = _bestPricesService.Calc(o);
+                return new CalcContext
+                {
+                    Orderbook = o,
+                    Bid = bestPrices.BestBid,
+                    Ask = bestPrices.BestAsk,
+                };
+            }).OrderBy(c => c.Orderbook.ExchangeName).ToList();
+
+            foreach (var context in contexts)
+            {
+                context.BidRank = contexts.Count(c => c.Bid < context.Bid);
+                context.AskRank = contexts.Count(c => c.Ask < context.Ask);
+            }
+
+            foreach (var context in contexts)
+            {
+                context.BidDistancesSum = contexts.Select(c => Square(c.BidRank - context.BidRank)).Sum();
+                context.AskDistancesSum = contexts.Select(c => Square(c.AskRank - context.AskRank)).Sum();
+                context.DistancesSum = context.BidDistancesSum + context.AskDistancesSum;
+            }
+
+            var minDistance = contexts.Min(c => c.DistancesSum);
+
+            CalcContext center;
+            var possibleCenters = contexts.Where(c => c.DistancesSum == minDistance).ToList();
+            if (possibleCenters.Count == 1)
+            {
+                center = possibleCenters[0];
+            }
+            else
+            {
+                var primaryExchange = _primaryExchangeService.GetLastPrimaryExchange(assetPairId);
+                center = possibleCenters.FirstOrDefault(c => c.Orderbook.ExchangeName == primaryExchange);
+                if (center == null)
+                {
+                    var qualities = _primaryExchangeService.GetQualities(assetPairId);
+                    center = possibleCenters
+                        .Select(c => new { c, quality = qualities.GetValueOrDefault(c.Orderbook.ExchangeName) })
+                        .OrderBy(c => c.quality?.Error ?? ExchangeErrorState.Disabled)
+                        .ThenByDescending(c => c.quality.HedgingPreference)
+                        .First().c;
+                }
+            }
+
+            foreach (var context in contexts)
+            {
+                context.BidRelativeDiff = (context.Bid - center.Bid) / center.Bid;
+                context.AskRelativeDiff = (context.Ask - center.Ask) / center.Ask;
+            }
+
+            var relativeThreshold = _priceCalcSettingsService.GetOutlierThreshold(assetPairId);
+            var result = new List<ExternalOrderbook>();
+            foreach (var context in contexts)
+            {
+                if (Math.Abs(context.BidRelativeDiff) >= relativeThreshold)
                 {
                     Trace.Write(assetPairId + " err trace", "Outlier (bid)", new
                     {
-                        orderbook.AssetPairId,
-                        orderbook.ExchangeName,
-                        prices.BestBid,
-                        medianBid,
-                        deviation = Math.Abs(prices.BestBid - medianBid),
-                        threshold,
-                        thresholdBid = threshold * medianBid
+                        context.Orderbook.AssetPairId,
+                        context.Orderbook.ExchangeName,
+                        context.Bid,
+                        context.BidRank,
+                        context.BidDistancesSum,
+                        context.DistancesSum,
+                        centerBid = center.Bid,
+                        centerExchange = center.Orderbook.ExchangeName,
+                        context.BidRelativeDiff,
+                        relativeThreshold
                     });
-                    result.Add(orderbook);
+                    result.Add(context.Orderbook);
                 }
-                else if (Math.Abs(prices.BestAsk - medianAsk) > threshold * medianAsk)
+                else if (Math.Abs(context.AskRelativeDiff) >= relativeThreshold)
                 {
                     Trace.Write(assetPairId + " err trace", "Outlier (ask)", new
                     {
-                        orderbook.AssetPairId,
-                        orderbook.ExchangeName,
-                        prices.BestAsk,
-                        medianAsk,
-                        deviation = Math.Abs(prices.BestAsk - medianAsk),
-                        threshold,
-                        thresholdAsk = threshold * medianAsk
+                        context.Orderbook.AssetPairId,
+                        context.Orderbook.ExchangeName,
+                        context.Ask,
+                        context.AskRank,
+                        context.AskDistancesSum,
+                        context.DistancesSum,
+                        centerAsk = center.Ask,
+                        centerExchange = center.Orderbook.ExchangeName,
+                        context.AskRelativeDiff,
+                        relativeThreshold
                     });
-                    result.Add(orderbook);
+                    result.Add(context.Orderbook);
                 }
             }
 
             return result;
         }
 
-        private decimal GetOutlierThreshold(string assetPairId)
+        private static int Square(int d)
         {
-            return _priceCalcSettingsService.GetOutlierThreshold(assetPairId);
+            return d * d;
         }
 
-        private static decimal GetMedian(IEnumerable<decimal> src, bool onEvenCountGetLesser)
+        private class CalcContext
         {
-            // todo: choose using "2d ranked range median" algo
-            var sorted = src.OrderBy(e => e).ToList();
-            int mid = sorted.Count / 2;
-            if (sorted.Count % 2 != 0)
-                return sorted[mid];
-            else if (onEvenCountGetLesser)
-                return sorted[mid - 1];
-            else
-                return sorted[mid];
+            public ExternalOrderbook Orderbook { get; set; }
+            public decimal Bid { get; set; }
+            public decimal Ask { get; set; }
+            public decimal BidRelativeDiff { get; set; }
+            public decimal AskRelativeDiff { get; set; }
+            public int BidRank { get; set; }
+            public int AskRank { get; set; }
+            public int BidDistancesSum { get; set; }
+            public int AskDistancesSum { get; set; }
+            public int DistancesSum { get; set; }
         }
     }
 }
