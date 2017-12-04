@@ -3,15 +3,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <NoWarn>$(NoWarn);1591</NoWarn>
-    <Version>1.0.1</Version>
+    <Version>2.0.0</Version>
     <AssemblyName>MarginTrading.MarketMaker</AssemblyName>
     <RootNamespace>MarginTrading.MarketMaker</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>7.1</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -26,7 +23,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AgileObjects.ReadableExpressions" Version="1.9.5" />
     <PackageReference Include="AutoMapper" Version="6.2.1" />
     <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
     <PackageReference Include="Lykke.Common" Version="3.0.2" />

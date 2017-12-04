@@ -9,11 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class AssetPairController : Controller
+    public class AssetPairsController : Controller
     {
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
-        public AssetPairController(IAssetPairSourceTypeService assetPairSourceTypeService)
+        public AssetPairsController(IAssetPairSourceTypeService assetPairSourceTypeService)
         {
             _assetPairSourceTypeService = assetPairSourceTypeService;
         }
