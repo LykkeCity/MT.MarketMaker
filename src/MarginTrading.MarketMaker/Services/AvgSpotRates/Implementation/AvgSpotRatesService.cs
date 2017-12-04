@@ -22,7 +22,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
         public AvgSpotRatesService(ILog log, ICandleshistoryservice candlesHistoryService, ISystem system,
             IMarketMakerService marketMakerService)
             : base(Startup.ServiceName + '_' + nameof(AvgSpotRatesService),
-                (int) TimeSpan.FromHours(1).TotalMilliseconds, log)
+                (int) TimeSpan.FromMinutes(1).TotalMilliseconds, log)
         {
             _candlesHistoryService = candlesHistoryService;
             _system = system;
