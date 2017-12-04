@@ -57,7 +57,7 @@ namespace MarginTrading.MarketMaker.Controllers
                                 e.Hedging.IsTemporarilyUnavailable),
                             new ExchangeOrderGenerationSettings(e.OrderGeneration.VolumeMultiplier,
                                 e.OrderGeneration.OrderRenewalDelay))));
-            var cross = _crossRateCalcInfosService.Get().FirstOrDefault() ?? new CrossRateCalcInfo("",
+            var cross = _crossRateCalcInfosService.Get().FirstOrDefault(c => c.ResultingPairId == s.AssetPairId) ?? new CrossRateCalcInfo("",
                             new CrossRateSourceAssetPair("", false), new CrossRateSourceAssetPair("", false));
             return new AssetPairSettings(s.QuotesSourceType,
                 extGenerated,
