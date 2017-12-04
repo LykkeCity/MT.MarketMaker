@@ -80,7 +80,7 @@ namespace MarginTrading.MarketMaker.Controllers
                 return null;
             
             var model = _convertService.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(setting,
-                o => o.ConfigureMap(MemberList.Source));
+                o => o.ConfigureMap(MemberList.Source).ForSourceMember(s => s.Exchanges, e => e.Ignore()));
             model.AssetPairId = assetPairId;
             model.Steps = _extPricesSettingsService.GetDefaultSteps().SetItems(setting.Steps);
             return model;
@@ -89,7 +89,7 @@ namespace MarginTrading.MarketMaker.Controllers
         private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)
         {
             var settings = _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
-                o => o.ConfigureMap(MemberList.Destination));
+                o => o.ConfigureMap(MemberList.Destination).ForMember(s => s.Exchanges, e => e.Ignore()));
             return settings;
         }
     }
