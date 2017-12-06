@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models.Api;
@@ -22,10 +24,24 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all existing settings
         /// </summary>
         [HttpGet]
-        public ImmutableDictionary<string, AssetPairModel> List()
+        public IReadOnlyList<AssetPairModel> List()
         {
             return _assetPairSourceTypeService.Get()
-                .ToImmutableDictionary(d => d.Key, d => new AssetPairModel {SourceType = d.Value.ToString()});
+                .OrderBy(d => d.Key)
+                .Select(d => new AssetPairModel {SourceType = d.Value.ToString(), AssetPairId = d.Key})
+                .ToList();
+        }
+
+        /// <summary>
+        /// Adds default settings for an asset pair
+        /// </summary>
+        [HttpPost]
+        [Route("{assetPairId}")]
+        public IActionResult Add([NotNull] string assetPairId, [FromBody] AssetPairQuotesSourceTypeEnum sourceType)
+        {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
+            return Ok(new { success = true });
         }
 
         /// <summary>
@@ -37,30 +53,32 @@ namespace MarginTrading.MarketMaker.Controllers
         public AssetPairModel Get([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            return new AssetPairModel {SourceType = _assetPairSourceTypeService.Get(assetPairId).ToString()};
-        }
-
-        /// <summary>
-        /// Inserts settings for an asset pair
-        /// </summary>
-        [HttpPut]
-        [Route("{assetPairId}")]
-        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
-        {
-            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
-            return Ok(new { success = true });
+            var sourceType = _assetPairSourceTypeService.Get(assetPairId);
+            return sourceType != null 
+                ? new AssetPairModel {SourceType = sourceType.ToString(), AssetPairId = assetPairId }
+                : null;
         }
 
         /// <summary>
         /// Updates settings for an asset pair
         /// </summary>
-        [HttpPost]
+        [HttpPut]
+        public IActionResult Update([NotNull] [FromBody] AssetPairInputModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(model.AssetPairId, model.SourceType);
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Deletes settings for an asset pair
+        /// </summary>
+        [HttpDelete]
         [Route("{assetPairId}")]
-        public IActionResult Update([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Delete([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId, sourceType);
+            _assetPairSourceTypeService.Delete(assetPairId);
             return Ok(new { success = true });
         }
     }

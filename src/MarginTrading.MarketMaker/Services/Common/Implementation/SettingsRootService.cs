@@ -51,6 +51,22 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             });
         }
 
+        public void Delete([NotNull] string assetPairId)
+        {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            Change(old =>
+            {
+                var newSettings = old.AssetPairs.Remove(assetPairId);
+                if (newSettings == old.AssetPairs)
+                {
+                    throw new ArgumentException($"Settings for {assetPairId} not found",
+                        nameof(assetPairId));
+                }
+                
+                return new SettingsRoot(newSettings);
+            });
+        }
+
         public void Add(string assetPairId, [NotNull] AssetPairSettings settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));

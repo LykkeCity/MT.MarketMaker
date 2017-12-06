@@ -54,7 +54,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return _exchangesQualities.GetValueOrDefault(assetPairId, ImmutableDictionary<string, ExchangeQuality>.Empty);
         }
 
-        public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorState> errors,
+        public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorStateEnum> errors,
             DateTime now, string currentProcessingExchange)
         {
             if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.ChoosePrimary, assetPairId))
@@ -67,8 +67,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now, currentProcessingExchange);
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
             _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.ExchangeName, now,
-                primaryQuality.HedgingPreference, primaryQuality.Error);
-            return primaryQuality.Error == ExchangeErrorState.Outlier ? null : primaryQuality.ExchangeName;
+                primaryQuality.HedgingPreference, primaryQuality.ErrorState);
+            return primaryQuality.ErrorState == ExchangeErrorStateEnum.Outlier ? null : primaryQuality.ExchangeName;
         }
 
         private ExchangeQuality CheckPrimaryStatusAndSwitchIfNeeded(string assetPairId,
@@ -82,18 +82,18 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 var result = SwitchPrimaryExchange(assetPairId, null, exchangeQualities,
                     newPrimary =>
                         $"{newPrimary.ExchangeName} has been chosen as an initial primary exchange for {assetPairId}. " +
-                        $"It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
+                        $"It has error state \"{newPrimary.ErrorState}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
                 return result;
             }
 
             var primaryQuality = exchangeQualities.GetValueOrDefault(primaryExchange);
             var primaryPreference = primaryQuality.HedgingPreference;
-            var primaryError = primaryQuality.Error;
+            var primaryError = primaryQuality.ErrorState;
             switch (primaryError)
             {
-                case ExchangeErrorState.Valid when primaryPreference > 0:
+                case ExchangeErrorStateEnum.Valid when primaryPreference > 0:
                     return primaryQuality;
-                case ExchangeErrorState.Outlier when primaryPreference > 0:
+                case ExchangeErrorStateEnum.Outlier when primaryPreference > 0:
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.");
                     return primaryQuality;
@@ -102,7 +102,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         newPrimary =>
                             $"Primary exchange {originalPrimaryExchange} for {assetPairId} was changed.\r\n" +
                             $"It had error state \"{primaryError}\" and hedging preference \"{primaryPreference}\".\r\n" +
-                            $"New primary exchange: \"{newPrimary.ExchangeName}\". It has error state \"{newPrimary.Error}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
+                            $"New primary exchange: \"{newPrimary.ExchangeName}\". It has error state \"{newPrimary.ErrorState}\" and hedging preference \"{newPrimary.HedgingPreference}\".");
                     return primaryQuality;
             }
         }
@@ -143,11 +143,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             var allHedgingPriorities = exchangeQualities
                 .Values
-                .Where(p => p.Error != null && p.Error != ExchangeErrorState.Disabled)
+                .Where(p => p.ErrorState != null && p.ErrorState != ExchangeErrorStateEnum.Disabled)
                 // ReSharper disable once PossibleInvalidOperationException
-                .ToLookup(t => t.Error.Value);
+                .ToLookup(t => t.ErrorState.Value);
 
-            var primary = allHedgingPriorities[ExchangeErrorState.Valid]
+            var primary = allHedgingPriorities[ExchangeErrorStateEnum.Valid]
                 .OrderByDescending(p => p.HedgingPreference)
                 .ThenBy(p => p.ExchangeName)
                 .FirstOrDefault();
@@ -157,7 +157,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return primary;
             }
 
-            foreach (var state in new[] {ExchangeErrorState.Valid, ExchangeErrorState.Outlier})
+            foreach (var state in new[] {ExchangeErrorStateEnum.Valid, ExchangeErrorStateEnum.Outlier})
             {
                 primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).ThenBy(p => p.ExchangeName).FirstOrDefault();
                 if (primary != null)
@@ -170,7 +170,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         }
 
         private ImmutableDictionary<string, ExchangeQuality> CalcExchangeQualities(string assetPairId,
-            [NotNull] ImmutableDictionary<string, ExchangeErrorState> errors, DateTime now, string currentProcessingExchange)
+            [NotNull] ImmutableDictionary<string, ExchangeErrorStateEnum> errors, DateTime now, string currentProcessingExchange)
         {
             if (errors == null) throw new ArgumentNullException(nameof(errors));
             var hedgingPreferences = _hedgingPreferenceService.Get(assetPairId);
@@ -181,7 +181,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         {
                             var orderbookReceived = errors.TryGetValue(p.Key, out var state);
                             return new ExchangeQuality(p.Key, p.Value,
-                                orderbookReceived ? state : (ExchangeErrorState?) null,
+                                orderbookReceived ? state : (ExchangeErrorStateEnum?) null,
                                 orderbookReceived,
                                 currentProcessingExchange == p.Key
                                     ? now
@@ -213,11 +213,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 Task.Run(() =>
                 {
                     var validHedgableCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.Valid && q.HedgingPreference > 0);
+                        q.ErrorState == ExchangeErrorStateEnum.Valid && q.HedgingPreference > 0);
                     var validCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.Valid);
+                        q.ErrorState == ExchangeErrorStateEnum.Valid);
                     var activeCount = exchangeQualities.Values.Count(q =>
-                        q.Error == ExchangeErrorState.Valid || q.Error == ExchangeErrorState.Outlier);
+                        q.ErrorState == ExchangeErrorStateEnum.Valid || q.ErrorState == ExchangeErrorStateEnum.Outlier);
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
                         $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +
@@ -231,7 +231,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             return new ExchangeQualityMessage
             {
-                Error = quality.Error,
+                ErrorState = quality.ErrorState,
                 ExchangeName = quality.ExchangeName,
                 HedgingPreference = quality.HedgingPreference,
                 OrderbookReceived = quality.OrderbookReceived,

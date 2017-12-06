@@ -30,5 +30,6 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         ExchangeExtPriceSettings Get(string assetPairId, string exchangeName);
         ExchangeExtPriceSettings Add(string assetPairId, string exchangeName, string reason);
         void Update(string assetPairId, string exchangeName, ExchangeExtPriceSettings settings, string reason);
+        void Delete(string assetPairId, string exchangeName, string reason);
     }
 }

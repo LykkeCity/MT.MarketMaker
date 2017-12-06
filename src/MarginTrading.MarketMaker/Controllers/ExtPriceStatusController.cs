@@ -23,7 +23,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all status
         /// </summary>
         [HttpGet]
-        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> List()
+        public IReadOnlyList<ExtPriceStatusModel> List()
         {
             return _extPricesStatusService.Get();
         }
@@ -58,8 +58,14 @@ namespace MarginTrading.MarketMaker.Controllers
         [CanBeNull]
         public IEnumerable<LogModel> GetLogsFiltered(string contains)
         {
-            return Trace.GetLast().Where(l =>
-                (l.Group + '\t' + l.Message).IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0);
+            return Trace.GetLast().Where(l => Contains(l.Group + '\t' + l.Message, contains));
+        }
+
+        private static bool Contains(string text, string contains)
+        {
+            return contains.Split(" OR ")
+                .Any(containsOr =>
+                    containsOr.Split(' ', StringSplitOptions.RemoveEmptyEntries).All(c => text.IndexOf(c.Trim(), StringComparison.OrdinalIgnoreCase) >= 0));
         }
     }
 }

@@ -43,5 +43,10 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             return _settingsRootService.Get(assetPairId)?.QuotesSourceType;
         }
+
+        public void Delete(string assetPairId)
+        {
+            _settingsRootService.Delete(assetPairId);
+        }
     }
 }

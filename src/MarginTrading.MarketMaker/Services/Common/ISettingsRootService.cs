@@ -13,6 +13,7 @@ namespace MarginTrading.MarketMaker.Services.Common
         SettingsRoot Get();
         [CanBeNull] AssetPairSettings Get(string assetPairId);
         void Update(string assetPairId, Func<AssetPairSettings, AssetPairSettings> changeFunc);
+        void Delete(string assetPairId);
         void Add(string assetPairId, AssetPairSettings settings);
     }
 }

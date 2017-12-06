@@ -24,23 +24,25 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
+        ///     Gets all existing settings
+        /// </summary>
+        [HttpGet]
+        public IReadOnlyList<CrossRateCalcInfoModel> List()
+        {
+            return _crossRateCalcInfosService.Get().Values.Select(Convert)
+                .OrderBy(m => m.ResultingPairId)
+                .ToList();
+        }
+
+        /// <summary>
         ///     Update setting for a resulting cross-pair
         /// </summary>
-        [HttpPost]
+        [HttpPut]
         public IActionResult Update([NotNull] [FromBody] CrossRateCalcInfoModel settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
             _crossRateCalcInfosService.Update(Convert(settings));
             return Ok(new {success = true});
-        }
-
-        /// <summary>
-        ///     Gets all existing settings
-        /// </summary>
-        [HttpGet]
-        public IEnumerable<CrossRateCalcInfoModel> List()
-        {
-            return _crossRateCalcInfosService.Get().Values.Select(Convert);
         }
 
         /// <summary>

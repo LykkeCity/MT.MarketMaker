@@ -138,10 +138,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public void Update(string assetPairId, string exchangeName, ExchangeExtPriceSettings settings, string reason)
         {
             if (TryGetExchange(assetPairId, exchangeName) == null)
-                throw new Exception($"Exchange {exchangeName} already exist for asset pair {assetPairId}");
+                throw new Exception($"Exchange {exchangeName} not exist for asset pair {assetPairId}");
 
             Update(assetPairId, old => AssetPairExtPriceSettings.Change(old,
                 old.Exchanges.SetItem(exchangeName, settings)), reason);
+        }
+
+        public void Delete(string assetPairId, string exchangeName, string reason)
+        {
+            if (TryGetExchange(assetPairId, exchangeName) == null)
+                throw new Exception($"Exchange {exchangeName} not exist for asset pair {assetPairId}");
+
+            Update(assetPairId, old => AssetPairExtPriceSettings.Change(old,
+                old.Exchanges.Remove(exchangeName)), reason);
         }
 
         [CanBeNull]
