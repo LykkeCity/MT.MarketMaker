@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using AutoMapper;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Infrastructure;
@@ -22,24 +24,49 @@ namespace MarginTrading.MarketMaker.Controllers
             _convertService = convertService;
         }
 
+        /// <summary>
+        /// Gets all exchanges
+        /// </summary>
         [HttpGet]
-        public ImmutableDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettingsModel>> List()
+        public IReadOnlyList<ExchangeExtPriceSettingsModel> List()
         {
             return _extPricesSettingsService.GetExchanges()
-                    .ToImmutableDictionary(a => a.Key, a => a.Value.ToImmutableDictionary(e => e.Key, e => Convert(a.Key, e.Key, e.Value)));
+                .SelectMany(a => a.Value.Select(e => Convert(a.Key, e.Key, e.Value)))
+                .OrderBy(a => a.AssetPairId).ThenBy(a => a.ExchangeName)
+                .ToList();
+        }
+        
+        /// <summary>
+        /// Updates an exchange
+        /// </summary>
+        [HttpPut]
+        public IActionResult Update([NotNull] [FromBody] ExchangeExtPriceSettingsModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            _extPricesSettingsService.Update(model.AssetPairId, model.ExchangeName, Convert(model),
+                "settings was manually changed");
+            return Ok(new {success = true});
         }
 
+        /// <summary>
+        /// Gets all exchanges for an asset pair
+        /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
-        public ImmutableDictionary<string, ExchangeExtPriceSettingsModel> List([NotNull] string assetPairId)
+        public IReadOnlyList<ExchangeExtPriceSettingsModel> List([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            return _extPricesSettingsService.Get(assetPairId)?.Exchanges.ToImmutableDictionary(e => e.Key, e => Convert(assetPairId, e.Key, e.Value))
-                ?? ImmutableDictionary<string, ExchangeExtPriceSettingsModel>.Empty;
+            return _extPricesSettingsService.Get(assetPairId)?.Exchanges
+                       .Select(e => Convert(assetPairId, e.Key, e.Value))
+                       .OrderBy(a => a.ExchangeName).ToList()
+                   ?? new List<ExchangeExtPriceSettingsModel>();
         }
 
+        /// <summary>
+        /// Gets exchange by asset pair and exchange name
+        /// </summary>
         [CanBeNull]
-        [HttpGet]        
+        [HttpGet]
         [Route("{assetPairId}/{exchangeName}")]
         public ExchangeExtPriceSettingsModel Get([NotNull] string assetPairId, [NotNull] string exchangeName)
         {
@@ -48,24 +75,32 @@ namespace MarginTrading.MarketMaker.Controllers
             return Convert(assetPairId, exchangeName, _extPricesSettingsService.Get(assetPairId, exchangeName));
         }
 
-        [HttpPut]        
+        /// <summary>
+        /// Adds an exchange with default settings
+        /// </summary>
+        [HttpPost]        
         [Route("{assetPairId}/{exchangeName}")]
         public ExchangeExtPriceSettingsModel Add([NotNull] string assetPairId, [NotNull] string exchangeName)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             if (exchangeName == null) throw new ArgumentNullException(nameof(exchangeName));
-            return Convert(assetPairId, exchangeName, _extPricesSettingsService.Add(assetPairId, exchangeName, "settings was manually changed"));
+            var settings = _extPricesSettingsService.Add(assetPairId, exchangeName, "settings was manually changed");
+            return Convert(assetPairId, exchangeName, settings);
         }
-        
-        [HttpPost]
-        public IActionResult Add([NotNull] [FromBody] ExchangeExtPriceSettingsModel model)
+
+        /// <summary>
+        /// Deletes an exchange
+        /// </summary>
+        [HttpDelete]        
+        [Route("{assetPairId}/{exchangeName}")]
+        public IActionResult Delete([NotNull] string assetPairId, [NotNull] string exchangeName)
         {
-            if (model == null) throw new ArgumentNullException(nameof(model));
-            _extPricesSettingsService.Update(model.AssetPairId, model.ExchangeName, Convert(model),
-                "settings was manually changed");
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            if (exchangeName == null) throw new ArgumentNullException(nameof(exchangeName));
+            _extPricesSettingsService.Delete(assetPairId, exchangeName, "settings was manually changed");
             return Ok(new {success = true});
         }
-        
+
         [CanBeNull]
         private ExchangeExtPriceSettingsModel Convert(string assetPairId, string exchangeName, [CanBeNull] ExchangeExtPriceSettings settings)
         {

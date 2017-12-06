@@ -161,7 +161,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         /// <summary>
         ///     Detects exchanges errors and disables thm if they get repeated
         /// </summary>
-        private (ImmutableDictionary<string, ExchangeErrorState>, ImmutableDictionary<string, ExternalOrderbook>)
+        private (ImmutableDictionary<string, ExchangeErrorStateEnum>, ImmutableDictionary<string, ExternalOrderbook>)
             MarkExchangesErrors(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> allOrderbooks, DateTime now)
         {
             var disabledExchanges = _disabledOrderbooksService.GetDisabledExchanges(assetPairId);
@@ -173,12 +173,12 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 outdatedExchanges, outliersExchanges, now);
             _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges, "Repeated outlier");
 
-            var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorState>()
-                .SetValueForKeys(disabledExchanges, ExchangeErrorState.Disabled)
-                .SetValueForKeys(outdatedExchanges, ExchangeErrorState.Outdated)
-                .SetValueForKeys(outliersExchanges, ExchangeErrorState.Outlier)
-                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorState.Valid)
-                .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorState.Disabled)
+            var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorStateEnum>()
+                .SetValueForKeys(disabledExchanges, ExchangeErrorStateEnum.Disabled)
+                .SetValueForKeys(outdatedExchanges, ExchangeErrorStateEnum.Outdated)
+                .SetValueForKeys(outliersExchanges, ExchangeErrorStateEnum.Outlier)
+                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorStateEnum.Valid)
+                .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorStateEnum.Disabled)
                 .ToImmutable();
 
             return (exchangesErrors, validOrderbooks);

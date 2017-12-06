@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using AutoMapper;
 using JetBrains.Annotations;
@@ -15,23 +16,26 @@ namespace MarginTrading.MarketMaker.Controllers
     public class ExtPriceSettingsController : Controller
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
+        private readonly IExtPricesStatusService _extPricesStatusService;
         private readonly IConvertService _convertService;
 
         public ExtPriceSettingsController(IExtPricesSettingsService extPricesSettingsService,
-            IConvertService convertService)
+            IConvertService convertService, IExtPricesStatusService extPricesStatusService)
         {
             _extPricesSettingsService = extPricesSettingsService;
             _convertService = convertService;
+            _extPricesStatusService = extPricesStatusService;
         }
 
         /// <summary>
         ///     Updates settings for an asset pair
         /// </summary>
-        [HttpPost]
-        public IActionResult Update([NotNull] AssetPairExtPriceSettingsModel setting)
+        [HttpPut]
+        public IActionResult Update([NotNull] [FromBody] AssetPairExtPriceSettingsModel setting)
         {
             if (setting == null) throw new ArgumentNullException(nameof(setting));
-            _extPricesSettingsService.UpdateWithoutExchanges(setting.AssetPairId, Convert(setting), "settings was manually changed");
+            _extPricesSettingsService.UpdateWithoutExchanges(setting.AssetPairId, Convert(setting),
+                "settings was manually changed");
             return Ok(new {success = true});
         }
 
@@ -41,7 +45,8 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         public IReadOnlyList<AssetPairExtPriceSettingsModel> List()
         {
-            return _extPricesSettingsService.Get().Select(p => Convert(p.Key, p.Value)).ToList();
+            return _extPricesSettingsService.Get().Select(p => Convert(p.Key, p.Value)).OrderBy(m => m.AssetPairId)
+                .ToList();
         }
 
         /// <summary>
@@ -63,22 +68,32 @@ namespace MarginTrading.MarketMaker.Controllers
         [Route("hedging-preferences")]
         public IReadOnlyList<HedgingPreferenceModel> GetHedgingPreferences()
         {
-            return _extPricesSettingsService.Get().SelectMany(ap =>
-                ap.Value.Exchanges.Select(e => new HedgingPreferenceModel
+            var statusDict = _extPricesStatusService.Get().ToDictionary(s => (s.AssetPairId, s.ExchangeName));
+            return _extPricesSettingsService.Get().SelectMany(asset =>
+            {
+                return asset.Value.Exchanges.Select(exchange =>
                 {
-                    AssetPairId = ap.Key,
-                    Exchange = e.Key,
-                    HedgingTemporarilyDisabled = e.Value.Hedging.IsTemporarilyUnavailable,
-                    Preference = e.Value.Hedging.DefaultPreference,
-                })).ToList();
+                    var status = statusDict.GetValueOrDefault((asset.Key, exchange.Key));
+                    return new HedgingPreferenceModel
+                    {
+                        AssetPairId = asset.Key,
+                        Exchange = exchange.Key,
+                        IsHedgingUnavailable = exchange.Value.Hedging.IsTemporarilyUnavailable || exchange.Value.Disabled.IsTemporarilyDisabled,
+                        IsPrimary = status?.IsPrimary == true,
+                        ErrorState = status?.ErrorState ?? "NoOrderbook",
+                        Preference = exchange.Value.Hedging.DefaultPreference,
+                    };
+                });
+            }).ToList();
         }
 
         [CanBeNull]
-        private AssetPairExtPriceSettingsModel Convert(string assetPairId, [CanBeNull] AssetPairExtPriceSettings setting)
+        private AssetPairExtPriceSettingsModel Convert(string assetPairId,
+            [CanBeNull] AssetPairExtPriceSettings setting)
         {
             if (setting == null)
                 return null;
-            
+
             var model = _convertService.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(setting,
                 o => o.ConfigureMap(MemberList.Source).ForSourceMember(s => s.Exchanges, e => e.Ignore()));
             model.AssetPairId = assetPairId;
@@ -89,7 +104,9 @@ namespace MarginTrading.MarketMaker.Controllers
         private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)
         {
             var settings = _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
-                o => o.ConfigureMap(MemberList.Destination).ForMember(s => s.Exchanges, e => e.Ignore()));
+                o => o.ConfigureMap(MemberList.Destination).ForCtorParam("exchanges",
+                        e => e.ResolveUsing(m => ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty))
+                    .ForMember(e => e.Exchanges, e => e.Ignore()));
             return settings;
         }
     }

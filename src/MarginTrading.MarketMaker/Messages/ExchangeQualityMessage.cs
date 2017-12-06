@@ -6,7 +6,7 @@ namespace MarginTrading.MarketMaker.Messages
     {
         public string ExchangeName { get; set; }
         public decimal HedgingPreference { get; set; }
-        public ExchangeErrorState? Error { get; set; }
+        public ExchangeErrorStateEnum? ErrorState { get; set; }
         public bool OrderbookReceived { get; set; }
     }
 }

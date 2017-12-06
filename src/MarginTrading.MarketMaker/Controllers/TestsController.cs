@@ -84,6 +84,9 @@ namespace MarginTrading.MarketMaker.Controllers
             return _testingHelperService.Get(assetPairId, exchange);
         }
 
+        /// <summary>
+        /// Sets quotes source type to manual and sends manual quotes 
+        /// </summary>
         [HttpPost]
         [Route("manual-price/{assetPairId}")]
         public async Task<IActionResult> SetManualPrice([NotNull] string assetPairId, decimal bid, decimal ask)

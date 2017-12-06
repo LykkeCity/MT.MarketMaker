@@ -6,6 +6,7 @@
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AgileObjects.ReadableExpressions" Version="1.10.0" />
     <PackageReference Include="FluentAssertions" Version="4.19.4" />
     <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
@@ -15,8 +16,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MarginTrading.MarketMaker\MarginTrading.MarketMaker.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Infrastructure" />
   </ItemGroup>
 </Project>
