@@ -53,7 +53,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
-        public IReadOnlyList<ExchangeExtPriceSettingsModel> List([NotNull] string assetPairId)
+        public IReadOnlyList<ExchangeExtPriceSettingsModel> ListByAssetPair([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             return _extPricesSettingsService.Get(assetPairId)?.Exchanges
