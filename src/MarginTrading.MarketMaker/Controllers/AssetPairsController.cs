@@ -37,7 +37,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public IActionResult Add([NotNull] string assetPairId, [FromBody] AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
