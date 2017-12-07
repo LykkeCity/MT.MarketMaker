@@ -11,6 +11,7 @@ namespace MarginTrading.MarketMaker.Contracts
         Task<string> Get();
 
         [Put("/api/SettingsRoot")]
+        [Headers("Content-Type: application/json; charset=UTF-8")]
         Task Set([Body] string settings);
     }
 }

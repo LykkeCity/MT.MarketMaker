@@ -36,13 +36,13 @@ namespace MarginTrading.MarketMaker.Contracts
         /// <summary>
         ///     Adds an exchange with default settings
         /// </summary>
-        [Post("/api/ExtPriceExchanges/{assetPairId}")]
+        [Post("/api/ExtPriceExchanges/{assetPairId}/{exchangeName}")]
         Task<ExchangeExtPriceSettingsModel> Add(string assetPairId, string exchangeName);
 
         /// <summary>
         ///     Deletes an exchange
         /// </summary>
-        [Delete("/api/ExtPriceExchanges/{assetPairId}")]
+        [Delete("/api/ExtPriceExchanges/{assetPairId}/{exchangeName}")]
         Task Delete(string assetPairId, string exchangeName);
     }
 }

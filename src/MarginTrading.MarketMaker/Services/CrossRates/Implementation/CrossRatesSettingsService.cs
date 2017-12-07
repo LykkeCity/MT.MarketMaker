@@ -12,7 +12,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public IReadOnlyList<CrossRatesSettings> Get()
         {
-            throw new System.NotImplementedException();
+            return new CrossRatesSettings[0];
         }
     }
 }
