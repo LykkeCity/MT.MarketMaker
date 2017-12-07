@@ -18,7 +18,7 @@ namespace MarginTrading.MarketMaker.Contracts.Client
             CancellationToken cancellationToken)
         {
             request.Headers.UserAgent.Clear();
-            request.Headers.UserAgent.Add(new ProductInfoHeaderValue(_userAgent));
+            request.Headers.TryAddWithoutValidation("UserAgent", _userAgent);
             return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
     }
