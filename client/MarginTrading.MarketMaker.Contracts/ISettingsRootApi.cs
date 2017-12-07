@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Refit;
 
 namespace MarginTrading.MarketMaker.Contracts
@@ -7,9 +8,9 @@ namespace MarginTrading.MarketMaker.Contracts
     public interface ISettingsRootApi
     {
         [Get("/api/SettingsRoot")]
-        string Get();
+        Task<string> Get();
 
         [Put("/api/SettingsRoot")]
-        void Set([Body] string settings);
+        Task Set([Body] string settings);
     }
 }

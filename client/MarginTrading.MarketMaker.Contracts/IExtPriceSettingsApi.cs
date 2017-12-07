@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts.Models;
 using Refit;
@@ -12,24 +13,24 @@ namespace MarginTrading.MarketMaker.Contracts
         ///     Updates settings for an asset pair
         /// </summary>
         [Put("/api/ExtPriceSettings")]
-        void Update([Body] AssetPairExtPriceSettingsModel setting);
+        Task Update([Body] AssetPairExtPriceSettingsModel setting);
 
         /// <summary>
         ///     Gets all existing settings
         /// </summary>
         [Get("/api/ExtPriceSettings")]
-        IReadOnlyList<AssetPairExtPriceSettingsModel> List();
+        Task<IReadOnlyList<AssetPairExtPriceSettingsModel>> List();
 
         /// <summary>
         ///     Gets settings for a single asset pair
         /// </summary>
         [Put("/api/ExtPriceSettings/{assetPairId}")]
-        AssetPairExtPriceSettingsModel Get(string assetPairId);
+        Task<AssetPairExtPriceSettingsModel> Get(string assetPairId);
 
         /// <summary>
         ///     Gets all hedging preferences
         /// </summary>
         [Get("/api/ExtPriceSettings/hedging-preferences")]
-        IReadOnlyList<HedgingPreferenceModel> GetHedgingPreferences();
+        Task<IReadOnlyList<HedgingPreferenceModel>> GetHedgingPreferences();
     }
 }

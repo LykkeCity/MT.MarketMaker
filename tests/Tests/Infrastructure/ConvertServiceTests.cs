@@ -33,7 +33,7 @@ namespace Tests.Infrastructure
                 OutlierThreshold = 4,
                 PresetDefaultExchange = "ex",
                 RepeatedOutliers = new RepeatedOutliersParamsModel
-                {TL
+                {
                     MaxAvg = 5,
                     MaxAvgAge = TimeSpan.FromMinutes(6),
                     MaxSequenceLength = 7,

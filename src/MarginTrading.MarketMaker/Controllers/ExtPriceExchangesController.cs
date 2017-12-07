@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class ExtPriceExchangesController : Controller, IExtPriceExchangesApi
+    public class ExtPriceExchangesController : Controller
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
         private readonly IConvertService _convertService;
@@ -41,11 +41,12 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Updates an exchange
         /// </summary>
         [HttpPut]
-        public void Update([NotNull] [FromBody] ExchangeExtPriceSettingsModel model)
+        public IActionResult Update([NotNull] [FromBody] ExchangeExtPriceSettingsModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             _extPricesSettingsService.Update(model.AssetPairId, model.ExchangeName, Convert(model),
                 "settings was manually changed");
+            return Ok(new {success = true});
         }
 
         /// <summary>
@@ -93,11 +94,12 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpDelete]        
         [Route("{assetPairId}/{exchangeName}")]
-        public void Delete([NotNull] string assetPairId, [NotNull] string exchangeName)
+        public IActionResult Delete([NotNull] string assetPairId, [NotNull] string exchangeName)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             if (exchangeName == null) throw new ArgumentNullException(nameof(exchangeName));
             _extPricesSettingsService.Delete(assetPairId, exchangeName, "settings was manually changed");
+            return Ok(new {success = true});
         }
 
         [CanBeNull]

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class ExtPriceStatusController : Controller, IExtPriceStatusApi
+    public class ExtPriceStatusController : Controller
     {
         private readonly IExtPricesStatusService _extPricesStatusService;
 

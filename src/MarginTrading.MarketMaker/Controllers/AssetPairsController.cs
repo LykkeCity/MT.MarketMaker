@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class AssetPairsController : Controller, IAssetPairsApi
+    public class AssetPairsController : Controller
     {
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
@@ -39,10 +39,11 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public void Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
+            return Ok(new {success = true});
         }
 
         /// <summary>
@@ -64,10 +65,11 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Updates settings for an asset pair
         /// </summary>
         [HttpPut]
-        public void Update([NotNull] [FromBody] AssetPairInputModel model)
+        public IActionResult Update([NotNull] [FromBody] AssetPairInputModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             _assetPairSourceTypeService.UpdateAssetPairQuotesSource(model.AssetPairId, model.SourceType);
+            return Ok(new {success = true});
         }
 
         /// <summary>
@@ -75,10 +77,11 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpDelete]
         [Route("{assetPairId}")]
-        public void Delete([NotNull] string assetPairId)
+        public IActionResult Delete([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.Delete(assetPairId);
+            return Ok(new {success = true});
         }
     }
 }

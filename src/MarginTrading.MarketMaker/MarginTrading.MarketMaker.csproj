@@ -46,7 +46,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
     <PackageReference Include="morelinq" Version="2.8.0" />
-    <PackageReference Include="Refit" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\client\MarginTrading.MarketMaker.Contracts\MarginTrading.MarketMaker.Contracts.csproj" />
