@@ -24,7 +24,7 @@ namespace MarginTrading.MarketMaker.Contracts
         /// <summary>
         ///     Gets settings for a single asset pair
         /// </summary>
-        [Put("/api/ExtPriceSettings/{assetPairId}")]
+        [Get("/api/ExtPriceSettings/{assetPairId}")]
         Task<AssetPairExtPriceSettingsModel> Get(string assetPairId);
 
         /// <summary>
