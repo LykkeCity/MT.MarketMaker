@@ -79,7 +79,8 @@ namespace MarginTrading.MarketMaker.TestClient
 
         public static T Dump<T>(this T o)
         {
-            Console.WriteLine("{0}. {1}", ++_counter, JsonConvert.SerializeObject(o));
+            var str = o is string s ? s : JsonConvert.SerializeObject(o);
+            Console.WriteLine("{0}. {1}", ++_counter, str);
             return o;
         }
         
