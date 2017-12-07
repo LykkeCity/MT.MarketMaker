@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class ExtPriceStatusController : Controller
+    public class ExtPriceStatusController : Controller, IExtPriceStatusApi
     {
         private readonly IExtPricesStatusService _extPricesStatusService;
 
@@ -45,7 +46,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs")]
         [CanBeNull]
-        public List<LogModel> GetLogs()
+        public IReadOnlyList<LogModel> GetLogs()
         {
             return Trace.GetLast();
         }
@@ -56,9 +57,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs/{contains}")]
         [CanBeNull]
-        public IEnumerable<LogModel> GetLogsFiltered(string contains)
+        public IReadOnlyList<LogModel> GetLogsFiltered(string contains)
         {
-            return Trace.GetLast().Where(l => Contains(l.Group + '\t' + l.Message, contains));
+            return Trace.GetLast().Where(l => Contains(l.Group + '\t' + l.Message, contains)).ToList();
         }
 
         private static bool Contains(string text, string contains)

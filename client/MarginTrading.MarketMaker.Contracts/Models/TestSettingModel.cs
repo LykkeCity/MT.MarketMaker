@@ -1,16 +1,19 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace MarginTrading.MarketMaker.Models.Api
+namespace MarginTrading.MarketMaker.Contracts.Models
 {
     public class TestSettingModel
     {
         public string AssetPairId { get; set; }
         public string Exchange { get; set; }
+
         [CanBeNull]
         public Range Disable { get; set; }
+
         [CanBeNull]
         public RangeWithAmount<decimal> BidModification { get; set; }
+
         [CanBeNull]
         public RangeWithAmount<decimal> AskModification { get; set; }
 
@@ -25,7 +28,7 @@ namespace MarginTrading.MarketMaker.Models.Api
             }
         }
 
-        public class RangeWithAmount<T>: Range
+        public class RangeWithAmount<T> : Range
         {
             public T Amount { get; set; }
         }

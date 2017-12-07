@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Services.Common;

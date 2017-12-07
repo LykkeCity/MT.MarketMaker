@@ -1,6 +1,6 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using MarginTrading.MarketMaker.Contracts.Enums;
 
-namespace MarginTrading.MarketMaker.Models.Api
+namespace MarginTrading.MarketMaker.Contracts.Models
 {
     public class AssetPairInputModel
     {

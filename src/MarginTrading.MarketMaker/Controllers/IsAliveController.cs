@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Contracts.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.SwaggerGen;

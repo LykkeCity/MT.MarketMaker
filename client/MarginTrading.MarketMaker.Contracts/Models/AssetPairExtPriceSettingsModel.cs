@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Contracts.Enums;
 
-namespace MarginTrading.MarketMaker.Models.Api
+namespace MarginTrading.MarketMaker.Contracts.Models
 {
     public class AssetPairExtPriceSettingsModel
     {

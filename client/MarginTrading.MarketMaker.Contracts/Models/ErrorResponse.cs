@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace MarginTrading.MarketMaker.Models.Api
+namespace MarginTrading.MarketMaker.Contracts.Models
 {
     [UsedImplicitly] // from startup.cs only in release configuration
     public class ErrorResponse

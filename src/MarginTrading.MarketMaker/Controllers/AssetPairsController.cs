@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class AssetPairsController : Controller
+    public class AssetPairsController : Controller, IAssetPairsApi
     {
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
@@ -37,11 +39,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public void Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
-            return Ok(new { success = true });
         }
 
         /// <summary>
@@ -63,11 +64,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Updates settings for an asset pair
         /// </summary>
         [HttpPut]
-        public IActionResult Update([NotNull] [FromBody] AssetPairInputModel model)
+        public void Update([NotNull] [FromBody] AssetPairInputModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             _assetPairSourceTypeService.UpdateAssetPairQuotesSource(model.AssetPairId, model.SourceType);
-            return Ok(new { success = true });
         }
 
         /// <summary>
@@ -75,11 +75,10 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpDelete]
         [Route("{assetPairId}")]
-        public IActionResult Delete([NotNull] string assetPairId)
+        public void Delete([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.Delete(assetPairId);
-            return Ok(new { success = true });
         }
     }
 }

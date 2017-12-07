@@ -7,6 +7,7 @@ using Autofac;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;

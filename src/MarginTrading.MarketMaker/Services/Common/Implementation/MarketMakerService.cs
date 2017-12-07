@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using Lykke.SettingsReader;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Infrastructure;

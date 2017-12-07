@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 
 namespace MarginTrading.MarketMaker.Models.Settings
