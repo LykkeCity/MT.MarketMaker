@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using MarginTrading.MarketMaker.Models.Api;
+using MarginTrading.MarketMaker.Contracts.Models;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices
 {

@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 using System.Linq;
 using AutoMapper;
 using Common;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {

@@ -2,9 +2,10 @@
 using System.Collections.Immutable;
 using AutoMapper;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Models.Settings;
 using NUnit.Framework;
 
@@ -32,7 +33,7 @@ namespace Tests.Infrastructure
                 OutlierThreshold = 4,
                 PresetDefaultExchange = "ex",
                 RepeatedOutliers = new RepeatedOutliersParamsModel
-                {
+                {TL
                     MaxAvg = 5,
                     MaxAvgAge = TimeSpan.FromMinutes(6),
                     MaxSequenceLength = 7,

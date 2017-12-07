@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace MarginTrading.MarketMaker.Models.Api
+namespace MarginTrading.MarketMaker.Contracts.Models
 {
     public class CrossRatesSettingsModel
     {

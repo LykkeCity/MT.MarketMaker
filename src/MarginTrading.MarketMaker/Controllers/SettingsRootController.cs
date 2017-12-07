@@ -21,7 +21,7 @@ namespace MarginTrading.MarketMaker.Controllers
             return _settingsRootService.Get();
         }
         
-        [HttpPost]
+        [HttpPut]
         public IActionResult Set([FromBody] SettingsRoot settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));

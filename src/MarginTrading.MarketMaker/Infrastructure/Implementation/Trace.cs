@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Filters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using MarginTrading.MarketMaker.Models.Api;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {

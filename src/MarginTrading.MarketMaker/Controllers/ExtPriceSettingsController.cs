@@ -4,8 +4,9 @@ using System.Collections.Immutable;
 using System.Linq;
 using AutoMapper;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MarginTrading.MarketMaker.Controllers
 {
     [Route("api/[controller]")]
-    public class ExtPriceSettingsController : Controller
+    public class ExtPriceSettingsController : Controller, IExtPriceSettingsApi
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
         private readonly IExtPricesStatusService _extPricesStatusService;
@@ -31,12 +32,11 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Updates settings for an asset pair
         /// </summary>
         [HttpPut]
-        public IActionResult Update([NotNull] [FromBody] AssetPairExtPriceSettingsModel setting)
+        public void Update([NotNull] [FromBody] AssetPairExtPriceSettingsModel setting)
         {
             if (setting == null) throw new ArgumentNullException(nameof(setting));
             _extPricesSettingsService.UpdateWithoutExchanges(setting.AssetPairId, Convert(setting),
                 "settings was manually changed");
-            return Ok(new {success = true});
         }
 
         /// <summary>

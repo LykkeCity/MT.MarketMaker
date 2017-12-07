@@ -1,4 +1,5 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 
 namespace MarginTrading.MarketMaker.Models.Settings

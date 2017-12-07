@@ -1,4 +1,4 @@
-﻿namespace MarginTrading.MarketMaker.Enums
+﻿namespace MarginTrading.MarketMaker.Contracts.Enums
 {
     public enum OrderbookGeneratorStepEnum
     {
@@ -7,6 +7,6 @@
         FindRepeatedProblems = 50,
         ChoosePrimary = 60,
         GetArbitrageFreeSpread = 70,
-        Transform = 80,
+        Transform = 80
     }
 }
