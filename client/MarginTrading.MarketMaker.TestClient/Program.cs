@@ -27,8 +27,26 @@ namespace MarginTrading.MarketMaker.TestClient
             }
             catch (ApiException e)
             {
-                Console.WriteLine(e.Content);
+                var str = e.Content;
+                if (str.StartsWith('"'))
+                {
+                    str = TryDeserializeToString(str);
+                }
+                
+                Console.WriteLine(str);
                 throw;
+            }
+        }
+
+        private static string TryDeserializeToString(string str)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<string>(str);
+            }
+            catch
+            {
+                return str;
             }
         }
 
@@ -43,8 +61,10 @@ namespace MarginTrading.MarketMaker.TestClient
             
             await client.AssetPairs.List().Dump();
             await client.AssetPairs.Get(AssetPairId).Dump();
-            await client.AssetPairs.Delete(TestAssetPairId).Dump();
+            await TryDeleteOld(client);
             await client.AssetPairs.Add(TestAssetPairId, AssetPairQuotesSourceTypeEnum.External).Dump();
+            await client.AssetPairs.Get(TestAssetPairId).Dump();
+            await client.AssetPairs.Update(new AssetPairInputModel{AssetPairId = TestAssetPairId, SourceType = AssetPairQuotesSourceTypeEnum.CrossRates}).Dump();
             await client.AssetPairs.Get(TestAssetPairId).Dump();
 
             await client.ExtPriceSettings.List().Dump();
@@ -75,6 +95,17 @@ namespace MarginTrading.MarketMaker.TestClient
             
             await client.AssetPairs.Delete(TestAssetPairId).Dump();
             await client.AssetPairs.Get(TestAssetPairId).Dump();
+        }
+
+        private static async Task TryDeleteOld(IMtMarketMakerClient client)
+        {
+            try
+            {
+                await client.AssetPairs.Delete(TestAssetPairId).Dump();
+            }
+            catch
+            {
+            }
         }
 
         public static T Dump<T>(this T o)
