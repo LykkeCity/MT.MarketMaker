@@ -29,7 +29,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         public IReadOnlyList<CrossRateCalcInfoModel> List()
         {
-            return _crossRateCalcInfosService.Get().Values.Select(Convert)
+            return _crossRateCalcInfosService.Get().Select(settings => Convert(settings.Key, settings.Value))
                 .OrderBy(m => m.ResultingPairId)
                 .ToList();
         }
@@ -53,12 +53,14 @@ namespace MarginTrading.MarketMaker.Controllers
         public CrossRateCalcInfoModel Get([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            return Convert(_crossRateCalcInfosService.Get(assetPairId));
+            return Convert(assetPairId, _crossRateCalcInfosService.Get(assetPairId));
         }
 
-        private CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)
+        private CrossRateCalcInfoModel Convert(string assetPairId, CrossRateCalcInfo settings)
         {
-            return _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
+            var crossRateCalcInfoModel = _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
+            crossRateCalcInfoModel.ResultingPairId = assetPairId;
+            return crossRateCalcInfoModel;
         }
 
         private CrossRateCalcInfo Convert(CrossRateCalcInfoModel model)
