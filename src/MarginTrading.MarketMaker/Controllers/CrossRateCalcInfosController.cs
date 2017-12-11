@@ -46,7 +46,7 @@ namespace MarginTrading.MarketMaker.Controllers
         }
 
         /// <summary>
-        ///     Gets all existing settings
+        ///     Gets cross-pair by asset pair
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]

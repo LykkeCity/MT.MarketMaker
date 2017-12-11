@@ -10,5 +10,6 @@ namespace MarginTrading.MarketMaker.Contracts
         IExtPriceSettingsApi ExtPriceSettings { get; }
         IExtPriceStatusApi ExtPriceStatus { get; }
         ISettingsRootApi SettingsRoot { get; }
+        ICrossRateCalcInfosApi CrossRateCalcInfos { get; }
     }
 }

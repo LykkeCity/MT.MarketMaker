@@ -9,6 +9,7 @@ namespace MarginTrading.MarketMaker.Contracts.Client
         public IExtPriceSettingsApi ExtPriceSettings { get; }
         public IExtPriceStatusApi ExtPriceStatus { get; }
         public ISettingsRootApi SettingsRoot { get; }
+        public ICrossRateCalcInfosApi CrossRateCalcInfos { get; }
 
         public MtMarketMakerClient(string url, string userAgent)
         {
@@ -19,6 +20,7 @@ namespace MarginTrading.MarketMaker.Contracts.Client
             ExtPriceSettings = RestService.For<IExtPriceSettingsApi>(url, settings);
             ExtPriceStatus = RestService.For<IExtPriceStatusApi>(url, settings);
             SettingsRoot = RestService.For<ISettingsRootApi>(url, settings);
+            CrossRateCalcInfos = RestService.For<ICrossRateCalcInfosApi>(url, settings);
         }
     }
 }
