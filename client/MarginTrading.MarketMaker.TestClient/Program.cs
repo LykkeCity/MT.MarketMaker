@@ -54,7 +54,7 @@ namespace MarginTrading.MarketMaker.TestClient
         {
             var services = new ServiceCollection();
             var builder = new ContainerBuilder();
-            services.RegisterMtMarketMakerClient("http://localhost:5007", "TestClient");
+            services.RegisterMtMarketMakerClient("http://mt-market-maker.lykke-mt.svc.cluster.local", "TestClient");
             builder.Populate(services);
             var container = builder.Build();
             var client = container.Resolve<IMtMarketMakerClient>();
@@ -95,6 +95,12 @@ namespace MarginTrading.MarketMaker.TestClient
             
             await client.AssetPairs.Delete(TestAssetPairId).Dump();
             await client.AssetPairs.Get(TestAssetPairId).Dump();
+
+
+            await client.CrossRateCalcInfos.List().Dump();            
+            await client.CrossRateCalcInfos.Get("BTCCHF").Dump();
+            var testCrossRate = await client.CrossRateCalcInfos.Get("BTCCHF").Dump();
+            await client.CrossRateCalcInfos.Update(testCrossRate).Dump();            
         }
 
         private static async Task TryDeleteOld(IMtMarketMakerClient client)
