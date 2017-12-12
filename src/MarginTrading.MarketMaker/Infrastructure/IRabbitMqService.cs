@@ -8,7 +8,7 @@ namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface IRabbitMqService
     {
-        IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable);
+        IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable, bool useMessagePack);
         void Subscribe<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable, Func<TMessage, Task> handler);
     }
 }

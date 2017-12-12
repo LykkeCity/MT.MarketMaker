@@ -6,6 +6,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.CandlesHistory.Client;
 using Lykke.Service.CandlesHistory.Client.Models;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.Common;
@@ -41,7 +42,8 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
             }
             
             await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avg.Value, avg.Value);
-            Trace.Write(assetPairId + " trace", $"Avg quotes for {assetPairId} sent: {avg}");
+            Trace.Write(TraceGroupEnum.Trace, assetPairId, $"Avg spot quotes sent: {avg}",
+                new {avg.Value, Event = "AvgSpotRatesSent"});
         }
 
         [ItemCanBeNull] 
@@ -51,7 +53,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
                 TimeInterval.Min5, now.AddHours(-12), now);
             if (!candlesHistory.History.Any())
             {
-                _log.WriteErrorAsync(GetComponentName(), nameof(GetAvg), new Exception("No candles history found"));
+                _log.WriteErrorAsync(GetComponentName(), nameof(GetAvg), new Exception("No candles history found for " + assetPairId));
                 return null;
             }
             

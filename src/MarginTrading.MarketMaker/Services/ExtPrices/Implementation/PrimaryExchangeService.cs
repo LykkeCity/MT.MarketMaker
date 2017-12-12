@@ -115,9 +115,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var newPrimary = ChooseBackupExchange(assetPairId, exchangeQualities);
             if (newPrimary.ExchangeName == oldPrimary?.ExchangeName)
             {
-                Trace.Write(assetPairId + " warn trace",
-                    $"Current exchange {oldPrimary.ExchangeName} for {assetPairId} is bad, but switch failed. " +
-                    "Exchanges: " + GetExchangesQualitiesString(exchangeQualities.Values));
+                Trace.Write(TraceGroupEnum.WarnTrace, assetPairId,
+                    $"Current exchange {oldPrimary.ExchangeName} is bad, but switch failed",
+                    new {Event = "ExchangeSwitchFailed", Reason = "No valid hedgable exchanges", oldPrimary.ExchangeName});
                 return oldPrimary;
             }
 

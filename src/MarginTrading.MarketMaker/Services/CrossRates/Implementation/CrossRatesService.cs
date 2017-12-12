@@ -49,10 +49,12 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var sourceOrderbook2 = _orderbooks.GetValueOrDefault(info.Source2.Id); // ex: eurusd
             if (sourceOrderbook1 == null || sourceOrderbook2 == null)
             {
-                Trace.Write(info.ResultingPairId + " warn trace",
-                    "Skipping generating cross-rate: " +
-                    (sourceOrderbook1 == null ? $"Orderbook for {info.Source1.Id} not exists. " : "") +
-                    (sourceOrderbook2 == null ? $"Orderbook for {info.Source2.Id} not exists. " : ""));
+                var reason = sourceOrderbook1 == null
+                    ? "No orderbook for {info.Source1.Id}"
+                    : "No orderbook for {info.Source2.Id}";
+                Trace.Write(TraceGroupEnum.WarnTrace, info.ResultingPairId,
+                    "Skipping generating cross-rate: " + reason,
+                    new {Event = "CrossRateSkipped", Reason = reason});
                 return null;
             }
 
@@ -60,6 +62,11 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var bestPrices2 = _bestPricesService.Calc(sourceOrderbook2); // ex: eurusd
             var crossBid = GetCrossRate(bestPrices1, bestPrices2, info, true);
             var crossAsk = GetCrossRate(bestPrices1, bestPrices2, info, false);
+
+            Trace.Write(TraceGroupEnum.Trace, info.ResultingPairId,
+                "Generating cross-rate",
+                new {Event = "CrossRateGenerated", Bid = crossBid, Ask = crossAsk});
+            
             return new Orderbook(info.ResultingPairId,
                 ImmutableArray.Create(new OrderbookPosition(crossBid, 1)), // in future: calc whole orderbook
                 ImmutableArray.Create(new OrderbookPosition(crossAsk, 1)));

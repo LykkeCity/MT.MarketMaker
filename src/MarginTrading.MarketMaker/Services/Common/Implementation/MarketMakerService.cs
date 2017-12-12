@@ -122,7 +122,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             IReloadingManager<MarginTradingMarketMakerSettings> settings, IRabbitMqService rabbitMqService)
         {
             return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
-                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
+                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false, false);
         }
 
         private Task SendOrderCommandsAsync(string assetPairId, decimal bid, decimal ask)

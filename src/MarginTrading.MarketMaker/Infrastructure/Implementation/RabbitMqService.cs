@@ -60,7 +60,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                 stoppable.Value.Stop();
         }
 
-        public IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable)
+        public IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable, bool useMessagePack)
         {
             // on-the fly connection strings switch is not supported currently for rabbitMq
             var currSettings = settings.CurrentValue;
@@ -86,8 +86,9 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     else
                         publisher.DisableInMemoryQueuePersistence();
 
+                    var serializer = new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
                     return publisher
-                        .SetSerializer(new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings))
+                        .SetSerializer(serializer)
                         .SetLogger(_logger)
                         .Start();
                 });
