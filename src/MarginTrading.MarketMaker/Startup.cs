@@ -18,6 +18,7 @@ using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Modules;
+using MarginTrading.MarketMaker.Services.AvgSpotRates;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -76,7 +77,8 @@ namespace MarginTrading.MarketMaker
                 builder.Populate(services);
 
                 ApplicationContainer = builder.Build();
-
+                Trace.TraceService = ApplicationContainer.Resolve<ITraceService>();
+                
                 return new AutofacServiceProvider(ApplicationContainer);
             }
             catch (Exception ex)
@@ -130,6 +132,7 @@ namespace MarginTrading.MarketMaker
                 }
 
                 ApplicationContainer.Resolve<IBrokerService>().Run();
+                ApplicationContainer.Resolve<IAvgSpotRatesService>().Run();
 
                 await Log.WriteMonitorAsync("", "", "Started");
             }

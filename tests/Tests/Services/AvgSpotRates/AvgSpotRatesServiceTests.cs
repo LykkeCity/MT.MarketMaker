@@ -7,6 +7,7 @@ using MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation;
 using MarginTrading.MarketMaker.Services.Common;
 using NUnit.Framework;
 using Moq;
+using Times = Moq.Times;
 
 namespace Tests.Services.AvgSpotRates
 {
@@ -33,7 +34,7 @@ namespace Tests.Services.AvgSpotRates
             _testSuit
                 .Setup<ISystem>(s => s.UtcNow == now)
                 .Setup<ICandleshistoryservice>(s =>
-                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", PriceType.Mid, TimeInterval.Min5,
+                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", CandlePriceType.Mid, CandleTimeInterval.Min5,
                         now.AddHours(-12), now, null, default) == history.ToResponse<object>())
                 .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25) == Task.CompletedTask);
 

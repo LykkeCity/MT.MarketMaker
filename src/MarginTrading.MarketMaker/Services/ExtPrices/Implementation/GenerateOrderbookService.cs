@@ -22,7 +22,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     /// <remarks>
     ///     https://lykkex.atlassian.net/wiki/spaces/MW/pages/84607035/Price+setting
     /// </remarks>
-    public class GenerateOrderbookService : IStartable, IDisposable, IGenerateOrderbookService
+    public class GenerateOrderbookService : ICustomStartup, IDisposable, IGenerateOrderbookService
     {
         private readonly ReadWriteLockedDictionary<string, (int Hash, DateTime Time)> _sentOrderbooks =
             new ReadWriteLockedDictionary<string, (int, DateTime)>();
@@ -162,7 +162,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return reason;
         }
 
-        public void Start()
+        public void Initialize()
         {
             _alertService.AlertStarted();
         }

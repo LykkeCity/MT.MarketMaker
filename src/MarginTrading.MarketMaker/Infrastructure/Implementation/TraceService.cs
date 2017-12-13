@@ -16,7 +16,7 @@ using Newtonsoft.Json.Converters;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
-    internal class TraceService : ITraceService, IStartable
+    internal class TraceService : ITraceService, ICustomStartup
     {
         private static readonly BlockingCollection<TraceMessage> WritingQueue =
             new BlockingCollection<TraceMessage>(10000);
@@ -34,26 +34,32 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             _messageProducer =
                 rabbitMqService.GetProducer<TraceMessage>(settings.Nested(s => s.RabbitMq.Publishers.Trace), true, true);
         }
-
-        public void Start()
+        
+        public void Initialize()
         {
-            Trace.TraceService = this;
             Task.Run(() =>
             {
                 while (true)
-                    foreach (var m in WritingQueue.GetConsumingEnumerable())
+                    try
                     {
-                        if (m.Level < TraceLevelGroupEnum.Info)
-                            Console.WriteLine(m.AssetPairId + '\t' + m.Level + '\t' + m.Msg);
+                        foreach (var m in WritingQueue.GetConsumingEnumerable())
+                        {
+                            if (m.Level < TraceLevelGroupEnum.Info)
+                                Console.WriteLine(m.AssetPairId + '\t' + m.Level + '\t' + m.Msg);
                         
-                        _messageProducer.ProduceAsync(m);
+                            _messageProducer.ProduceAsync(m);
 
-                        var lastElemsQueue =
-                            LastElemsQueues.GetOrAdd((m.Level, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
-                        lastElemsQueue.Enqueue(m);
+                            var lastElemsQueue =
+                                LastElemsQueues.GetOrAdd((m.Level, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
+                            lastElemsQueue.Enqueue(m);
                         
-                        while (lastElemsQueue.Count > 100) 
-                            lastElemsQueue.TryDequeue(out var _);
+                            while (lastElemsQueue.Count > 100) 
+                                lastElemsQueue.TryDequeue(out var _);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
             });
         }

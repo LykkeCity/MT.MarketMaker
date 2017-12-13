@@ -13,6 +13,7 @@ using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Settings;
+using MessagePack.Resolvers;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -88,7 +89,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
                     var serializer =
                         useMessagePack
-                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>()
+                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>(TypelessContractlessStandardResolver.Instance)
                             : new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
                     return publisher
                         .SetSerializer(serializer)
