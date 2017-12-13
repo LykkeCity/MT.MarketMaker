@@ -86,7 +86,10 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     else
                         publisher.DisableInMemoryQueuePersistence();
 
-                    var serializer = new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
+                    var serializer =
+                        useMessagePack
+                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>()
+                            : new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
                     return publisher
                         .SetSerializer(serializer)
                         .SetLogger(_logger)

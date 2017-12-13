@@ -35,7 +35,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
         {
             var now = _system.UtcNow;
             const string assetPairId = "LKKUSD";
-            var avg = await GetAvg(assetPairId, PriceType.Mid, now);
+            var avg = await GetAvg(assetPairId, CandlePriceType.Mid, now);
             if (avg == null)
             {
                 return;
@@ -47,10 +47,10 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
         }
 
         [ItemCanBeNull] 
-        private async Task<decimal?> GetAvg(string assetPairId, PriceType priceType, DateTime now)
+        private async Task<decimal?> GetAvg(string assetPairId, CandlePriceType priceType, DateTime now)
         {
             var candlesHistory = await _candlesHistoryService.GetCandlesHistoryAsync(assetPairId, priceType,
-                TimeInterval.Min5, now.AddHours(-12), now);
+                CandleTimeInterval.Min5, now.AddHours(-12), now);
             if (!candlesHistory.History.Any())
             {
                 _log.WriteErrorAsync(GetComponentName(), nameof(GetAvg),

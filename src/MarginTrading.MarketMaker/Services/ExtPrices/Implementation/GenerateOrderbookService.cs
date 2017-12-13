@@ -314,8 +314,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     PrimaryExchange = primaryExchange,
                     ElapsedMilliseconds = elapsedMilliseconds,
                     IsSkip = isSkip,
-                    BestBid = orderbook.Bids.First(),
-                    BestAsk = orderbook.Asks.First(),
+                    BestBid = orderbook.Bids.First().Price,
+                    BestAsk = orderbook.Asks.First().Price,
                 });
         }
     }

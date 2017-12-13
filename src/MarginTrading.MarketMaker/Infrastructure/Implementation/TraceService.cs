@@ -32,7 +32,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         {
             _system = system;
             _messageProducer =
-                rabbitMqService.GetProducer<TraceMessage>(settings.Nested(s => s.RabbitMq.Publishers.Trace), true, false);
+                rabbitMqService.GetProducer<TraceMessage>(settings.Nested(s => s.RabbitMq.Publishers.Trace), true, true);
         }
 
         public void Start()
@@ -79,7 +79,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             return LastElemsQueues.ToArray()
                 .SelectMany(q =>
                 {
-                    var gr = q.Key.AssetPairId + '\t' + q.Key.Group;
+                    var gr = q.Key.AssetPairId + ' ' + q.Key.Group;
                     return q.Value.ToArray().Select(m => new TraceModel
                     {
                         Time = m.Time,
