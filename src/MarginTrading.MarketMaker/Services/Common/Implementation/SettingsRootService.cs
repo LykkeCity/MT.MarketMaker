@@ -3,12 +3,13 @@ using System.Collections.Immutable;
 using Autofac;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
-    internal class SettingsRootService : IStartable, ISettingsRootService
+    internal class SettingsRootService : ICustomStartup, ISettingsRootService
     {
         private readonly ISettingsStorageService _settingsStorageService;
         [CanBeNull] private SettingsRoot _cache;
@@ -84,7 +85,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             }
         }
 
-        public void Start()
+        public void Initialize()
         {
             _cache = _settingsStorageService.Read()
                 ?? new SettingsRoot(ImmutableDictionary<string, AssetPairSettings>.Empty);

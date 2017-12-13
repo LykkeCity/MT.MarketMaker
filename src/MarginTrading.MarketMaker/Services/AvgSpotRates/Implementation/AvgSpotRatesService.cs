@@ -13,7 +13,7 @@ using MarginTrading.MarketMaker.Services.Common;
 
 namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
 {
-    internal class AvgSpotRatesService : TimerPeriod
+    internal class AvgSpotRatesService : TimerPeriod, IAvgSpotRatesService
     {
         private readonly ICandleshistoryservice _candlesHistoryService;
         private readonly IMarketMakerService _marketMakerService;
@@ -60,6 +60,11 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
             }
             
             return (decimal) candlesHistory.History.SelectMany(h => new[] {h.Open, h.Close}).Average();
+        }
+
+        public void Run()
+        {
+            Start();
         }
     }
 }
