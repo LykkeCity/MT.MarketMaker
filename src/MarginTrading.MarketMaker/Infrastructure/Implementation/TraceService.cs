@@ -16,20 +16,13 @@ using Newtonsoft.Json.Converters;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
-    public interface ITraceService
-    {
-        void Write(TraceGroupEnum group, string assetPairId, string msg, object obj);
-        List<TraceModel> GetLast();
-        List<TraceModel> GetLast(string contains);
-    }
-
     internal class TraceService : ITraceService, IStartable
     {
         private static readonly BlockingCollection<TraceMessage> WritingQueue =
             new BlockingCollection<TraceMessage>(10000);
 
-        private static readonly ConcurrentDictionary<(TraceGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
-            = new ConcurrentDictionary<(TraceGroupEnum, string), ConcurrentQueue<TraceMessage>>();
+        private static readonly ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
+            = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
 
         private readonly ISystem _system;
         private readonly IMessageProducer<TraceMessage> _messageProducer;
@@ -50,11 +43,13 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                 while (true)
                     foreach (var m in WritingQueue.GetConsumingEnumerable())
                     {
-                        Console.WriteLine(m.AssetPairId + '\t' + m.Group + '\t' + m.Msg);
+                        if (m.Level < TraceLevelGroupEnum.Info)
+                            Console.WriteLine(m.AssetPairId + '\t' + m.Level + '\t' + m.Msg);
+                        
                         _messageProducer.ProduceAsync(m);
 
                         var lastElemsQueue =
-                            LastElemsQueues.GetOrAdd((m.Group, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
+                            LastElemsQueues.GetOrAdd((m.Level, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
                         lastElemsQueue.Enqueue(m);
                         
                         while (lastElemsQueue.Count > 100) 
@@ -63,9 +58,9 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             });
         }
 
-        public void Write(TraceGroupEnum group, string assetPairId, string msg, object obj)
+        public void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {
-            WritingQueue.Add(new TraceMessage(group, assetPairId, msg, obj, _system.UtcNow));
+            WritingQueue.Add(new TraceMessage(levelGroup, assetPairId, msg, obj, _system.UtcNow));
         }
 
         public List<TraceModel> GetLast()
@@ -107,15 +102,15 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public class TraceMessage
         {
-            public TraceGroupEnum Group { get; }
+            public TraceLevelGroupEnum Level { get; }
             public string AssetPairId { get; }
             public string Msg { get; }
             public object Data { get; }
             public DateTime Time { get; }
 
-            public TraceMessage(TraceGroupEnum group, string assetPairId, string msg, object data, DateTime time)
+            public TraceMessage(TraceLevelGroupEnum level, string assetPairId, string msg, object data, DateTime time)
             {
-                Group = group;
+                Level = level;
                 AssetPairId = assetPairId;
                 Msg = msg;
                 Data = data;

@@ -49,10 +49,10 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var sourceOrderbook2 = _orderbooks.GetValueOrDefault(info.Source2.Id); // ex: eurusd
             if (sourceOrderbook1 == null || sourceOrderbook2 == null)
             {
-                var reason = sourceOrderbook1 == null
-                    ? "No orderbook for {info.Source1.Id}"
-                    : "No orderbook for {info.Source2.Id}";
-                Trace.Write(TraceGroupEnum.WarnTrace, info.ResultingPairId,
+                var reason = "No orderbook for " + (sourceOrderbook1 == null
+                                 ? info.Source1.Id
+                                 : info.Source2.Id);
+                Trace.Write(TraceLevelGroupEnum.WarnTrace, info.ResultingPairId,
                     "Skipping generating cross-rate: " + reason,
                     new {Event = "CrossRateSkipped", Reason = reason});
                 return null;
@@ -63,7 +63,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             var crossBid = GetCrossRate(bestPrices1, bestPrices2, info, true);
             var crossAsk = GetCrossRate(bestPrices1, bestPrices2, info, false);
 
-            Trace.Write(TraceGroupEnum.Trace, info.ResultingPairId,
+            Trace.Write(TraceLevelGroupEnum.Trace, info.ResultingPairId,
                 "Generating cross-rate",
                 new {Event = "CrossRateGenerated", Bid = crossBid, Ask = crossAsk});
             

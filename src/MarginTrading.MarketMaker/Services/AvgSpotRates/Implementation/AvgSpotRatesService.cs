@@ -42,7 +42,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
             }
             
             await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avg.Value, avg.Value);
-            Trace.Write(TraceGroupEnum.Trace, assetPairId, $"Avg spot quotes sent: {avg}",
+            Trace.Write(TraceLevelGroupEnum.Trace, assetPairId, $"Avg spot quotes sent: {avg}",
                 new {avg.Value, Event = "AvgSpotRatesSent"});
         }
 
@@ -53,7 +53,9 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
                 TimeInterval.Min5, now.AddHours(-12), now);
             if (!candlesHistory.History.Any())
             {
-                _log.WriteErrorAsync(GetComponentName(), nameof(GetAvg), new Exception("No candles history found for " + assetPairId));
+                _log.WriteErrorAsync(GetComponentName(), nameof(GetAvg),
+                    new Exception("No candles history found for " + assetPairId)
+                        {Data = {{"AssetPairId", assetPairId}}});
                 return null;
             }
             

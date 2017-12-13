@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts;
 using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;

@@ -47,7 +47,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public Task AlertRiskOfficer(string assetPairId, string message)
         {
-            Trace.Write(TraceGroupEnum.AlertRiskOfficerTrace, assetPairId, $"{nameof(AlertRiskOfficer)}: {message}", new {});
+            Trace.Write(TraceLevelGroupEnum.AlertRiskOfficerTrace, assetPairId, $"{nameof(AlertRiskOfficer)}: {message}", new {});
             return _slack.SendAsync(null, "MarketMaker", message);
         }
 

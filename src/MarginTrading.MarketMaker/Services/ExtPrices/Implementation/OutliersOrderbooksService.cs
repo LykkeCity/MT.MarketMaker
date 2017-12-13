@@ -87,7 +87,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             {
                 if (Math.Abs(context.BidRelativeDiff) >= relativeThreshold)
                 {
-                    Trace.Write(TraceGroupEnum.ErrorTrace, assetPairId, "Outlier (bid)", new
+                    Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Outlier (bid)", new
                     {
                         Event = "Outlier",
                         Reason = "Bid",
@@ -105,7 +105,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 }
                 else if (Math.Abs(context.AskRelativeDiff) >= relativeThreshold)
                 {
-                    Trace.Write(TraceGroupEnum.ErrorTrace, assetPairId, "Outlier (ask)", new
+                    Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Outlier (ask)", new
                     {
                         Event = "Outlier",
                         Reason = "Ask",

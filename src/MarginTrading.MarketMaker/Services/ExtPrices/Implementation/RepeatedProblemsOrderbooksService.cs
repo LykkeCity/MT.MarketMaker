@@ -55,7 +55,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                             $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
                             $"It had {outliersInRow} outlier orderbooks in a row " +
                             $"during last {repeatedOutliersParams.MaxSequenceAge.TotalSeconds:f0} secs.");
-                        Trace.Write(TraceGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (sequence)",
+                        Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (sequence)",
                             new
                             {
                                 Event = "Repeated outlier",
@@ -83,7 +83,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
                         $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% " +
                         $"outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
-                    Trace.Write(TraceGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (avg)",
+                    Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (avg)",
                         new
                         {
                             Event = "Repeated outlier",

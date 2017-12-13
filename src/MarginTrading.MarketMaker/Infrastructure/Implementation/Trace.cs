@@ -6,9 +6,9 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
     {
         public static ITraceService TraceService { get; set; }
 
-        public static void Write(TraceGroupEnum group, string assetPairId, string msg, object obj)
+        public static void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {
-            TraceService.Write(group, assetPairId, msg, obj);
+            TraceService.Write(levelGroup, assetPairId, msg, obj);
         }
     }
 }
