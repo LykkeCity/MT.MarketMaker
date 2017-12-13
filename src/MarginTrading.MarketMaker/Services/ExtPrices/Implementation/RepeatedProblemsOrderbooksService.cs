@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
 
@@ -15,7 +16,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private readonly IExtPricesSettingsService _extPricesSettingsService;
         private readonly IAlertService _alertService;
 
-        public RepeatedProblemsOrderbooksService(IExtPricesSettingsService extPricesSettingsService, IAlertService alertService)
+        public RepeatedProblemsOrderbooksService(IExtPricesSettingsService extPricesSettingsService,
+            IAlertService alertService)
         {
             _extPricesSettingsService = extPricesSettingsService;
             _alertService = alertService;
@@ -26,9 +28,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             var assetPairId = orderbook.AssetPairId;
             var repeatedOutliersParams = _extPricesSettingsService.GetRepeatedOutliersParams(assetPairId);
-            DateTime outlierSequenceStart = now - repeatedOutliersParams.MaxSequenceAge;
-            DateTime outlierAvgStart = now - repeatedOutliersParams.MaxAvgAge;
-            DateTime minEventTime = outlierSequenceStart < outlierAvgStart ? outlierSequenceStart : outlierAvgStart;
+            var outlierSequenceStart = now - repeatedOutliersParams.MaxSequenceAge;
+            var outlierAvgStart = now - repeatedOutliersParams.MaxAvgAge;
+            var minEventTime = outlierSequenceStart < outlierAvgStart ? outlierSequenceStart : outlierAvgStart;
             var newEvent = new Event(now, isOutdated, isOutlier);
             var actualProblems = _lastEvents.AddOrUpdate((assetPairId, orderbook.ExchangeName),
                 k => ImmutableSortedSet.Create(Event.ComparerByTime, newEvent),
@@ -37,9 +39,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             //currently we process only Outlier
             if (isOutlier)
             {
-                int outliersInRow = 0;
-                int statsCount = 0;
-                int outliersCount = 0;
+                var outliersInRow = 0;
+                var statsCount = 0;
+                var outliersCount = 0;
                 foreach (var e in actualProblems)
                 {
                     if (e.IsOutlier && e.Time >= outlierSequenceStart)
@@ -49,9 +51,20 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
                     if (outliersInRow > repeatedOutliersParams.MaxSequenceLength)
                     {
-                        _alertService.AlertRiskOfficer(assetPairId, $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
-                                                             $"It had {outliersInRow} outlier orderbooks in a row during last {repeatedOutliersParams.MaxSequenceAge.TotalSeconds:f0} secs.");
-                        Trace.Write(assetPairId + " err trace", "Repeated outlier (sequence)", new { AssetPairId = assetPairId, orderbook.ExchangeName, outliersInRow, repeatedOutliersParams.MaxSequenceLength });
+                        _alertService.AlertRiskOfficer(assetPairId,
+                            $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
+                            $"It had {outliersInRow} outlier orderbooks in a row " +
+                            $"during last {repeatedOutliersParams.MaxSequenceAge.TotalSeconds:f0} secs.");
+                        Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (sequence)",
+                            new
+                            {
+                                Event = "Repeated outlier",
+                                Reason = "Sequence",
+                                orderbook.ExchangeName,
+                                outliersInRow,
+                                repeatedOutliersParams.MaxSequenceLength,
+                                repeatedOutliersParams.MaxSequenceAge
+                            });
                         return true;
                     }
 
@@ -66,9 +79,22 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 var avg = outliersCount / (decimal) statsCount;
                 if (avg > repeatedOutliersParams.MaxAvg)
                 {
-                    _alertService.AlertRiskOfficer(assetPairId, $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
-                                                         $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
-                    Trace.Write(assetPairId + " err trace", "Repeated outlier (avg)", new { AssetPairId = assetPairId, orderbook.ExchangeName, outliersCount, statsCount, avg, repeatedOutliersParams.MaxAvg });
+                    _alertService.AlertRiskOfficer(assetPairId,
+                        $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
+                        $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% " +
+                        $"outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
+                    Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (avg)",
+                        new
+                        {
+                            Event = "Repeated outlier",
+                            Reason = "Avg",
+                            orderbook.ExchangeName,
+                            outliersCount,
+                            statsCount,
+                            avg,
+                            repeatedOutliersParams.MaxAvg,
+                            repeatedOutliersParams.MaxAvgAge
+                        });
                     return true;
                 }
             }
@@ -80,7 +106,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             DateTime minEventTime)
         {
             if (events[0].Time < minEventTime)
-                return events.SkipWhile(e => e.Time < minEventTime).Concat(new[] { ev }).ToImmutableSortedSet(Event.ComparerByTime);
+                return events.SkipWhile(e => e.Time < minEventTime).Concat(new[] {ev})
+                    .ToImmutableSortedSet(Event.ComparerByTime);
             else
                 return events.Add(ev);
         }

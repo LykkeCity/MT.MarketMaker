@@ -4,6 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts;
 using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace MarginTrading.MarketMaker.Controllers
     public class ExtPriceStatusController : Controller
     {
         private readonly IExtPricesStatusService _extPricesStatusService;
+        private readonly ITraceService _traceService;
 
-        public ExtPriceStatusController(IExtPricesStatusService extPricesStatusService)
+        public ExtPriceStatusController(IExtPricesStatusService extPricesStatusService, ITraceService traceService)
         {
             _extPricesStatusService = extPricesStatusService;
+            _traceService = traceService;
         }
 
         /// <summary>
@@ -46,9 +49,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs")]
         [CanBeNull]
-        public IReadOnlyList<LogModel> GetLogs()
+        public IReadOnlyList<TraceModel> GetLogs()
         {
-            return Trace.GetLast();
+            return _traceService.GetLast();
         }
 
         /// <summary>
@@ -57,16 +60,9 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         [Route("logs/{contains}")]
         [CanBeNull]
-        public IReadOnlyList<LogModel> GetLogsFiltered(string contains)
+        public IReadOnlyList<TraceModel> GetLogsFiltered(string contains)
         {
-            return Trace.GetLast().Where(l => Contains(l.Group + '\t' + l.Message, contains)).ToList();
-        }
-
-        private static bool Contains(string text, string contains)
-        {
-            return contains.Split(" OR ")
-                .Any(containsOr =>
-                    containsOr.Split(' ', StringSplitOptions.RemoveEmptyEntries).All(c => text.IndexOf(c.Trim(), StringComparison.OrdinalIgnoreCase) >= 0));
+            return _traceService.GetLast(contains);
         }
     }
 }

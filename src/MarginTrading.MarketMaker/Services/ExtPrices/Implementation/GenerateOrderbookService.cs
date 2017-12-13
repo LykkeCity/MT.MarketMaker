@@ -87,66 +87,79 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return null;
             }
 
-            var (result, primaryExchange) = OnNewOrderbookInternal(orderbook);
-            LogCycle(orderbook, watch, primaryExchange, result == null);
+            var (result, primaryExchange, problem) = OnNewOrderbookInternal(orderbook);
+            LogCycle(orderbook, watch, primaryExchange, result == null, problem);
             return result;
         }
 
-        private (Orderbook Orderbook, string PrimaryExchange) OnNewOrderbookInternal(ExternalOrderbook orderbook)
+        private (Orderbook Orderbook, string PrimaryExchange, string Problem) OnNewOrderbookInternal(
+            ExternalOrderbook orderbook)
         {
             var assetPairId = orderbook.AssetPairId;
             if (!_extPricesSettingsService.IsExchangeConfigured(assetPairId, orderbook.ExchangeName))
             {
-                Trace.Write(assetPairId + " warn trace", $"Skipping not configured exchange {orderbook.ExchangeName} for {assetPairId}");
-                return (null, null);
+                Trace.Write(TraceLevelGroupEnum.WarnTrace, assetPairId,
+                    $"Skipping not configured exchange {orderbook.ExchangeName}",
+                    new {Event = "NotConfiguredExchangeSkipped", orderbook.ExchangeName});
+                return (null, null, "Skipping not configured exchange");
             }
 
             var allOrderbooks = _orderbooksService.AddAndGetByAssetPair(orderbook);
             var now = orderbook.LastUpdatedTime;
             var (exchangesErrors, validOrderbooks) = MarkExchangesErrors(assetPairId, allOrderbooks, now);
-            var primaryExchange = _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now, orderbook.ExchangeName);
+            var primaryExchange =
+                _primaryExchangeService.GetPrimaryExchange(assetPairId, exchangesErrors, now, orderbook.ExchangeName);
             if (primaryExchange == null)
             {
-                return (null, null);
+                return (null, null, "No primary exchange");
             }
 
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
             {
-                _log.WriteWarningAsync(nameof(GenerateOrderbookService), null,
-                    $"{primaryExchange} not found in allOrderbooks ({allOrderbooks.Keys.ToJson()})");
-                return (null, primaryExchange);
+                _log.WriteErrorAsync(nameof(GenerateOrderbookService), null,
+                    new Exception($"{primaryExchange} not found in allOrderbooks ({allOrderbooks.Keys.ToJson()})")
+                    {
+                        Data = {{"AssetPairId", assetPairId}}
+                    });
+                return (null, primaryExchange, "Primary exchange orderbook not found");
             }
 
             _stopTradesService.FinishCycle(primaryOrderbook, now);
             var resultingOrderbook = Transform(primaryOrderbook, validOrderbooks);
-            if (!CanSendOrderbook(resultingOrderbook))
+            if (TryFindSkipOrderbookReason(resultingOrderbook) is string reason)
             {
-                return (null, primaryExchange);
+                return (null, primaryExchange, reason);
             }
 
-            return (resultingOrderbook, primaryExchange);
+            return (resultingOrderbook, primaryExchange, null);
         }
 
-        private bool CanSendOrderbook(Orderbook orderbook)
+        [CanBeNull]
+        private string TryFindSkipOrderbookReason(Orderbook orderbook)
         {
             var now = _system.UtcNow;
             var newHash = Orderbook.Comparer.GetHashCode(orderbook);
-            bool canSend = true;
+            string reason = null;
             var period = _extPricesSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
-             _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
-                       (k, old) =>
-                       {
-                           if (newHash == old.Hash || now.Subtract(old.Time) < period)
-                           {
-                               canSend = false;
-                               return old;
-                           }
-                           else
-                           {
-                               return (newHash, now);
-                           }
-                       });
-            return canSend;
+            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
+                (k, old) =>
+                {
+                    if (newHash == old.Hash)
+                    {
+                        reason = "Not changed";
+                        return old;
+                    }
+                    if (now.Subtract(old.Time) < period)
+                    {
+                        reason = "Too frequient update";
+                        return old;
+                    }
+                    else
+                    {
+                        return (newHash, now);
+                    }
+                });
+            return reason;
         }
 
         public void Start()
@@ -163,7 +176,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         ///     Detects exchanges errors and disables thm if they get repeated
         /// </summary>
         private (ImmutableDictionary<string, ExchangeErrorStateEnum>, ImmutableDictionary<string, ExternalOrderbook>)
-            MarkExchangesErrors(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> allOrderbooks, DateTime now)
+            MarkExchangesErrors(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> allOrderbooks,
+                DateTime now)
         {
             var disabledExchanges = _disabledOrderbooksService.GetDisabledExchanges(assetPairId);
             var enabledOrderbooks = allOrderbooks.RemoveRange(disabledExchanges);
@@ -196,7 +210,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.Transform,
                 primaryOrderbook.AssetPairId))
             {
-                return primaryOrderbook;
+                return new Orderbook(primaryOrderbook.AssetPairId,
+                    primaryOrderbook.Bids.OrderBy(p => p.Price).ToImmutableArray(),
+                    primaryOrderbook.Asks.OrderByDescending(p => p.Price).ToImmutableArray());
             }
 
             var bestPrices =
@@ -242,7 +258,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (ImmutableHashSet<string>.Empty, freshOrderbooks);
             }
 
-            var outliersExchanges = _outliersOrderbooksService.FindOutliers(assetPairId, freshOrderbooks).Select(o => o.ExchangeName)
+            var outliersExchanges = _outliersOrderbooksService.FindOutliers(assetPairId, freshOrderbooks)
+                .Select(o => o.ExchangeName)
                 .ToImmutableHashSet();
             var freshNotOutlierOrderbooks = freshOrderbooks.RemoveRange(outliersExchanges);
             return (outliersExchanges, freshNotOutlierOrderbooks);
@@ -268,7 +285,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return (outdatedExchanges, freshOrderbooks);
         }
 
-        private void LogCycle(ExternalOrderbook orderbook, Stopwatch watch, string primaryExchange, bool isSkip)
+        private void LogCycle(ExternalOrderbook orderbook, Stopwatch watch, string primaryExchange, bool isSkip,
+            [CanBeNull] string problem)
         {
             var elapsedMilliseconds = watch.ElapsedMilliseconds;
             if (elapsedMilliseconds > 20)
@@ -284,9 +302,21 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         {"IsSkip", isSkip.ToString()},
                     });
             }
-
-            Trace.Write(orderbook.AssetPairId + " trace",
-                $"{(isSkip ? "Skipped " : "Processed")} {orderbook.AssetPairId} from {orderbook.ExchangeName}, primary: {primaryExchange}, time: {elapsedMilliseconds} ms");
+            var action = isSkip ? "Skipped" : "Processed";
+            Trace.Write(TraceLevelGroupEnum.Trace, orderbook.AssetPairId,
+                $"{action} from {orderbook.ExchangeName}, " +
+                $"primary: {primaryExchange}, time: {elapsedMilliseconds} ms",
+                new
+                {
+                    Event = "ExternalOrderbook" + action,
+                    Reason = problem,
+                    orderbook.ExchangeName,
+                    PrimaryExchange = primaryExchange,
+                    ElapsedMilliseconds = elapsedMilliseconds,
+                    IsSkip = isSkip,
+                    BestBid = orderbook.Bids.First().Price,
+                    BestAsk = orderbook.Asks.First().Price,
+                });
         }
     }
 }
