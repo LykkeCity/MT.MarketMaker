@@ -62,8 +62,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             }
 
             var externalOrderbook = new ExternalOrderbook(orderbook.AssetPairId, orderbook.Source, _system.UtcNow,
-                orderbook.Bids.Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray(),
-                orderbook.Asks.Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray());
+                orderbook.Bids.OrderBy(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray(),
+                orderbook.Asks.OrderByDescending(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray());
             var resultingOrderbook = _generateOrderbookService.OnNewOrderbook(externalOrderbook);
             if (resultingOrderbook == null)
             {
