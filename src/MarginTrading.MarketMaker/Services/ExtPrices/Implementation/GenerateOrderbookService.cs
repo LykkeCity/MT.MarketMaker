@@ -88,7 +88,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             }
 
             var (result, primaryExchange, problem) = OnNewOrderbookInternal(orderbook);
-            LogCycle(orderbook, watch, primaryExchange, result == null, problem);
+            LogCycle(orderbook, result, watch, primaryExchange, problem);
             return result;
         }
 
@@ -210,9 +210,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.Transform,
                 primaryOrderbook.AssetPairId))
             {
-                return new Orderbook(primaryOrderbook.AssetPairId,
-                    primaryOrderbook.Bids.OrderBy(p => p.Price).ToImmutableArray(),
-                    primaryOrderbook.Asks.OrderByDescending(p => p.Price).ToImmutableArray());
+                return primaryOrderbook;
             }
 
             var bestPrices =
@@ -285,8 +283,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return (outdatedExchanges, freshOrderbooks);
         }
 
-        private void LogCycle(ExternalOrderbook orderbook, Stopwatch watch, string primaryExchange, bool isSkip,
-            [CanBeNull] string problem)
+        private void LogCycle(ExternalOrderbook orderbook, [CanBeNull] Orderbook resultingOrderbook, Stopwatch watch, string primaryExchange, [CanBeNull] string problem)
         {
             var elapsedMilliseconds = watch.ElapsedMilliseconds;
             if (elapsedMilliseconds > 20)
@@ -299,10 +296,13 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                         {"AssetPairId", orderbook.AssetPairId},
                         {"Exchange", orderbook.ExchangeName},
                         {"IsPrimary", (orderbook.ExchangeName == primaryExchange).ToString()},
-                        {"IsSkip", isSkip.ToString()},
+                        {"IsSkip", (resultingOrderbook == null).ToString()},
                     });
             }
-            var action = isSkip ? "Skipped" : "Processed";
+
+            var bestPrices = _bestPricesService.Calc(orderbook);
+            var resultingBestPrices = resultingOrderbook == null ? null : _bestPricesService.Calc(resultingOrderbook);
+            var action = resultingOrderbook == null ? "Skipped" : "Processed";
             Trace.Write(TraceLevelGroupEnum.Trace, orderbook.AssetPairId,
                 $"{action} from {orderbook.ExchangeName}, " +
                 $"primary: {primaryExchange}, time: {elapsedMilliseconds} ms",
@@ -313,9 +313,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     orderbook.ExchangeName,
                     PrimaryExchange = primaryExchange,
                     ElapsedMilliseconds = elapsedMilliseconds,
-                    IsSkip = isSkip,
-                    BestBid = orderbook.Bids.First().Price,
-                    BestAsk = orderbook.Asks.First().Price,
+                    IsSkip = resultingOrderbook == null,
+                    bestPrices.BestBid,
+                    bestPrices.BestAsk,
+                    ResultingBestBid = resultingBestPrices?.BestBid,
+                    ResultingBestAsk = resultingBestPrices?.BestAsk,
+                    BidsDepth = orderbook.Bids.Length,
+                    AsksDepth = orderbook.Asks.Length,
+                    ResultingsBidsDepth = resultingOrderbook?.Bids.Length,
+                    ResultingsAsksDepth = resultingOrderbook?.Asks.Length,
                 });
         }
     }
