@@ -7,5 +7,8 @@ namespace MarginTrading.MarketMaker.Contracts.Models
     {
         [UsedImplicitly]
         public string ErrorMessage { get; set; }
+
+        [UsedImplicitly]
+        public string Details { get; set; }
     }
 }
