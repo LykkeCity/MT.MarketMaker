@@ -19,7 +19,6 @@ namespace MarginTrading.MarketMaker.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly ILog _log;
-        private readonly IServiceCollection _services = new ServiceCollection();
 
         public MarketMakerModule(IReloadingManager<AppSettings> settings, ILog log)
         {
@@ -35,21 +34,11 @@ namespace MarginTrading.MarketMaker.Modules
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
             builder.RegisterType<SystemService>().As<ISystem>().SingleInstance();
 
+            builder.RegisterType<BrokerService>().As<IBrokerService>().InstancePerDependency();
+            
             builder.RegisterInstance(new RabbitMqService(_log,
                     _settings.Nested(s => s.MarginTradingMarketMaker.Db.QueuePersistanceRepositoryConnString)))
                 .As<IRabbitMqService>().SingleInstance();
-
-            builder.RegisterType<BrokerService>().As<IBrokerService>().InstancePerDependency();
-
-            _services.RegisterAssetsClient(AssetServiceSettings.Create(
-                new Uri(_settings.CurrentValue.MarginTradingMarketMaker.ExternalServices.AssetsServiceUrl),
-                TimeSpan.FromMinutes(5)));
-            builder.RegisterInstance(
-                    new Candleshistoryservice(new Uri(_settings.CurrentValue.CandlesHistoryServiceClient.ServiceUrl)))
-                .As<ICandleshistoryservice>()
-                .SingleInstance();
-
-            builder.Populate(_services);
         }
 
         /// <summary>

@@ -73,6 +73,7 @@ namespace MarginTrading.MarketMaker
                 Log = CreateLogWithSlack(services, appSettings);
 
                 builder.RegisterModule(new MarketMakerModule(appSettings, Log));
+                builder.RegisterModule(new MarketMakerExternalServicesModule(appSettings));
 
                 builder.Populate(services);
 
