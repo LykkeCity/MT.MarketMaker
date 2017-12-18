@@ -11,7 +11,7 @@ namespace Tests.Integrational
     {
         private readonly List<IModule> _modules = new List<IModule>();
 
-        public ITestContainerBuilder Build()
+        public ITestEnvironment Build()
         {
             Reset();
             return GetTestContainerBuilder();
@@ -23,36 +23,41 @@ namespace Tests.Integrational
             return this;
         }
 
-        protected virtual TestContainerBuilder GetTestContainerBuilder()
+        protected virtual TestEnvironment GetTestContainerBuilder()
         {
-            return new TestContainerBuilder(this);
+            return new TestEnvironment(this);
         }
 
 
-        protected class TestContainerBuilder : ITestContainerBuilder
+        protected class TestEnvironment : ITestEnvironment
         {
             private readonly IntegrationalTestSuit _suit;
-            private readonly List<(object Instance, Type Type)> _instancesToInject = new List<(object, Type)>();
+            private readonly List<Action<ContainerBuilder>> _builders = new List<Action<ContainerBuilder>>();  
 
-            public TestContainerBuilder(IntegrationalTestSuit suit)
+            public TestEnvironment(IntegrationalTestSuit suit)
             {
                 _suit = suit;
             }
 
-            public ITestContainerBuilder Setup<TMocked>(TMocked instance) where TMocked : class
+            public ITestEnvironment Setup<TMocked>(TMocked instance) where TMocked : class
             {
-                _instancesToInject.Add((instance, typeof(TMocked)));
-                return this;
+                return Setup(b => b.RegisterInstance(instance).As(typeof(TMocked)).SingleInstance());
             }
 
-            public ITestContainerBuilder Setup<TMocked>(Expression<Func<TMocked, bool>> setup) where TMocked : class
+            public ITestEnvironment Setup<TMocked>(Expression<Func<TMocked, bool>> setup) where TMocked : class
             {
                 return Setup(_suit.SetupCore(setup).Object);
             }
 
-            public ITestContainerBuilder Setup<TMocked>(params Action<Mock<TMocked>>[] setups) where TMocked : class
+            public ITestEnvironment Setup<TMocked>(params Action<Mock<TMocked>>[] setups) where TMocked : class
             {
                 return Setup(_suit.SetupCore(setups).Object);
+            }
+
+            public ITestEnvironment Setup(Action<ContainerBuilder> register)
+            {
+                _builders.Add(register);
+                return this;
             }
 
             public IContainer CreateContainer()
@@ -61,8 +66,8 @@ namespace Tests.Integrational
                 foreach (var module in _suit._modules)
                     builder.RegisterModule(module);
 
-                foreach (var mock in _instancesToInject)
-                    builder.RegisterInstance(mock.Instance).As(mock.Type).SingleInstance();
+                foreach (var b in _builders)
+                    b(builder);
 
                 return builder.Build();
             }

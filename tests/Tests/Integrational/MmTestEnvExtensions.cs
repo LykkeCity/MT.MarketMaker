@@ -1,26 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Autofac;
 using FluentAssertions;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
 using MoreLinq;
+using Newtonsoft.Json;
 
 namespace Tests.Integrational
 {
-    internal static class MmTestContainerBuilderExtensions
+    internal static class MmTestEnvExtensions
     {
         public static void VerifyCommandsSent(
-            this IMmTestContainerBuilder testContainerBuilder,
+            this IMmTestEnvironment testEnvironment,
             params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
         {
-            testContainerBuilder.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>()
+            testEnvironment.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>()
                 .ShouldAllBeEquivalentTo(
-                    testContainerBuilder.GetExpectedCommands(pairsData));
+                    testEnvironment.GetExpectedCommands(pairsData));
         }
         
-        public static void VerifyTradesStopped(this IMmTestContainerBuilder testContainerBuilder, string assetPairId, params bool[] isStopped)
+        public static void VerifyTradesStopped(this IMmTestEnvironment testEnvironment, string assetPairId, params bool[] isStopped)
         {
-            testContainerBuilder.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>()
+            testEnvironment.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>()
                 .ShouldAllBeEquivalentTo(
                     isStopped.Select(s => new
                     {
@@ -30,9 +34,9 @@ namespace Tests.Integrational
                     }), o => o.ExcludingMissingMembers());
         }
         
-        public static void VerifyPrimaryExchangeSwitched(this IMmTestContainerBuilder testContainerBuilder, string assetPairId, params string[] exchangeNames)
+        public static void VerifyPrimaryExchangeSwitched(this IMmTestEnvironment testEnvironment, string assetPairId, params string[] exchangeNames)
         {
-            testContainerBuilder.StubRabbitMqService.GetSentMessages<PrimaryExchangeSwitchedMessage>()
+            testEnvironment.StubRabbitMqService.GetSentMessages<PrimaryExchangeSwitchedMessage>()
                 .ShouldAllBeEquivalentTo(
                     exchangeNames.Select(e => new
                     {
@@ -43,7 +47,7 @@ namespace Tests.Integrational
         }
         
         public static IEnumerable<OrderCommandsBatchMessage> GetExpectedCommands(
-            this IMmTestContainerBuilder testContainerBuilder,
+            this IMmTestEnvironment testEnvironment,
             params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
         {
             foreach (var (assetPairId, bids, asks) in pairsData)
@@ -61,9 +65,14 @@ namespace Tests.Integrational
                     AssetPairId = assetPairId,
                     Commands = commands,
                     MarketMakerId = "testMmId",
-                    Timestamp = testContainerBuilder.UtcNow,
+                    Timestamp = testEnvironment.UtcNow,
                 };
             }
+        }
+
+        public static void PrintLogs(this IContainer container)
+        {
+            Console.WriteLine(JsonConvert.SerializeObject(container.Resolve<ITraceService>().GetLast(), Formatting.Indented));
         }
 
         private static IEnumerable<OrderCommand> GetCommands(IEnumerable<decimal> src, OrderDirectionEnum orderDirection)

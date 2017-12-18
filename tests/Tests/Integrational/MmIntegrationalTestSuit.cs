@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Common.Log;
 using Lykke.Service.Assets.Client;
@@ -9,16 +10,20 @@ using Lykke.Service.CandlesHistory.Client;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
+using Trace = MarginTrading.MarketMaker.Infrastructure.Implementation.Trace;
 
 namespace Tests.Integrational
 {
     internal class MmIntegrationalTestSuit : IntegrationalTestSuit
     {
+        private static readonly LogToConsole LogToConsole = new LogToConsole();
+
         public AppSettings AppSettings { get; set; } = new AppSettings
         {
             MarginTradingMarketMaker = new MarginTradingMarketMakerSettings
@@ -28,23 +33,28 @@ namespace Tests.Integrational
             }
         };
 
+        static MmIntegrationalTestSuit()
+        {
+            Trace.TraceService = new TraceService(new SystemService(), new StubRabbitMqService(), null);
+        }
+        
         public MmIntegrationalTestSuit()
         {
             WithModule(new MarketMakerModule(
-                new StubReloadingManager<AppSettings>(() => AppSettings), new LogToConsole()));
+                new StubReloadingManager<AppSettings>(() => AppSettings), LogToConsole));
         }
 
-        public new IMmTestContainerBuilder Build()
+        public new IMmTestEnvironment Build()
         {
-            return (IMmTestContainerBuilder) base.Build();
+            return (IMmTestEnvironment) base.Build();
         }
 
-        protected override TestContainerBuilder GetTestContainerBuilder()
+        protected override TestEnvironment GetTestContainerBuilder()
         {
-            return new MmTestContainerBuilder(this);
+            return new MmTestEnvironment(this);
         }
 
-        private class MmTestContainerBuilder : TestContainerBuilder, IMmTestContainerBuilder
+        private class MmTestEnvironment : TestEnvironment, IMmTestEnvironment
         {
             public DateTime UtcNow { get; set; } = DateTime.UtcNow;
             public StubRabbitMqService StubRabbitMqService { get; } = new StubRabbitMqService();
@@ -66,7 +76,7 @@ namespace Tests.Integrational
                     new AssetPairSettings(AssetPairQuotesSourceTypeEnum.External,
                         GetDefaultExtPriceSettings(), GetDefaultCrossRateCalcInfo("BTCUSD"))));
 
-            public MmTestContainerBuilder(MmIntegrationalTestSuit suit) : base(suit)
+            public MmTestEnvironment(MmIntegrationalTestSuit suit) : base(suit)
             {
                 Setup<ISettingsStorageService>(
                         m => m.Setup(s => s.Read()).Returns(() => SettingsRoot),
@@ -77,6 +87,7 @@ namespace Tests.Integrational
                     .Setup<IAssetsService>(m => m.Setup(s => s.GetAssetPairsWithHttpMessagesAsync(default, default))
                         .Returns(() => AssetPairs.ToResponse()))
                     .Setup(new Mock<IMtMmRisksSlackNotificationsSender>().Object)
+                    .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>();
             }
         }

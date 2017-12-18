@@ -5,7 +5,7 @@ using MarginTrading.MarketMaker.Models.Settings;
 
 namespace Tests.Integrational
 {
-    internal interface IMmTestContainerBuilder : ITestContainerBuilder
+    internal interface IMmTestEnvironment : ITestEnvironment
     {
         DateTime UtcNow { get; set; }
         StubRabbitMqService StubRabbitMqService { get; }
