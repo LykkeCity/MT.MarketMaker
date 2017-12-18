@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using FluentAssertions;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Messages;
 using MoreLinq;
@@ -8,6 +9,39 @@ namespace Tests.Integrational
 {
     internal static class MmTestContainerBuilderExtensions
     {
+        public static void VerifyCommandsSent(
+            this IMmTestContainerBuilder testContainerBuilder,
+            params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
+        {
+            testContainerBuilder.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>()
+                .ShouldAllBeEquivalentTo(
+                    testContainerBuilder.GetExpectedCommands(pairsData));
+        }
+        
+        public static void VerifyTradesStopped(this IMmTestContainerBuilder testContainerBuilder, string assetPairId, params bool[] isStopped)
+        {
+            testContainerBuilder.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>()
+                .ShouldAllBeEquivalentTo(
+                    isStopped.Select(s => new
+                    {
+                        AssetPairId = assetPairId,
+                        MarketMakerId = "testMmId",
+                        Stop = s,
+                    }), o => o.ExcludingMissingMembers());
+        }
+        
+        public static void VerifyPrimaryExchangeSwitched(this IMmTestContainerBuilder testContainerBuilder, string assetPairId, params string[] exchangeNames)
+        {
+            testContainerBuilder.StubRabbitMqService.GetSentMessages<PrimaryExchangeSwitchedMessage>()
+                .ShouldAllBeEquivalentTo(
+                    exchangeNames.Select(e => new
+                    {
+                        AssetPairId = assetPairId,
+                        MarketMakerId = "testMmId",
+                        NewPrimaryExchange = new { ExchangeName = e },
+                    }), o => o.ExcludingMissingMembers());
+        }
+        
         public static IEnumerable<OrderCommandsBatchMessage> GetExpectedCommands(
             this IMmTestContainerBuilder testContainerBuilder,
             params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
