@@ -87,6 +87,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     else
                         publisher.DisableInMemoryQueuePersistence();
 
+                    
                     var serializer =
                         useMessagePack
                             ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>(MsgPackCompatModeResolver.Instance)
