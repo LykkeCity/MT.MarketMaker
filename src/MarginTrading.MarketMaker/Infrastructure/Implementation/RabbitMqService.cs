@@ -89,7 +89,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
                     var serializer =
                         useMessagePack
-                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>(TypelessContractlessStandardResolver.Instance)
+                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>(MsgPackCompatModeResolver.Instance)
                             : new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
                     return publisher
                         .SetSerializer(serializer)
