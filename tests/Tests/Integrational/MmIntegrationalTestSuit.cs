@@ -100,7 +100,8 @@ namespace Tests.Integrational
                 0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10, TimeSpan.FromMinutes(5)),
                 Enum.GetValues(typeof(OrderbookGeneratorStepEnum)).Cast<OrderbookGeneratorStepEnum>()
-                    .ToImmutableDictionary(e => e, e => true),
+                    .ToImmutableDictionary(e => e, e => true)
+                    .SetItem(OrderbookGeneratorStepEnum.GetArbitrageFreeSpread, false),
                 ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty
                     .Add("bitmex", GetDefaultExtPriceExchangeSettings())
                     .Add("bitfinex", GetDefaultExtPriceExchangeSettings())

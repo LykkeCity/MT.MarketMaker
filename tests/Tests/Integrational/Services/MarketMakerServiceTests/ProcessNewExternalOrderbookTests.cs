@@ -82,7 +82,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var decimals = Generate.Decimals();
             bitmexDecimals.Reset();
             env.VerifyCommandsSent(("BTCUSD", decimals.Take(4), decimals.Take(4)), ("BTCUSD", bitmexDecimals.Take(4), bitmexDecimals.Take(4)));
-            env.VerifyTradesStopped("BTCUSD", false, true);
+            env.VerifyTradesStopped("BTCUSD", true, false);
             env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitfinex", "bitmex");
         }
 

@@ -20,9 +20,9 @@ namespace Tests.Integrational
             this IMmTestEnvironment testEnvironment,
             params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
         {
-            testEnvironment.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>()
-                .ShouldAllBeEquivalentTo(
-                    testEnvironment.GetExpectedCommands(pairsData), o => o.WithStrictOrdering().Excluding(c => c.Timestamp));
+            var sent = testEnvironment.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>();
+            var expected = testEnvironment.GetExpectedCommands(pairsData);
+            sent.ShouldAllBeEquivalentTo(expected, o => o.WithStrictOrdering().Excluding(c => c.Timestamp));
         }
         
         public static void VerifyTradesStopped(this IMmTestEnvironment testEnvironment, string assetPairId, params bool[] isStopped)
