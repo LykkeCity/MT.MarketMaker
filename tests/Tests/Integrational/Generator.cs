@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 
 namespace Tests.Integrational
 {
@@ -44,7 +45,7 @@ namespace Tests.Integrational
             return Func().GetEnumerator();
         }
     }
-    
+
     internal static class Generate
     {
         public static Generator<T> FromLambda<T>(Func<T, int, T> increment)

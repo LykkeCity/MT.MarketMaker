@@ -18,10 +18,10 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class TraceService : ITraceService, ICustomStartup
     {
-        private static readonly BlockingCollection<TraceMessage> WritingQueue =
+        private readonly BlockingCollection<TraceMessage> WritingQueue =
             new BlockingCollection<TraceMessage>(10000);
 
-        private static readonly ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
+        private readonly ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
             = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
 
         private readonly ISystem _system;
@@ -80,7 +80,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                 .OrderByDescending(t => t.Time).ToList();
         }
 
-        private static IEnumerable<TraceModel> GetLastCore()
+        private IEnumerable<TraceModel> GetLastCore()
         {
             return LastElemsQueues.ToArray()
                 .SelectMany(q =>

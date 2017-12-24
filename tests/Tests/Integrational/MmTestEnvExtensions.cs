@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Controllers;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Messages;
 using MoreLinq;
 using Newtonsoft.Json;
@@ -19,7 +22,7 @@ namespace Tests.Integrational
         {
             testEnvironment.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>()
                 .ShouldAllBeEquivalentTo(
-                    testEnvironment.GetExpectedCommands(pairsData));
+                    testEnvironment.GetExpectedCommands(pairsData), o => o.WithStrictOrdering().Excluding(c => c.Timestamp));
         }
         
         public static void VerifyTradesStopped(this IMmTestEnvironment testEnvironment, string assetPairId, params bool[] isStopped)
@@ -31,7 +34,7 @@ namespace Tests.Integrational
                         AssetPairId = assetPairId,
                         MarketMakerId = "testMmId",
                         Stop = s,
-                    }), o => o.ExcludingMissingMembers());
+                    }), o => o.WithStrictOrdering().ExcludingMissingMembers());
         }
         
         public static void VerifyPrimaryExchangeSwitched(this IMmTestEnvironment testEnvironment, string assetPairId, params string[] exchangeNames)
@@ -43,7 +46,7 @@ namespace Tests.Integrational
                         AssetPairId = assetPairId,
                         MarketMakerId = "testMmId",
                         NewPrimaryExchange = new { ExchangeName = e },
-                    }), o => o.ExcludingMissingMembers());
+                    }), o => o.WithStrictOrdering().ExcludingMissingMembers());
         }
         
         public static IEnumerable<OrderCommandsBatchMessage> GetExpectedCommands(
@@ -57,8 +60,8 @@ namespace Tests.Integrational
                     new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
                 };
 
-                commands.AddRange(GetCommands(bids, OrderDirectionEnum.Buy));
-                commands.AddRange(GetCommands(asks, OrderDirectionEnum.Sell));
+                commands.AddRange(GetCommands(bids, OrderDirectionEnum.Buy).OrderByDescending(e => e.Price));
+                commands.AddRange(GetCommands(asks, OrderDirectionEnum.Sell).OrderBy(e => e.Price));
 
                 yield return new OrderCommandsBatchMessage
                 {
@@ -70,9 +73,35 @@ namespace Tests.Integrational
             }
         }
 
-        public static void PrintLogs(this IContainer container)
+        public static void PrintLogs(this IMmTestEnvironment testEnvironment)
         {
-            Console.WriteLine(JsonConvert.SerializeObject(container.Resolve<ITraceService>().GetLast(), Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(Trace.TraceService.GetLast(), Formatting.Indented));
+        }
+        
+        public static void Sleep(this IMmTestEnvironment env, TimeSpan time)
+        {
+            env.UtcNow += time;
+        }
+        
+        public static void SleepSecs(this IMmTestEnvironment env, double seconds)
+        {
+            env.Sleep(TimeSpan.FromSeconds(seconds));
+        }
+
+        public static void ChangeExchangeSettings(this IContainer container, string assetPairId, string exchangeName, Action<ExchangeExtPriceSettingsModel> update)
+        {
+            var extPriceExchangesController = container.Resolve<ExtPriceExchangesController>();
+            var settings = extPriceExchangesController.Get(assetPairId, exchangeName).RequiredNotNull("settings");
+            update(settings);
+            extPriceExchangesController.Update(settings);
+        }
+
+        public static void ChangeAssetSettings(this IContainer container, string assetPairId, Action<AssetPairExtPriceSettingsModel> update)
+        {
+            var extPriceExchangesController = container.Resolve<ExtPriceSettingsController>();
+            var settings = extPriceExchangesController.Get(assetPairId).RequiredNotNull("settings");
+            update(settings);
+            extPriceExchangesController.Update(settings);
         }
 
         private static IEnumerable<OrderCommand> GetCommands(IEnumerable<decimal> src, OrderDirectionEnum orderDirection)

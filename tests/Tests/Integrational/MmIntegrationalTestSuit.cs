@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using Autofac;
 using Common.Log;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
@@ -10,7 +11,6 @@ using Lykke.Service.CandlesHistory.Client;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
@@ -33,11 +33,6 @@ namespace Tests.Integrational
             }
         };
 
-        static MmIntegrationalTestSuit()
-        {
-            Trace.TraceService = new TraceService(new SystemService(), new StubRabbitMqService(), null);
-        }
-        
         public MmIntegrationalTestSuit()
         {
             WithModule(new MarketMakerModule(
@@ -90,12 +85,19 @@ namespace Tests.Integrational
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>();
             }
+
+            public override IContainer CreateContainer()
+            {
+                var container = base.CreateContainer();
+                Trace.TraceService = container.Resolve<ITraceService>();
+                return container;
+            }
         }
 
         private static AssetPairExtPriceSettings GetDefaultExtPriceSettings()
         {
             return new AssetPairExtPriceSettings("bitmex",
-                0.05m, TimeSpan.FromSeconds(0.5), new AssetPairMarkupsParams(0, 0),
+                0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10, TimeSpan.FromMinutes(5)),
                 Enum.GetValues(typeof(OrderbookGeneratorStepEnum)).Cast<OrderbookGeneratorStepEnum>()
                     .ToImmutableDictionary(e => e, e => true),

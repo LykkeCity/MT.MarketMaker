@@ -60,7 +60,7 @@ namespace Tests.Integrational
                 return this;
             }
 
-            public IContainer CreateContainer()
+            public virtual IContainer CreateContainer()
             {
                 var builder = new ContainerBuilder();
                 foreach (var module in _suit._modules)
