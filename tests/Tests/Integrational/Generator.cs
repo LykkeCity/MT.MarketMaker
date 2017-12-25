@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 
 namespace Tests.Integrational
 {
-    internal class Generator<T>: IEnumerable<T>
+    internal class Generator<T> : IEnumerable<T>
     {
         private readonly Func<T, int, T> _increment;
         private T _value;
@@ -15,7 +14,7 @@ namespace Tests.Integrational
         {
             _increment = increment;
         }
-        
+
         public T Next()
         {
             return _value = _increment(_value, _counter++);
@@ -27,9 +26,14 @@ namespace Tests.Integrational
             _counter = default;
         }
 
+        public Generator<T> Clone()
+        {
+            return new Generator<T>(_increment);
+        }
+
         private IEnumerable<T> Func()
         {
-            while(true)
+            while (true)
             {
                 yield return Next();
             }
@@ -53,9 +57,9 @@ namespace Tests.Integrational
             return new Generator<T>(increment);
         }
 
-        public static Generator<decimal> Decimals()
+        public static Generator<decimal> Decimals(decimal multiplier = 1)
         {
-            return FromLambda<decimal>((o, i) => i + 1);
+            return FromLambda<decimal>((o, i) => (i + 1) * multiplier);
         }
 
         public static Generator<int> Ints()

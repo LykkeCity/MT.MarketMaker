@@ -55,23 +55,25 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return _exchangesQualities.GetValueOrDefault(assetPairId, ImmutableDictionary<string, ExchangeQuality>.Empty);
         }
 
-        public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorStateEnum> errors,
-            DateTime now, string currentProcessingExchange)
+        public ExchangeQuality GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorStateEnum> errors, DateTime now, string currentProcessingExchange)
         {
             if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.ChoosePrimary, assetPairId))
             {
                 var presetPrimaryExchange = _extPricesSettingsService.GetPresetPrimaryExchange(assetPairId);
                 _primaryExchanges[assetPairId] = presetPrimaryExchange;
-                return presetPrimaryExchange;
+                return new ExchangeQuality(presetPrimaryExchange, 0, ExchangeErrorStateEnum.Valid, false, null);
             }
 
             var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now, currentProcessingExchange);
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
+            if (primaryQuality == null) return null;
+            
             _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.ExchangeName, now,
                 primaryQuality.HedgingPreference, primaryQuality.ErrorState);
-            return primaryQuality.ErrorState == ExchangeErrorStateEnum.Outlier ? null : primaryQuality.ExchangeName;
+            return primaryQuality;
         }
 
+        [CanBeNull]
         private ExchangeQuality CheckPrimaryStatusAndSwitchIfNeeded(string assetPairId,
             ImmutableDictionary<string, ExchangeQuality> exchangeQualities)
         {

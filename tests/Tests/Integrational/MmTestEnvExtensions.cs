@@ -24,7 +24,18 @@ namespace Tests.Integrational
             var expected = testEnvironment.GetExpectedCommands(pairsData);
             sent.ShouldAllBeEquivalentTo(expected, o => o.WithStrictOrdering().Excluding(c => c.Timestamp));
         }
-        
+
+        public static void VerifyCommandsSent(
+            this IMmTestEnvironment testEnvironment,
+            params (string AssetPairId, Generator<decimal> Generator)[] pairsData)
+        {
+            testEnvironment.VerifyCommandsSent(pairsData.Select(p =>
+            {
+                var g = p.Generator.Clone();
+                return (p.AssetPairId, g.Take(4), g.Take(4));
+            }).ToArray());
+        }
+
         public static void VerifyTradesStopped(this IMmTestEnvironment testEnvironment, string assetPairId, params bool[] isStopped)
         {
             testEnvironment.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>()
