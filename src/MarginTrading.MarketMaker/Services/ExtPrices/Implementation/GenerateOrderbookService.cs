@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using Autofac;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
@@ -24,8 +23,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     /// </remarks>
     public class GenerateOrderbookService : ICustomStartup, IDisposable, IGenerateOrderbookService
     {
-        private readonly ReadWriteLockedDictionary<string, (int Hash, DateTime Time)> _sentOrderbooks =
-            new ReadWriteLockedDictionary<string, (int, DateTime)>();
+        private readonly ReadWriteLockedDictionary<string, DateTime> _sentOrderbooks =
+            new ReadWriteLockedDictionary<string, DateTime>();
 
         private readonly IOrderbooksService _orderbooksService;
         private readonly IDisabledOrderbooksService _disabledOrderbooksService;
@@ -114,6 +113,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (null, null, "No primary exchange");
             }
 
+            if (primaryExchange != orderbook.ExchangeName)
+            {
+                return (null, primaryExchange, "Orderbook not from primary exchange");
+            }
+
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
             {
                 _log.WriteErrorAsync(nameof(GenerateOrderbookService), null,
@@ -138,25 +142,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private string TryFindSkipOrderbookReason(Orderbook orderbook)
         {
             var now = _system.UtcNow;
-            var newHash = Orderbook.Comparer.GetHashCode(orderbook);
             string reason = null;
             var period = _extPricesSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
-            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
-                (k, old) =>
+            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => now,
+                (k, lastTime) =>
                 {
-                    if (newHash == old.Hash)
-                    {
-                        reason = "Not changed";
-                        return old;
-                    }
-                    if (now.Subtract(old.Time) < period)
+                    if (now.Subtract(lastTime) < period)
                     {
                         reason = "Too frequient update";
-                        return old;
+                        return lastTime;
                     }
                     else
                     {
-                        return (newHash, now);
+                        return now;
                     }
                 });
             return reason;
@@ -283,7 +281,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return (outdatedExchanges, freshOrderbooks);
         }
 
-        private void LogCycle(ExternalOrderbook orderbook, [CanBeNull] Orderbook resultingOrderbook, Stopwatch watch, string primaryExchange, [CanBeNull] string problem)
+        private void LogCycle(ExternalOrderbook orderbook, [CanBeNull] Orderbook resultingOrderbook, Stopwatch watch,
+            string primaryExchange, [CanBeNull] string problem)
         {
             var elapsedMilliseconds = watch.ElapsedMilliseconds;
             if (elapsedMilliseconds > 20)
