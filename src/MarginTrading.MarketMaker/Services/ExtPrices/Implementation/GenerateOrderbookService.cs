@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using Autofac;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
@@ -116,7 +115,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             if (primaryExchange != orderbook.ExchangeName)
             {
-                return (null, primaryExchange);
+                return (null, primaryExchange, "Orderbook not from primary exchange");
             }
 
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
@@ -145,22 +144,17 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var now = _system.UtcNow;
             string reason = null;
             var period = _extPricesSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
-            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
-                (k, old) =>
+            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => now,
+                (k, lastTime) =>
                 {
-                    if (newHash == old.Hash)
-                    {
-                        reason = "Not changed";
-                        return old;
-                    }
-                    if (now.Subtract(old.Time) < period)
+                    if (now.Subtract(lastTime) < period)
                     {
                         reason = "Too frequient update";
-                        return old;
+                        return lastTime;
                     }
                     else
                     {
-                        return (newHash, now);
+                        return now;
                     }
                 });
             return reason;
@@ -287,7 +281,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return (outdatedExchanges, freshOrderbooks);
         }
 
-        private void LogCycle(ExternalOrderbook orderbook, [CanBeNull] Orderbook resultingOrderbook, Stopwatch watch, string primaryExchange, [CanBeNull] string problem)
+        private void LogCycle(ExternalOrderbook orderbook, [CanBeNull] Orderbook resultingOrderbook, Stopwatch watch,
+            string primaryExchange, [CanBeNull] string problem)
         {
             var elapsedMilliseconds = watch.ElapsedMilliseconds;
             if (elapsedMilliseconds > 20)
