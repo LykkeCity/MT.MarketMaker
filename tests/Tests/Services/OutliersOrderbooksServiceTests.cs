@@ -4,8 +4,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using Common;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Services;
-using MarginTrading.MarketMaker.Services.Implementation;
+using MarginTrading.MarketMaker.Services.ExtPrices;
+using MarginTrading.MarketMaker.Services.ExtPrices.Implementation;
 using NUnit.Framework;
 
 namespace Tests.Services
@@ -94,7 +94,7 @@ namespace Tests.Services
                 return KeyValuePair.Create(exchangeName, orderbook);
             }).ToImmutableDictionary();
 
-            _testSuit.Setup<IPriceCalcSettingsService>(s => s.GetOutlierThreshold("pair") == threshold);
+            _testSuit.Setup<IExtPricesSettingsService>(s => s.GetOutlierThreshold("pair") == threshold);
             _testSuit.Setup<IPrimaryExchangeService>(s => s.GetLastPrimaryExchange("pair") == "ex1");
 
             //act

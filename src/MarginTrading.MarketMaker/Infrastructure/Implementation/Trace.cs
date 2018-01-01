@@ -3,14 +3,20 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Common;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Filters;
-using MarginTrading.MarketMaker.Models.Api;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal static class Trace
     {
+        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        {
+            Converters = { new StringEnumConverter() }
+        };
+
         private static readonly BlockingCollection<(string MsgGroup, string Msg, DateTime Time)> _writingQueue = new BlockingCollection<(string MsgGroup, string Msg, DateTime Time)>(10000);
         private static readonly ConcurrentDictionary<string, ConcurrentQueue<(string Msg, DateTime Time)>> _lastElemsQueues
             = new ConcurrentDictionary<string, ConcurrentQueue<(string Msg, DateTime Time)>>();
@@ -26,6 +32,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                         lastElemsQueue.Enqueue((msg, time));
                         if (lastElemsQueue.Count > 100) lastElemsQueue.TryDequeue(out var _);
                         if (TestFunctionalityFilter.TestsEnabled) Console.WriteLine(msg);
+                        // todo: send rabbit messages
                     }
             });
         }
@@ -37,7 +44,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public static void Write(string msgGroup, string msg, object obj)
         {
-            Write(msgGroup, msg + ": " + obj.ToJson());
+            Write(msgGroup, msg + ": " + JsonConvert.SerializeObject(obj, JsonSerializerSettings));
         }
 
         public static List<LogModel> GetLast()

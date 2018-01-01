@@ -1,60 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using JetBrains.Annotations;
-using MarginTrading.MarketMaker.AzureRepositories;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models;
+﻿using System.Collections.Generic;
+using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 {
     internal class CrossRatesSettingsService : ICrossRatesSettingsService
     {
-        [CanBeNull]
-        private IReadOnlyList<CrossRatesSettings> _cache;
-
-        private readonly object _writeLock = new object();
-
-        private readonly ICrossRatesSettingsRepository _repository;
-
-        public CrossRatesSettingsService(ICrossRatesSettingsRepository repository)
+        public void Set(IReadOnlyList<CrossRatesSettings> model)
         {
-            _repository = repository;
-        }
-
-        public void Set([NotNull] IReadOnlyList<CrossRatesSettings> models)
-        {
-            if (models == null) throw new ArgumentNullException(nameof(models));
-            lock (_writeLock)
-            {
-                WriteRepository(models);
-                _cache = models;
-            }
+            throw new System.NotImplementedException();
         }
 
         public IReadOnlyList<CrossRatesSettings> Get()
         {
-            if (_cache == null)
-            {
-                lock (_writeLock)
-                {
-                    if (_cache == null)
-                    {
-                        _cache = ReadRepository();
-                    }
-                }
-            }
-
-            return _cache.RequiredNotNull("result");
-        }
-
-        private void WriteRepository(IEnumerable<CrossRatesSettings> models)
-        {
-            _repository.InsertOrReplaceAsync(models).GetAwaiter().GetResult();
-        }
-
-        private IReadOnlyList<CrossRatesSettings> ReadRepository()
-        {
-            return _repository.GetAllAsync().GetAwaiter().GetResult();
+            return new CrossRatesSettings[0];
         }
     }
 }

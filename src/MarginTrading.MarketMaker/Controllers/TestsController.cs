@@ -1,10 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
-using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -13,20 +18,24 @@ namespace MarginTrading.MarketMaker.Controllers
     public class TestsController : Controller
     {
         private readonly ITestingHelperService _testingHelperService;
+        private readonly IMarketMakerService _marketMakerService;
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
 
-        public TestsController(ITestingHelperService testingHelperService)
+        public TestsController(ITestingHelperService testingHelperService, IMarketMakerService marketMakerService,
+            IAssetPairSourceTypeService assetPairSourceTypeService)
         {
             _testingHelperService = testingHelperService;
+            _marketMakerService = marketMakerService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
         }
 
         /// <summary>
         ///     Adds settings
         /// </summary>
-        [HttpPost]
-        [Route("add")]
-        [SwaggerOperation("AddTestSettings")]
-        public IActionResult Add([FromBody] ImmutableList<TestSetting> settings)
+        [HttpPut]
+        public IActionResult Add([NotNull] [FromBody] ImmutableList<TestSettingModel> settings)
         {
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             _testingHelperService.Add(settings);
             return Ok(new {success = true});
         }
@@ -35,9 +44,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// <summary>
         ///     Deletes settings
         /// </summary>
-        [HttpPost]
-        [Route("delete")]
-        [SwaggerOperation("DeleteAllTestSettings")]
+        [HttpDelete]
         public IActionResult DeleteAll()
         {
             _testingHelperService.DeleteAll();
@@ -47,11 +54,12 @@ namespace MarginTrading.MarketMaker.Controllers
         /// <summary>
         ///     Deletes settings
         /// </summary>
-        [HttpPost]
-        [Route("delete/{assetPairId}/{exchange}")]
-        [SwaggerOperation("DeleteTestSettings")]
-        public IActionResult Delete(string assetPairId, string exchange)
+        [HttpDelete]
+        [Route("{assetPairId}/{exchange}")]
+        public IActionResult Delete([NotNull] string assetPairId, [NotNull] string exchange)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            if (exchange == null) throw new ArgumentNullException(nameof(exchange));
             _testingHelperService.Delete(assetPairId, exchange);
             return Ok(new {success = true});
         }
@@ -60,9 +68,7 @@ namespace MarginTrading.MarketMaker.Controllers
         ///     Gets all existing settings
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetAllTestSettings")]
-        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSetting>> GetAll()
+        public IReadOnlyDictionary<(string AssetPairId, string Exchange), ImmutableList<TestSettingModel>> List()
         {
             return _testingHelperService.GetAll();
         }
@@ -72,10 +78,25 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}/{exchange}")]
-        [SwaggerOperation("GetTestSettings")]
-        public ImmutableList<TestSetting> Get(string assetPairId, string exchange)
+        public ImmutableList<TestSettingModel> Get([NotNull] string assetPairId, [NotNull] string exchange)
         {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            if (exchange == null) throw new ArgumentNullException(nameof(exchange));
             return _testingHelperService.Get(assetPairId, exchange);
+        }
+
+        /// <summary>
+        /// Sets quotes source type to manual and sends manual quotes 
+        /// </summary>
+        [HttpPost]
+        [Route("manual-price/{assetPairId}")]
+        public async Task<IActionResult> SetManualPrice([NotNull] string assetPairId, decimal bid, decimal ask)
+        {
+            if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
+            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId,
+                AssetPairQuotesSourceTypeEnum.Manual);
+            await _marketMakerService.ProcessNewManualQuotes(assetPairId, bid, ask);
+            return Ok(new {success = true});
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.AzureQueueIntegration;
@@ -13,17 +14,19 @@ using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Api;
 using MarginTrading.MarketMaker.Modules;
-using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace MarginTrading.MarketMaker
@@ -54,11 +57,15 @@ namespace MarginTrading.MarketMaker
                 services.AddMvc()
                     .AddJsonOptions(options =>
                     {
-                        options.SerializerSettings.ContractResolver =
-                            new DefaultContractResolver();
+                        options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+                        options.SerializerSettings.Converters.Add(new StringEnumConverter());
                     });
 
-                services.AddSwaggerGen(options => { options.DefaultLykkeConfiguration("v1", ServiceName + " API"); });
+                services.AddSwaggerGen(options =>
+                {
+                    options.DefaultLykkeConfiguration("v1", ServiceName + " API");
+                    options.OperationFilter<CustomOperationIdOperationFilter>();
+                });
 
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();

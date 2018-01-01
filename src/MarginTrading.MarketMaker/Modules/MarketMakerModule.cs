@@ -8,11 +8,11 @@ using Lykke.Service.CandlesHistory.Client;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Services;
-using MarginTrading.MarketMaker.Services.Implementation;
+using MarginTrading.MarketMaker.Services.Common;
+using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
-using Rocks.Caching;
 
 namespace MarginTrading.MarketMaker.Modules
 {
@@ -35,7 +35,6 @@ namespace MarginTrading.MarketMaker.Modules
             builder.RegisterInstance(_settings.Nested(s => s.MarginTradingMarketMaker)).SingleInstance();
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
             builder.RegisterType<SystemService>().As<ISystem>().SingleInstance();
-            builder.RegisterType<MemoryCacheProvider>().As<ICacheProvider>().SingleInstance();
 
             builder.RegisterInstance(new RabbitMqService(_log,
                     _settings.Nested(s => s.MarginTradingMarketMaker.Db.QueuePersistanceRepositoryConnString)))
@@ -50,6 +49,8 @@ namespace MarginTrading.MarketMaker.Modules
                     new Candleshistoryservice(new Uri(_settings.CurrentValue.CandlesHistoryServiceClient.ServiceUrl)))
                 .As<ICandleshistoryservice>()
                 .SingleInstance();
+            
+            _services.AddSingleton<ITelemetryInitializer, UserAgentTelemetryInitializer>();
 
             builder.Populate(_services);
         }

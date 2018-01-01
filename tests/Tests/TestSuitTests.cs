@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using JetBrains.Annotations;
-using Moq;
 using NUnit.Framework;
 
 namespace Tests

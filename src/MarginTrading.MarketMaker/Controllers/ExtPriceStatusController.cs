@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts;
+using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Api;
-using MarginTrading.MarketMaker.Services;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace MarginTrading.MarketMaker.Controllers
 {
@@ -24,11 +24,9 @@ namespace MarginTrading.MarketMaker.Controllers
         /// Gets all status
         /// </summary>
         [HttpGet]
-        [Route("")]
-        [SwaggerOperation("GetAllExtPriceStatuses")]
-        public IReadOnlyDictionary<string, IReadOnlyList<ExtPriceStatusModel>> GetAllStatuses()
+        public IReadOnlyList<ExtPriceStatusModel> List()
         {
-            return _extPricesStatusService.GetAll();
+            return _extPricesStatusService.Get();
         }
 
         /// <summary>
@@ -36,9 +34,8 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
-        [SwaggerOperation("GetExtPriceStatus")]
         [CanBeNull]
-        public IReadOnlyList<ExtPriceStatusModel> GetStatus(string assetPairId)
+        public IReadOnlyList<ExtPriceStatusModel> Get(string assetPairId)
         {
             return _extPricesStatusService.Get(assetPairId);
         }
@@ -48,9 +45,8 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("logs")]
-        [SwaggerOperation("GetLogs")]
         [CanBeNull]
-        public List<LogModel> GetLogs()
+        public IReadOnlyList<LogModel> GetLogs()
         {
             return Trace.GetLast();
         }
@@ -60,12 +56,17 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("logs/{contains}")]
-        [SwaggerOperation("GetLogsFiltered")]
         [CanBeNull]
-        public IEnumerable<LogModel> GetLogsFiltered(string contains)
+        public IReadOnlyList<LogModel> GetLogsFiltered(string contains)
         {
-            return Trace.GetLast().Where(l =>
-                (l.Group + '\t' + l.Message).IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0);
+            return Trace.GetLast().Where(l => Contains(l.Group + '\t' + l.Message, contains)).ToList();
+        }
+
+        private static bool Contains(string text, string contains)
+        {
+            return contains.Split(" OR ")
+                .Any(containsOr =>
+                    containsOr.Split(' ', StringSplitOptions.RemoveEmptyEntries).All(c => text.IndexOf(c.Trim(), StringComparison.OrdinalIgnoreCase) >= 0));
         }
     }
 }

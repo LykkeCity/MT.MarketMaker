@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarginTrading.MarketMaker",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "tests\Tests\Tests.csproj", "{CA3F650E-F93E-48A5-94C8-45346C5BF776}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarginTrading.MarketMaker.Contracts", "client\MarginTrading.MarketMaker.Contracts\MarginTrading.MarketMaker.Contracts.csproj", "{AED3D357-EDC2-4817-91E1-93941B1FBD51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarginTrading.MarketMaker.TestClient", "client\MarginTrading.MarketMaker.TestClient\MarginTrading.MarketMaker.TestClient.csproj", "{F00BADC2-0210-4A51-BBD2-B4D601EFF399}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{CA3F650E-F93E-48A5-94C8-45346C5BF776}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA3F650E-F93E-48A5-94C8-45346C5BF776}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA3F650E-F93E-48A5-94C8-45346C5BF776}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AED3D357-EDC2-4817-91E1-93941B1FBD51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AED3D357-EDC2-4817-91E1-93941B1FBD51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AED3D357-EDC2-4817-91E1-93941B1FBD51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AED3D357-EDC2-4817-91E1-93941B1FBD51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F00BADC2-0210-4A51-BBD2-B4D601EFF399}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F00BADC2-0210-4A51-BBD2-B4D601EFF399}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F00BADC2-0210-4A51-BBD2-B4D601EFF399}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F00BADC2-0210-4A51-BBD2-B4D601EFF399}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

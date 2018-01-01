@@ -2,39 +2,43 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Autofac;
 using JetBrains.Annotations;
-using MarginTrading.MarketMaker.AzureRepositories;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
+using MarginTrading.MarketMaker.Models.Settings;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 {
-    public class CrossRateCalcInfosService : ICrossRateCalcInfosService, IStartable
+    internal class CrossRateCalcInfosService : ICrossRateCalcInfosService
     {
-        private ImmutableArray<CrossRateCalcInfo> _cache = ImmutableArray<CrossRateCalcInfo>.Empty;
+        private readonly ISettingsRootService _settingsRootService;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _dependentAssetPairs;
+        private readonly IDependentCrossRatesService _dependentCrossRatesService;
 
-        private readonly ICrossRateCalcInfosRepository _repository;
-
-        public CrossRateCalcInfosService(ICrossRateCalcInfosRepository repository)
+        public CrossRateCalcInfosService(ISettingsRootService settingsRootService,
+            IDependentCrossRatesService dependentCrossRatesService)
         {
-            _repository = repository;
+            _settingsRootService = settingsRootService;
+            _dependentCrossRatesService = dependentCrossRatesService;
             _dependentAssetPairs = DependentAssetPairsCache();
         }
 
-        public void Set([NotNull] IEnumerable<CrossRateCalcInfo> models)
+        public void Update([NotNull] CrossRateCalcInfo info)
         {
-            var newCache = models.RequiredNotNullElems(nameof(models)).ToImmutableArray();
-            WriteRepository(newCache);
-            _cache = newCache;
+            _settingsRootService.Update(info.ResultingPairId,
+                old => new AssetPairSettings(old.QuotesSourceType, old.ExtPriceSettings, info));
         }
 
-        public IReadOnlyList<CrossRateCalcInfo> Get()
+        public ImmutableDictionary<string, CrossRateCalcInfo> Get()
         {
-            return _cache;
+            return _settingsRootService.Get().AssetPairs
+                .Where(s => s.Value.QuotesSourceType == AssetPairQuotesSourceTypeEnum.CrossRates)
+                .ToImmutableDictionary(s => s.Key, s => s.Value.CrossRateCalcInfo.RequiredNotNull(nameof(s.Value.CrossRateCalcInfo)));
         }
 
         [ItemNotNull]
@@ -44,26 +48,22 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _dependentAssetPairs.Get()[assetPairId].RequiredNotNullElems("result");
         }
 
+        public CrossRateCalcInfo GetDefault(string assetPairId)
+        {
+            return _dependentCrossRatesService.GetForResultingPairId(assetPairId) ??
+                new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false), new CrossRateSourceAssetPair(string.Empty, false));
+        }
+
+        public CrossRateCalcInfo Get(string assetPairId)
+        {
+            return _settingsRootService.Get(assetPairId)?.CrossRateCalcInfo.RequiredNotNull(nameof(CrossRateCalcInfo));
+        }
+
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> DependentAssetPairsCache()
         {
             return Calculate.Cached(Get, ReferenceEquals,
-                src => src.SelectMany(i => new[] { (i.Source1.Id, i), (i.Source2.Id, i) })
+                src => src.SelectMany(i => new[] {(i.Value.Source1.Id, i.Value), (i.Value.Source2.Id, i.Value)})
                     .ToLookup());
-        }
-
-        private void WriteRepository(IEnumerable<CrossRateCalcInfo> models)
-        {
-            _repository.InsertOrReplaceAsync(models).GetAwaiter().GetResult();
-        }
-
-        private ImmutableArray<CrossRateCalcInfo> ReadRepository()
-        {
-            return _repository.GetAllAsync().GetAwaiter().GetResult().ToImmutableArray();
-        }
-
-        public void Start()
-        {
-            _cache = ReadRepository();
         }
     }
 }
