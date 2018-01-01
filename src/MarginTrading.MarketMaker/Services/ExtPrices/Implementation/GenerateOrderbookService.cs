@@ -24,8 +24,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     /// </remarks>
     public class GenerateOrderbookService : ICustomStartup, IDisposable, IGenerateOrderbookService
     {
-        private readonly ReadWriteLockedDictionary<string, (int Hash, DateTime Time)> _sentOrderbooks =
-            new ReadWriteLockedDictionary<string, (int, DateTime)>();
+        private readonly ReadWriteLockedDictionary<string, DateTime> _sentOrderbooks =
+            new ReadWriteLockedDictionary<string, DateTime>();
 
         private readonly IOrderbooksService _orderbooksService;
         private readonly IDisabledOrderbooksService _disabledOrderbooksService;
@@ -114,6 +114,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (null, null, "No primary exchange");
             }
 
+            if (primaryExchange != orderbook.ExchangeName)
+            {
+                return (null, primaryExchange);
+            }
+
             if (!allOrderbooks.TryGetValue(primaryExchange, out var primaryOrderbook))
             {
                 _log.WriteErrorAsync(nameof(GenerateOrderbookService), null,
@@ -138,7 +143,6 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private string TryFindSkipOrderbookReason(Orderbook orderbook)
         {
             var now = _system.UtcNow;
-            var newHash = Orderbook.Comparer.GetHashCode(orderbook);
             string reason = null;
             var period = _extPricesSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
             _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),

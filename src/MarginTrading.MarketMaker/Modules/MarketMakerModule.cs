@@ -11,6 +11,7 @@ using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MarginTrading.MarketMaker.Modules
@@ -48,6 +49,8 @@ namespace MarginTrading.MarketMaker.Modules
                     new Candleshistoryservice(new Uri(_settings.CurrentValue.CandlesHistoryServiceClient.ServiceUrl)))
                 .As<ICandleshistoryservice>()
                 .SingleInstance();
+            
+            _services.AddSingleton<ITelemetryInitializer, UserAgentTelemetryInitializer>();
 
             builder.Populate(_services);
         }
