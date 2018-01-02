@@ -3,14 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac;
-using Common;
-using JetBrains.Annotations;
-using Lykke.SettingsReader;
+using Lykke.Logs;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Filters;
-using MarginTrading.MarketMaker.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -18,23 +13,29 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class TraceService : ITraceService, ICustomStartup
     {
+        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        {
+            Converters = {new StringEnumConverter()}
+        };
+
         private static readonly BlockingCollection<TraceMessage> WritingQueue =
             new BlockingCollection<TraceMessage>(10000);
 
-        private static readonly ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
-            = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
+        private static readonly
+            ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>>
+            LastElemsQueues
+                = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
 
         private readonly ISystem _system;
-        private readonly IMessageProducer<TraceMessage> _messageProducer;
+        private readonly LykkeLogToAzureStorage _logToAzureStorage;
 
-        public TraceService(ISystem system, IRabbitMqService rabbitMqService,
-            IReloadingManager<MarginTradingMarketMakerSettings> settings)
+        public TraceService(ISystem system,
+            LykkeLogToAzureStorage logToAzureStorage)
         {
             _system = system;
-            _messageProducer =
-                rabbitMqService.GetProducer<TraceMessage>(settings.Nested(s => s.RabbitMq.Publishers.Trace), true, true);
+            _logToAzureStorage = logToAzureStorage;
         }
-        
+
         public void Initialize()
         {
             Task.Run(() =>
@@ -44,17 +45,18 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     {
                         foreach (var m in WritingQueue.GetConsumingEnumerable())
                         {
-                            if (m.Level < TraceLevelGroupEnum.Info)
-                                Console.WriteLine(m.AssetPairId + '\t' + m.Level + '\t' + m.Msg);
-                        
-                            _messageProducer.ProduceAsync(m);
-
                             var lastElemsQueue =
-                                LastElemsQueues.GetOrAdd((m.Level, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
+                                LastElemsQueues.GetOrAdd((m.TraceGroup, m.AssetPairId),
+                                    k => new ConcurrentQueue<TraceMessage>());
                             lastElemsQueue.Enqueue(m);
-                        
-                            while (lastElemsQueue.Count > 100) 
+
+                            while (lastElemsQueue.Count > 100)
                                 lastElemsQueue.TryDequeue(out var _);
+
+                            var message = m.AssetPairId + '\t' + m.TraceGroup + '\t' + m.Msg;
+                            Console.WriteLine(message);
+                            _logToAzureStorage.WriteInfoAsync("MtMmTrace",
+                                JsonConvert.SerializeObject(m, JsonSerializerSettings), message);
                         }
                     }
                     catch (Exception e)
@@ -108,15 +110,16 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public class TraceMessage
         {
-            public TraceLevelGroupEnum Level { get; }
+            public TraceLevelGroupEnum TraceGroup { get; }
             public string AssetPairId { get; }
             public string Msg { get; }
             public object Data { get; }
             public DateTime Time { get; }
 
-            public TraceMessage(TraceLevelGroupEnum level, string assetPairId, string msg, object data, DateTime time)
+            public TraceMessage(TraceLevelGroupEnum traceGroup, string assetPairId, string msg, object data,
+                DateTime time)
             {
-                Level = level;
+                TraceGroup = traceGroup;
                 AssetPairId = assetPairId;
                 Msg = msg;
                 Data = data;
