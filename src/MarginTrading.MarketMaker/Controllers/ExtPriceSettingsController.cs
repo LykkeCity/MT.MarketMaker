@@ -5,7 +5,9 @@ using System.Linq;
 using AutoMapper;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.ExtPrices;
@@ -98,8 +100,15 @@ namespace MarginTrading.MarketMaker.Controllers
             var model = _convertService.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(setting,
                 o => o.ConfigureMap(MemberList.Source).ForSourceMember(s => s.Exchanges, e => e.Ignore()));
             model.AssetPairId = assetPairId;
-            model.Steps = _extPricesSettingsService.GetDefaultSteps().SetItems(setting.Steps);
+            model.Steps = Convert(_extPricesSettingsService.GetDefaultSteps().SetItems(setting.Steps));
             return model;
+        }
+
+        private ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Convert(ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool> steps)
+        {
+            return _convertService
+                .Convert<ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool>,
+                    ImmutableDictionary<OrderbookGeneratorStepEnum, bool>>(steps);
         }
 
         private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)

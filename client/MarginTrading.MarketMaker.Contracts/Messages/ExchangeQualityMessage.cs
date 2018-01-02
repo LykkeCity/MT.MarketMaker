@@ -1,6 +1,6 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using MarginTrading.MarketMaker.Contracts.Enums;
 
-namespace MarginTrading.MarketMaker.Messages
+namespace MarginTrading.MarketMaker.Contracts.Messages
 {
     public class ExchangeQualityMessage
     {

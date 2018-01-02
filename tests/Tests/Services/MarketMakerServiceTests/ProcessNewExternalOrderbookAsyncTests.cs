@@ -6,6 +6,7 @@ using Common;
 using FluentAssertions;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Messages;
@@ -42,9 +43,9 @@ namespace Tests.Services.MarketMakerServiceTests
                     .Callback<OrderCommandsBatchMessage>(m => _sentMessages.Add(m)));
         }
 
-        [TestCase(AssetPairQuotesSourceTypeEnum.Manual)]
-        [TestCase(AssetPairQuotesSourceTypeEnum.Spot)]
-        public async Task IfQuotesSourceNotExternal_ShouldSkip(AssetPairQuotesSourceTypeEnum configuredSource)
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.Manual)]
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.Spot)]
+        public async Task IfQuotesSourceNotExternal_ShouldSkip(AssetPairQuotesSourceTypeDomainEnum configuredSource)
         {
             //arrange
             _testSuit
@@ -70,7 +71,7 @@ namespace Tests.Services.MarketMakerServiceTests
         {
             //arrange
             _testSuit.Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -93,7 +94,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -116,7 +117,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External);
 
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
@@ -139,7 +140,7 @@ namespace Tests.Services.MarketMakerServiceTests
             //arrange
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External);
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External);
             var incomingMessage = new ExternalExchangeOrderbookMessage
             {
                 AssetPairId = "pair",
@@ -181,7 +182,7 @@ namespace Tests.Services.MarketMakerServiceTests
 
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External)
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IGenerateOrderbookService>(s => s.OnNewOrderbook(externalOrderbook.Equivalent()) == null);
 
@@ -230,7 +231,7 @@ namespace Tests.Services.MarketMakerServiceTests
 
             _testSuit
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get("pair") == AssetPairQuotesSourceTypeEnum.External)
+                    s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.External)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IGenerateOrderbookService>(s =>
                     s.OnNewOrderbook(externalOrderbook.Equivalent()) == resultingOrderbook)

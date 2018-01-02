@@ -50,14 +50,18 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
+        [CanBeNull]
         public CrossRateCalcInfoModel Get([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             return Convert(_crossRateCalcInfosService.Get(assetPairId));
         }
 
-        private CrossRateCalcInfoModel Convert(CrossRateCalcInfo settings)
+        [ContractAnnotation("settings:null => null")]
+        [CanBeNull]
+        private CrossRateCalcInfoModel Convert([CanBeNull] CrossRateCalcInfo settings)
         {
+            if (settings == null) return null;
             return _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
         }
 

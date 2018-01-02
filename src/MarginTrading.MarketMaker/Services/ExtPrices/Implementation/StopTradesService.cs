@@ -26,7 +26,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         }
 
         public void SetPrimaryOrderbookState(string assetPairId, string exchange, DateTime now,
-            decimal hedgingPreference, ExchangeErrorStateEnum? errorState)
+            decimal hedgingPreference, ExchangeErrorStateDomainEnum? errorState)
         {
             var state = new State(primaryState: new PrimaryState(exchange, errorState, hedgingPreference));
             AddOrUpdateState(assetPairId, now, state);
@@ -49,8 +49,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
             var isPrimaryOk = state.PrimaryState == null ||
                               state.PrimaryState.HedgingPreference > 0 &&
-                              (state.PrimaryState.ErrorState == ExchangeErrorStateEnum.Valid ||
-                               state.PrimaryState.ErrorState == ExchangeErrorStateEnum.Outlier);
+                              (state.PrimaryState.ErrorState == ExchangeErrorStateDomainEnum.Valid ||
+                               state.PrimaryState.ErrorState == ExchangeErrorStateDomainEnum.Outlier);
 
             var isFreshOk = state.FreshOrderbooksState == null ||
                             state.FreshOrderbooksState.FreshOrderbooksKeys.Length > 2;
@@ -105,10 +105,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private class PrimaryState
         {
             public string Name { get; }
-            public ExchangeErrorStateEnum? ErrorState { get; }
+            public ExchangeErrorStateDomainEnum? ErrorState { get; }
             public decimal HedgingPreference { get; }
 
-            public PrimaryState(string name, ExchangeErrorStateEnum? errorState, decimal hedgingPreference)
+            public PrimaryState(string name, ExchangeErrorStateDomainEnum? errorState, decimal hedgingPreference)
             {
                 ErrorState = errorState;
                 HedgingPreference = hedgingPreference;

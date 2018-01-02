@@ -1,4 +1,4 @@
-﻿namespace MarginTrading.MarketMaker.Enums
+﻿namespace MarginTrading.MarketMaker.Contracts.Enums
 {
     /// <summary>
     /// Describes is an order for buy or for sell

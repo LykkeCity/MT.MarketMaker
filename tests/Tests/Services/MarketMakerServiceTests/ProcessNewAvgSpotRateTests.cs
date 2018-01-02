@@ -6,9 +6,9 @@ using Common;
 using FluentAssertions;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Models;
@@ -41,12 +41,12 @@ namespace Tests.Services.MarketMakerServiceTests
                     .Callback<OrderCommandsBatchMessage>(m => _sentMessages.Add(m)));
         }
 
-        [TestCase(AssetPairQuotesSourceTypeEnum.Manual)]
-        [TestCase(AssetPairQuotesSourceTypeEnum.External)]
-        [TestCase(AssetPairQuotesSourceTypeEnum.Spot)]
-        [TestCase(AssetPairQuotesSourceTypeEnum.Disabled)]
-        [TestCase(AssetPairQuotesSourceTypeEnum.CrossRates)]
-        public async Task IfPairSourceNotNull_ShouldSkip(AssetPairQuotesSourceTypeEnum sourceType)
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.Manual)]
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.External)]
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.Spot)]
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.Disabled)]
+        [TestCase(AssetPairQuotesSourceTypeDomainEnum.CrossRates)]
+        public async Task IfPairSourceNotNull_ShouldSkip(AssetPairQuotesSourceTypeDomainEnum sourceType)
         {
             //arrange
             _testSuit
@@ -79,7 +79,7 @@ namespace Tests.Services.MarketMakerServiceTests
                     ImmutableArray.Create(new OrderbookPosition(22, 1000020))));
 
             _testSuit
-                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
+                .Setup<IAssetPairSourceTypeService>(s => s.Get("pair") == AssetPairQuotesSourceTypeDomainEnum.SpotAgvPrices)
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"})

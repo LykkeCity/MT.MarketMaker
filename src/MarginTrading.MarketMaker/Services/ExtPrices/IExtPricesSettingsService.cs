@@ -9,7 +9,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
 {
     public interface IExtPricesSettingsService
     {
-        bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId);
+        bool IsStepEnabled(OrderbookGeneratorStepDomainEnum stepDomain, string assetPairId);
         string GetPresetPrimaryExchange(string assetPairId);
         decimal GetVolumeMultiplier(string assetPairId, string exchangeName);
         TimeSpan GetOrderbookOutdatingThreshold(string assetPairId, string exchangeName, DateTime now);
@@ -26,7 +26,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         ImmutableDictionary<string, AssetPairExtPriceSettings> Get();
         [CanBeNull] AssetPairExtPriceSettings Get(string assetPairId);
         AssetPairExtPriceSettings GetDefault();
-        ImmutableDictionary<OrderbookGeneratorStepEnum, bool> GetDefaultSteps();
+        ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool> GetDefaultSteps();
         ImmutableDictionary<string, ImmutableDictionary<string, ExchangeExtPriceSettings>> GetExchanges();
         ExchangeExtPriceSettings Get(string assetPairId, string exchangeName);
         ExchangeExtPriceSettings Add(string assetPairId, string exchangeName, string reason);

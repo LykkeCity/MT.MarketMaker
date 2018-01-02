@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MarginTrading.MarketMaker.Messages
+namespace MarginTrading.MarketMaker.Contracts.Messages
 {
     public class PrimaryExchangeSwitchedMessage
     {

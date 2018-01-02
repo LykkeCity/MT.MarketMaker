@@ -7,10 +7,10 @@ namespace MarginTrading.MarketMaker.Services.Common
 {
     public interface IAssetPairSourceTypeService
     {
-        void AddAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
-        void UpdateAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeEnum sourceType);
-        ImmutableDictionary<string, AssetPairQuotesSourceTypeEnum> Get();
-        [CanBeNull] AssetPairQuotesSourceTypeEnum? Get(string assetPairId);
+        void AddAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeDomainEnum sourceType);
+        void UpdateAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeDomainEnum sourceType);
+        ImmutableDictionary<string, AssetPairQuotesSourceTypeDomainEnum> Get();
+        [CanBeNull] AssetPairQuotesSourceTypeDomainEnum? Get(string assetPairId);
         void Delete(string assetPairId);
     }
 }
