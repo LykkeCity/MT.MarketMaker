@@ -8,7 +8,7 @@ namespace MarginTrading.MarketMaker.Models
     internal interface IAssetPairSettingsEntity
     {
         string AssetPairId { get; set; }
-        AssetPairQuotesSourceTypeEnum QuotesSourceType { get; set; }
+        AssetPairQuotesSourceTypeDomainEnum QuotesSourceType { get; set; }
         DateTimeOffset Timestamp { get; set; }
     }
 }

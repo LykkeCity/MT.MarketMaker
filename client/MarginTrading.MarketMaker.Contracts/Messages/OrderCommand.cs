@@ -1,6 +1,6 @@
-﻿using MarginTrading.MarketMaker.Enums;
+﻿using MarginTrading.MarketMaker.Contracts.Enums;
 
-namespace MarginTrading.MarketMaker.Messages
+namespace MarginTrading.MarketMaker.Contracts.Messages
 {
     /// <summary>
     /// A command to set or delete an order. The AssetPairId is specified in the <see cref="OrderCommandsBatchMessage"/>

@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using MarginTrading.MarketMaker.Messages;
+using MarginTrading.MarketMaker.Contracts.Messages;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices
 {

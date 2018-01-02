@@ -1,4 +1,4 @@
-﻿namespace MarginTrading.MarketMaker.Enums
+﻿namespace MarginTrading.MarketMaker.Contracts.Enums
 {
     public enum OrderCommandTypeEnum
     {

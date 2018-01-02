@@ -94,7 +94,7 @@ namespace MarginTrading.MarketMaker.Controllers
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.UpdateAssetPairQuotesSource(assetPairId,
-                AssetPairQuotesSourceTypeEnum.Manual);
+                AssetPairQuotesSourceTypeDomainEnum.Manual);
             await _marketMakerService.ProcessNewManualQuotes(assetPairId, bid, ask);
             return Ok(new {success = true});
         }

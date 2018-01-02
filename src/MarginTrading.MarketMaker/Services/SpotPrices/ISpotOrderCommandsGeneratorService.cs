@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using MarginTrading.MarketMaker.Messages;
+using MarginTrading.MarketMaker.Contracts.Messages;
 
 namespace MarginTrading.MarketMaker.Services.SpotPrices
 {

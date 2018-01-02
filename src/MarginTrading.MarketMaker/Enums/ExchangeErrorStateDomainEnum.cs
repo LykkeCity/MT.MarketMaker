@@ -1,6 +1,6 @@
 ﻿namespace MarginTrading.MarketMaker.Enums
 {
-    public enum ExchangeErrorStateEnum
+    public enum ExchangeErrorStateDomainEnum
     {
         Valid = 0,
         Outlier = 1,

@@ -38,7 +38,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                                                  ?? throw new ArgumentNullException(nameof(orderbook));
             var dependent = _crossRateCalcInfosService.GetDependentAssetPairs(orderbook.AssetPairId)
                 .Where(p => _assetPairSourceTypeService.Get(p.ResultingPairId) ==
-                            AssetPairQuotesSourceTypeEnum.CrossRates); // ex: btceur
+                            AssetPairQuotesSourceTypeDomainEnum.CrossRates); // ex: btceur
             return dependent.Select(CalculateOrderbook).Where(o => o != null).ToImmutableList();
         }
 

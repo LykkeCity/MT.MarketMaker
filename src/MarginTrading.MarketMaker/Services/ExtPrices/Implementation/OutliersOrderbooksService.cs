@@ -69,7 +69,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     var qualities = _primaryExchangeService.GetQualities(assetPairId);
                     center = possibleCenters
                         .Select(c => new { c, quality = qualities.GetValueOrDefault(c.Orderbook.ExchangeName) })
-                        .OrderBy(c => c.quality?.ErrorState ?? ExchangeErrorStateEnum.Disabled)
+                        .OrderBy(c => c.quality?.ErrorState ?? ExchangeErrorStateDomainEnum.Disabled)
                         .ThenByDescending(c => c.quality.HedgingPreference)
                         .First().c;
                 }

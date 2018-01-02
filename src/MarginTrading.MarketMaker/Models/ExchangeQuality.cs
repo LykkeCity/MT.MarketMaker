@@ -7,11 +7,11 @@ namespace MarginTrading.MarketMaker.Models
     {
         public string ExchangeName { get; }
         public decimal HedgingPreference { get; }
-        public ExchangeErrorStateEnum? ErrorState { get; }
+        public ExchangeErrorStateDomainEnum? ErrorState { get; }
         public bool OrderbookReceived { get; }
         public DateTime? LastOrderbookReceivedTime { get; }
 
-        public ExchangeQuality(string exchangeName, decimal hedgingPreference, ExchangeErrorStateEnum? errorState, bool orderbookReceived, DateTime? lastOrderbookReceivedTime)
+        public ExchangeQuality(string exchangeName, decimal hedgingPreference, ExchangeErrorStateDomainEnum? errorState, bool orderbookReceived, DateTime? lastOrderbookReceivedTime)
         {
             ExchangeName = exchangeName;
             HedgingPreference = hedgingPreference;

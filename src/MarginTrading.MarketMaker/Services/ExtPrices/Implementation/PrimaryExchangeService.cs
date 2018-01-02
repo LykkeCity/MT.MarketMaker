@@ -4,10 +4,10 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
@@ -25,14 +25,17 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private readonly IHedgingPreferenceService _hedgingPreferenceService;
         private readonly IExtPricesSettingsService _extPricesSettingsService;
         private readonly IStopTradesService _stopTradesService;
+        private readonly IConvertService _convertService;
 
         public PrimaryExchangeService(IAlertService alertService, IHedgingPreferenceService hedgingPreferenceService,
-            IExtPricesSettingsService extPricesSettingsService, IStopTradesService stopTradesService)
+            IExtPricesSettingsService extPricesSettingsService, IStopTradesService stopTradesService,
+            IConvertService convertService)
         {
             _alertService = alertService;
             _hedgingPreferenceService = hedgingPreferenceService;
             _extPricesSettingsService = extPricesSettingsService;
             _stopTradesService = stopTradesService;
+            _convertService = convertService;
         }
 
         public IReadOnlyDictionary<string, string> GetLastPrimaryExchanges()
@@ -52,13 +55,15 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public ImmutableDictionary<string, ExchangeQuality> GetQualities(string assetPairId)
         {
-            return _exchangesQualities.GetValueOrDefault(assetPairId, ImmutableDictionary<string, ExchangeQuality>.Empty);
+            return _exchangesQualities.GetValueOrDefault(assetPairId,
+                ImmutableDictionary<string, ExchangeQuality>.Empty);
         }
 
-        public string GetPrimaryExchange(string assetPairId, ImmutableDictionary<string, ExchangeErrorStateEnum> errors,
+        public string GetPrimaryExchange(string assetPairId,
+            ImmutableDictionary<string, ExchangeErrorStateDomainEnum> errors,
             DateTime now, string currentProcessingExchange)
         {
-            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.ChoosePrimary, assetPairId))
+            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepDomainEnum.ChoosePrimary, assetPairId))
             {
                 var presetPrimaryExchange = _extPricesSettingsService.GetPresetPrimaryExchange(assetPairId);
                 _primaryExchanges[assetPairId] = presetPrimaryExchange;
@@ -69,7 +74,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
             _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.ExchangeName, now,
                 primaryQuality.HedgingPreference, primaryQuality.ErrorState);
-            return primaryQuality.ErrorState == ExchangeErrorStateEnum.Outlier ? null : primaryQuality.ExchangeName;
+            return primaryQuality.ErrorState == ExchangeErrorStateDomainEnum.Outlier
+                ? null
+                : primaryQuality.ExchangeName;
         }
 
         private ExchangeQuality CheckPrimaryStatusAndSwitchIfNeeded(string assetPairId,
@@ -92,9 +99,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var primaryError = primaryQuality.ErrorState;
             switch (primaryError)
             {
-                case ExchangeErrorStateEnum.Valid when primaryPreference > 0:
+                case ExchangeErrorStateDomainEnum.Valid when primaryPreference > 0:
                     return primaryQuality;
-                case ExchangeErrorStateEnum.Outlier when primaryPreference > 0:
+                case ExchangeErrorStateDomainEnum.Outlier when primaryPreference > 0:
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.");
                     return primaryQuality;
@@ -144,11 +151,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             var allHedgingPriorities = exchangeQualities
                 .Values
-                .Where(p => p.ErrorState != null && p.ErrorState != ExchangeErrorStateEnum.Disabled)
+                .Where(p => p.ErrorState != null && p.ErrorState != ExchangeErrorStateDomainEnum.Disabled)
                 // ReSharper disable once PossibleInvalidOperationException
                 .ToLookup(t => t.ErrorState.Value);
 
-            var primary = allHedgingPriorities[ExchangeErrorStateEnum.Valid]
+            var primary = allHedgingPriorities[ExchangeErrorStateDomainEnum.Valid]
                 .OrderByDescending(p => p.HedgingPreference)
                 .ThenBy(p => p.ExchangeName)
                 .FirstOrDefault();
@@ -158,9 +165,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return primary;
             }
 
-            foreach (var state in new[] {ExchangeErrorStateEnum.Valid, ExchangeErrorStateEnum.Outlier})
+            foreach (var state in new[] {ExchangeErrorStateDomainEnum.Valid, ExchangeErrorStateDomainEnum.Outlier})
             {
-                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference).ThenBy(p => p.ExchangeName).FirstOrDefault();
+                primary = allHedgingPriorities[state].OrderByDescending(p => p.HedgingPreference)
+                    .ThenBy(p => p.ExchangeName).FirstOrDefault();
                 if (primary != null)
                 {
                     return primary;
@@ -171,23 +179,24 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         }
 
         private ImmutableDictionary<string, ExchangeQuality> CalcExchangeQualities(string assetPairId,
-            [NotNull] ImmutableDictionary<string, ExchangeErrorStateEnum> errors, DateTime now, string currentProcessingExchange)
+            [NotNull] ImmutableDictionary<string, ExchangeErrorStateDomainEnum> errors, DateTime now,
+            string currentProcessingExchange)
         {
             if (errors == null) throw new ArgumentNullException(nameof(errors));
             var hedgingPreferences = _hedgingPreferenceService.Get(assetPairId);
 
             ImmutableDictionary<string, ExchangeQuality> Calc(ImmutableDictionary<string, ExchangeQuality> old)
                 => hedgingPreferences.ToImmutableDictionary(p => p.Key,
-                        p =>
-                        {
-                            var orderbookReceived = errors.TryGetValue(p.Key, out var state);
-                            return new ExchangeQuality(p.Key, p.Value,
-                                orderbookReceived ? state : (ExchangeErrorStateEnum?) null,
-                                orderbookReceived,
-                                currentProcessingExchange == p.Key
-                                    ? now
-                                    : old?.GetValueOrDefault(p.Key).LastOrderbookReceivedTime);
-                        });
+                    p =>
+                    {
+                        var orderbookReceived = errors.TryGetValue(p.Key, out var state);
+                        return new ExchangeQuality(p.Key, p.Value,
+                            orderbookReceived ? state : (ExchangeErrorStateDomainEnum?) null,
+                            orderbookReceived,
+                            currentProcessingExchange == p.Key
+                                ? now
+                                : old?.GetValueOrDefault(p.Key).LastOrderbookReceivedTime);
+                    });
 
             ImmutableDictionary<string, ExchangeQuality> oldQualities = null;
             var exchangeQualities = _exchangesQualities.AddOrUpdate(assetPairId, k => Calc(null),
@@ -214,11 +223,12 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 Task.Run(() =>
                 {
                     var validHedgableCount = exchangeQualities.Values.Count(q =>
-                        q.ErrorState == ExchangeErrorStateEnum.Valid && q.HedgingPreference > 0);
+                        q.ErrorState == ExchangeErrorStateDomainEnum.Valid && q.HedgingPreference > 0);
                     var validCount = exchangeQualities.Values.Count(q =>
-                        q.ErrorState == ExchangeErrorStateEnum.Valid);
+                        q.ErrorState == ExchangeErrorStateDomainEnum.Valid);
                     var activeCount = exchangeQualities.Values.Count(q =>
-                        q.ErrorState == ExchangeErrorStateEnum.Valid || q.ErrorState == ExchangeErrorStateEnum.Outlier);
+                        q.ErrorState == ExchangeErrorStateDomainEnum.Valid ||
+                        q.ErrorState == ExchangeErrorStateDomainEnum.Outlier);
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
                         $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +
@@ -228,15 +238,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         }
 
         [Pure]
-        private static ExchangeQualityMessage Convert(ExchangeQuality quality)
+        private ExchangeQualityMessage Convert(ExchangeQuality quality)
         {
-            return new ExchangeQualityMessage
-            {
-                ErrorState = quality.ErrorState,
-                ExchangeName = quality.ExchangeName,
-                HedgingPreference = quality.HedgingPreference,
-                OrderbookReceived = quality.OrderbookReceived,
-            };
+            return _convertService.Convert<ExchangeQuality, ExchangeQualityMessage>(quality);
         }
     }
 }

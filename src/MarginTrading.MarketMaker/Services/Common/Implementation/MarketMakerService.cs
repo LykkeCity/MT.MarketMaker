@@ -7,6 +7,7 @@ using Common;
 using Common.Log;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Filters;
 using MarginTrading.MarketMaker.Infrastructure;
@@ -55,7 +56,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public Task ProcessNewExternalOrderbookAsync(ExternalExchangeOrderbookMessage orderbook)
         {
             var quotesSource = _assetPairSourceTypeService.Get(orderbook.AssetPairId);
-            if (quotesSource != AssetPairQuotesSourceTypeEnum.External
+            if (quotesSource != AssetPairQuotesSourceTypeDomainEnum.External
                 || (orderbook.Bids?.Count ?? 0) == 0 || (orderbook.Asks?.Count ?? 0) == 0)
             {
                 return Task.CompletedTask;
@@ -79,7 +80,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public Task ProcessNewSpotOrderBookDataAsync(SpotOrderbookMessage orderbook)
         {
             var quotesSource = _assetPairSourceTypeService.Get(orderbook.AssetPair);
-            if (quotesSource != AssetPairQuotesSourceTypeEnum.Spot || (orderbook.Prices?.Count ?? 0) == 0)
+            if (quotesSource != AssetPairQuotesSourceTypeDomainEnum.Spot || (orderbook.Prices?.Count ?? 0) == 0)
             {
                 return Task.CompletedTask;
             }
@@ -93,7 +94,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public Task ProcessNewAvgSpotRate(string assetPairId, decimal bid, decimal ask)
         {
             var quotesSource = _assetPairSourceTypeService.Get(assetPairId);
-            if (quotesSource != AssetPairQuotesSourceTypeEnum.SpotAgvPrices)
+            if (quotesSource != AssetPairQuotesSourceTypeDomainEnum.SpotAgvPrices)
             {
                 return Task.CompletedTask;
             }
@@ -112,7 +113,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             TestFunctionalityFilter.ValidateTestsEnabled();
             var quotesSourceType = _assetPairSourceTypeService.Get(assetPairId);
-            if (quotesSourceType == AssetPairQuotesSourceTypeEnum.Manual)
+            if (quotesSourceType == AssetPairQuotesSourceTypeDomainEnum.Manual)
             {
                 await SendOrderCommandsAsync(assetPairId, bid, ask);
             }

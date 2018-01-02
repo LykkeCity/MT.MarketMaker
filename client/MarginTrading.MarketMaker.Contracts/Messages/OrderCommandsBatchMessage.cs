@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MarginTrading.MarketMaker.Messages
+namespace MarginTrading.MarketMaker.Contracts.Messages
 {
     /// <summary>
     /// Represents several commands to create or to delete orders for a specified <see cref="AssetPairId"/>
