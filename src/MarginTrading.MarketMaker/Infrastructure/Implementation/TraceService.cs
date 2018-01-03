@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AsyncFriendlyStackTrace;
 using Lykke.Logs;
+using Lykke.SlackNotifications;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
 using Newtonsoft.Json;
@@ -28,12 +30,15 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         private readonly ISystem _system;
         private readonly LykkeLogToAzureStorage _logToAzureStorage;
+        private readonly ISlackNotificationsSender _slackNotificationsSender;
 
         public TraceService(ISystem system,
-            LykkeLogToAzureStorage logToAzureStorage)
+            LykkeLogToAzureStorage logToAzureStorage,
+            ISlackNotificationsSender slackNotificationsSender)
         {
             _system = system;
             _logToAzureStorage = logToAzureStorage;
+            _slackNotificationsSender = slackNotificationsSender;
         }
 
         public void Initialize()
@@ -62,6 +67,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
+                        _slackNotificationsSender.SendErrorAsync(e.ToAsyncString());
                     }
             });
         }
