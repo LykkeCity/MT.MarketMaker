@@ -21,7 +21,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         };
 
         private static readonly BlockingCollection<TraceMessage> WritingQueue =
-            new BlockingCollection<TraceMessage>(10000);
+            new BlockingCollection<TraceMessage>(50000);
 
         private static readonly
             ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>>
@@ -55,7 +55,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                                     k => new ConcurrentQueue<TraceMessage>());
                             lastElemsQueue.Enqueue(m);
 
-                            while (lastElemsQueue.Count > 100)
+                            while (lastElemsQueue.Count > 200)
                                 lastElemsQueue.TryDequeue(out var _);
 
                             var message = m.AssetPairId + '\t' + m.TraceGroup + '\t' + m.Msg;
@@ -74,7 +74,8 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {
-            WritingQueue.Add(new TraceMessage(levelGroup, assetPairId, msg, obj, _system.UtcNow));
+            if (!WritingQueue.TryAdd(new TraceMessage(levelGroup, assetPairId, msg, obj, _system.UtcNow)))
+                Console.WriteLine("ERROR WRITING TO TRACE QUEUE:\t" + assetPairId + '\t' + levelGroup + '\t' + msg);
         }
 
         public List<TraceModel> GetLast()
