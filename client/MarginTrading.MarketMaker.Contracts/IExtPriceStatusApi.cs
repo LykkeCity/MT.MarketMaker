@@ -25,12 +25,12 @@ namespace MarginTrading.MarketMaker.Contracts
         ///     Gets logs
         /// </summary>
         [Get("/api/ExtPriceStatus/logs")]
-        Task<IReadOnlyList<LogModel>> GetLogs();
+        Task<IReadOnlyList<TraceModel>> GetLogs();
 
         /// <summary>
         ///     Gets logs for asset pair
         /// </summary>
         [Get("/api/ExtPriceStatus/logs/{contains}")]
-        Task<IReadOnlyList<LogModel>> GetLogsFiltered(string contains);
+        Task<IReadOnlyList<TraceModel>> GetLogsFiltered(string contains);
     }
 }

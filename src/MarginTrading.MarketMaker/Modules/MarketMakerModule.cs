@@ -62,7 +62,7 @@ namespace MarginTrading.MarketMaker.Modules
         /// - are the only implementations of the 'ISmthService' interface <br/>
         /// - are not generic <br/><br/>
         /// Types like SmthRepository are also supported.
-        /// Also autoregisters <see cref="IStartable"/>'s.
+        /// Also registers startup for implementations of <see cref="ICustomStartup"/>.
         /// </summary>
         private void RegisterDefaultImplementations(ContainerBuilder builder)
         {
@@ -71,16 +71,17 @@ namespace MarginTrading.MarketMaker.Modules
                 .Where(t => !t.IsInterface && !t.IsGenericType && (t.Name.EndsWith("Service") || t.Name.EndsWith("Repository")))
                 .SelectMany(t =>
                     t.GetInterfaces()
-                        .Where(i => i.Name.StartsWith('I') && i.Assembly == assembly || i == typeof(IStartable))
+                        .Where(i => i.Name.StartsWith('I') && i.Assembly == assembly)
                         .Select(i => (Implementation: t, Interface: i)))
                 .GroupBy(t => t.Interface)
-                .Where(gr => gr.Count() == 1 || gr.Key == typeof(IStartable))
-                .SelectMany(gr => gr)
-                .GroupBy(t => t.Implementation, t => t.Interface);
+                .Where(gr => gr.Count() == 1)
+                .SelectMany(gr => gr);
 
-            foreach (var gr in implementations)
+            foreach (var t in implementations)
             {
-                builder.RegisterType(gr.Key).As(gr.ToArray()).SingleInstance();
+                var registrationBuilder = builder.RegisterType(t.Implementation).As(t.Interface).SingleInstance();
+                if (typeof(ICustomStartup).IsAssignableFrom(t.Implementation))
+                    registrationBuilder.OnActivated(args => ((ICustomStartup) args.Instance).Initialize());
             }
         }
     }

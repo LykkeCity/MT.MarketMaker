@@ -62,8 +62,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             }
 
             var externalOrderbook = new ExternalOrderbook(orderbook.AssetPairId, orderbook.Source, _system.UtcNow,
-                orderbook.Bids.Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray(),
-                orderbook.Asks.Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray());
+                orderbook.Bids.OrderByDescending(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray(),
+                orderbook.Asks.OrderBy(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray());
             var resultingOrderbook = _generateOrderbookService.OnNewOrderbook(externalOrderbook);
             if (resultingOrderbook == null)
             {
@@ -122,7 +122,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             IReloadingManager<MarginTradingMarketMakerSettings> settings, IRabbitMqService rabbitMqService)
         {
             return rabbitMqService.GetProducer<OrderCommandsBatchMessage>(
-                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false);
+                settings.Nested(s => s.RabbitMq.Publishers.OrderCommands), false, false);
         }
 
         private Task SendOrderCommandsAsync(string assetPairId, decimal bid, decimal ask)

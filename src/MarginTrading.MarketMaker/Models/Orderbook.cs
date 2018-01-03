@@ -10,6 +10,9 @@ namespace MarginTrading.MarketMaker.Models
         public ImmutableArray<OrderbookPosition> Asks { get; }
         public string AssetPairId { get; }
 
+        /// <remarks>
+        /// <paramref name="bids"/> & <paramref name="asks"/> should be sorted best prices first 
+        /// </remarks>
         public Orderbook(string assetPairId, ImmutableArray<OrderbookPosition> bids, ImmutableArray<OrderbookPosition> asks)
         {
             AssetPairId = assetPairId;

@@ -13,6 +13,7 @@ using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Settings;
+using MessagePack.Resolvers;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -60,7 +61,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                 stoppable.Value.Stop();
         }
 
-        public IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable)
+        public IMessageProducer<TMessage> GetProducer<TMessage>(IReloadingManager<RabbitConnectionSettings> settings, bool isDurable, bool useMessagePack)
         {
             // on-the fly connection strings switch is not supported currently for rabbitMq
             var currSettings = settings.CurrentValue;
@@ -86,8 +87,12 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     else
                         publisher.DisableInMemoryQueuePersistence();
 
+                    var serializer =
+                        useMessagePack
+                            ? (IRabbitMqSerializer<TMessage>) new MessagePackMessageSerializer<TMessage>(MsgPackCompatModeResolver.Instance)
+                            : new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings);
                     return publisher
-                        .SetSerializer(new JsonMessageSerializer<TMessage>(Encoding.UTF8, JsonSerializerSettings))
+                        .SetSerializer(serializer)
                         .SetLogger(_logger)
                         .Start();
                 });

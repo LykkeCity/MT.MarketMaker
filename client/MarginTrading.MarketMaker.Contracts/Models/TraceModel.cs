@@ -2,10 +2,13 @@
 
 namespace MarginTrading.MarketMaker.Contracts.Models
 {
-    public class LogModel
+    public class TraceModel
     {
         public DateTime Time { get; set; }
         public string Group { get; set; }
         public string Message { get; set; }
+        public string AssetPairId { get; set; }
+        public string TraceGroup { get; set; }
+        public object Data { get; set; }
     }
 }
