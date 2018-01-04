@@ -35,7 +35,7 @@ namespace Tests.Services.MarketMakerServiceTests
             _testSuit.Reset();
             _testSuit.Setup<IRabbitMqService>(s =>
                     s.GetProducer<OrderCommandsBatchMessage>(
-                        It.IsNotNull<IReloadingManager<RabbitConnectionSettings>>(), false)
+                        It.IsNotNull<IReloadingManager<RabbitConnectionSettings>>(), false, false)
                     == _testSuit.GetMockObj<IMessageProducer<OrderCommandsBatchMessage>>())
                 .Setup<IMessageProducer<OrderCommandsBatchMessage>>(mock => mock.Setup(
                         p => p.ProduceAsync(It.IsNotNull<OrderCommandsBatchMessage>()))

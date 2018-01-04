@@ -25,7 +25,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public void Run()
         {
-            _logger.WriteInfoAsync(Startup.ServiceName, null, null, "Starting broker").Wait();
+            _logger.WriteInfoAsync("Broker.Run", null, "Starting broker").Wait();
             try
             {
                 _rabbitMqService.Subscribe<ExternalExchangeOrderbookMessage>(_settings.Nested(s => s.RabbitMq.Consumers.FiatOrderbooks), false,
@@ -37,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             }
             catch (Exception ex)
             {
-                _logger.WriteErrorAsync(Startup.ServiceName, "Broker.Run", null, ex).Wait();
+                _logger.WriteErrorAsync("Broker.Run", null, ex).Wait();
             }
         }
     }

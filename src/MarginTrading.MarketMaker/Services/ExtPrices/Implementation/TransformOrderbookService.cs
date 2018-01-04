@@ -37,12 +37,14 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return Transform(primaryOrderbook, bidShift + priceMarkups.Bid, askShift + priceMarkups.Ask, volumeMultiplier);
         }
 
-        public Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift, decimal volumeMultiplier) 
+        private static Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift, decimal volumeMultiplier)
         {
             return new Orderbook(
                 orderbook.AssetPairId,
-                orderbook.Bids.Select(b => new OrderbookPosition(b.Price + bidShift, b.Volume * volumeMultiplier)).ToImmutableArray(),
-                orderbook.Asks.Select(b => new OrderbookPosition(b.Price + askShift, b.Volume * volumeMultiplier)).ToImmutableArray());
+                orderbook.Bids.Select(b => new OrderbookPosition(b.Price + bidShift, b.Volume * volumeMultiplier))
+                    .ToImmutableArray(),
+                orderbook.Asks.Select(b => new OrderbookPosition(b.Price + askShift, b.Volume * volumeMultiplier))
+                    .ToImmutableArray());
         }
 
         private static (decimal WorstBid, decimal WorstAsk) GetArbitrageFreeSpread(

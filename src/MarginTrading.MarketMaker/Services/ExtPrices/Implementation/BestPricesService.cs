@@ -27,9 +27,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         [Pure]
         public BestPrices Calc(Orderbook orderbook)
         {
-            return new BestPrices(
-                orderbook.Bids.Max(b => b.Price),
-                orderbook.Asks.Min(b => b.Price));
+            // note: assume prices sorted best first
+            return new BestPrices(orderbook.Bids.First().Price, orderbook.Asks.First().Price);
         }
     }
 }

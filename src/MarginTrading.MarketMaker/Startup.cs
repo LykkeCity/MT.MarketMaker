@@ -18,6 +18,7 @@ using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Modules;
+using MarginTrading.MarketMaker.Services.AvgSpotRates;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -76,7 +77,8 @@ namespace MarginTrading.MarketMaker
                 builder.Populate(services);
 
                 ApplicationContainer = builder.Build();
-
+                Trace.TraceService = ApplicationContainer.Resolve<ITraceService>();
+                
                 return new AutofacServiceProvider(ApplicationContainer);
             }
             catch (Exception ex)
@@ -98,7 +100,7 @@ namespace MarginTrading.MarketMaker
 #if DEBUG
                 app.UseLykkeMiddleware(ServiceName, ex => ex.ToString());
 #else
-                app.UseLykkeMiddleware(ServiceName, ex => new ErrorResponse {ErrorMessage = "Technical problem"});
+                app.UseLykkeMiddleware(ServiceName, ex => new ErrorResponse {ErrorMessage = "Technical problem", Details = ex.Message});
 #endif
 
                 app.UseMvc();
@@ -130,6 +132,7 @@ namespace MarginTrading.MarketMaker
                 }
 
                 ApplicationContainer.Resolve<IBrokerService>().Run();
+                ApplicationContainer.Resolve<IAvgSpotRatesService>().Run();
 
                 await Log.WriteMonitorAsync("", "", "Started");
             }
@@ -208,6 +211,8 @@ namespace MarginTrading.MarketMaker
                     consoleLogger);
 
                 azureStorageLogger.Start();
+                
+                services.AddSingleton(azureStorageLogger);
 
                 aggregateLogger.AddLog(azureStorageLogger);
             }
