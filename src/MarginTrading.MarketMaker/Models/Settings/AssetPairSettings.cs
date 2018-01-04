@@ -6,11 +6,11 @@ namespace MarginTrading.MarketMaker.Models.Settings
 {
     public class AssetPairSettings
     {
-        public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; }
+        public AssetPairQuotesSourceTypeDomainEnum QuotesSourceType { get; }
         public AssetPairExtPriceSettings ExtPriceSettings { get; }
         public CrossRateCalcInfo CrossRateCalcInfo { get; }
 
-        public AssetPairSettings(AssetPairQuotesSourceTypeEnum quotesSourceType, AssetPairExtPriceSettings extPriceSettings, CrossRateCalcInfo crossRateCalcInfo)
+        public AssetPairSettings(AssetPairQuotesSourceTypeDomainEnum quotesSourceType, AssetPairExtPriceSettings extPriceSettings, CrossRateCalcInfo crossRateCalcInfo)
         {
             QuotesSourceType = quotesSourceType;
             ExtPriceSettings = extPriceSettings;

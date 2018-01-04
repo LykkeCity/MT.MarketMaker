@@ -7,6 +7,7 @@ using MarginTrading.MarketMaker.Contracts;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,10 +17,12 @@ namespace MarginTrading.MarketMaker.Controllers
     public class AssetPairsController : Controller
     {
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
+        private readonly IConvertService _convertService;
 
-        public AssetPairsController(IAssetPairSourceTypeService assetPairSourceTypeService)
+        public AssetPairsController(IAssetPairSourceTypeService assetPairSourceTypeService, IConvertService convertService)
         {
             _assetPairSourceTypeService = assetPairSourceTypeService;
+            _convertService = convertService;
         }
 
         /// <summary>
@@ -39,7 +42,7 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpPost]
         [Route("{assetPairId}")]
-        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeEnum sourceType)
+        public IActionResult Add([NotNull] string assetPairId, AssetPairQuotesSourceTypeDomainEnum sourceType)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.AddAssetPairQuotesSource(assetPairId, sourceType);
@@ -68,7 +71,7 @@ namespace MarginTrading.MarketMaker.Controllers
         public IActionResult Update([NotNull] [FromBody] AssetPairInputModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
-            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(model.AssetPairId, model.SourceType);
+            _assetPairSourceTypeService.UpdateAssetPairQuotesSource(model.AssetPairId, Convert(model.SourceType));
             return Ok(new {success = true});
         }
 
@@ -82,6 +85,12 @@ namespace MarginTrading.MarketMaker.Controllers
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             _assetPairSourceTypeService.Delete(assetPairId);
             return Ok(new {success = true});
+        }
+
+        private AssetPairQuotesSourceTypeDomainEnum Convert(AssetPairQuotesSourceTypeEnum sourceType)
+        {
+            return _convertService.Convert<AssetPairQuotesSourceTypeEnum, AssetPairQuotesSourceTypeDomainEnum>(
+                sourceType);
         }
     }
 }

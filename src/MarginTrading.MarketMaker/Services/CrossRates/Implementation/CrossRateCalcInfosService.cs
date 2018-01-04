@@ -37,7 +37,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         public ImmutableDictionary<string, CrossRateCalcInfo> Get()
         {
             return _settingsRootService.Get().AssetPairs
-                .Where(s => s.Value.QuotesSourceType == AssetPairQuotesSourceTypeEnum.CrossRates)
+                .Where(s => s.Value.QuotesSourceType == AssetPairQuotesSourceTypeDomainEnum.CrossRates)
                 .ToImmutableDictionary(s => s.Key, s => s.Value.CrossRateCalcInfo.RequiredNotNull(nameof(s.Value.CrossRateCalcInfo)));
         }
 
@@ -56,7 +56,8 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public CrossRateCalcInfo Get(string assetPairId)
         {
-            return _settingsRootService.Get(assetPairId)?.CrossRateCalcInfo.RequiredNotNull(nameof(CrossRateCalcInfo));
+            var crossRateCalcInfo = (_settingsRootService.Get(assetPairId)?.CrossRateCalcInfo).RequiredNotNull(nameof(CrossRateCalcInfo));
+            return string.IsNullOrWhiteSpace(crossRateCalcInfo.ResultingPairId) ? null : crossRateCalcInfo;
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> DependentAssetPairsCache()

@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Lykke.SettingsReader;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Settings;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation

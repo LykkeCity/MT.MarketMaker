@@ -24,9 +24,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             _settingsRootService = settingsRootService;
         }
 
-        public bool IsStepEnabled(OrderbookGeneratorStepEnum step, string assetPairId)
+        public bool IsStepEnabled(OrderbookGeneratorStepDomainEnum stepDomain, string assetPairId)
         {
-            return GetAsset(assetPairId).Steps.GetValueOrDefault(step, DefaultStepEnabled);
+            return GetAsset(assetPairId).Steps.GetValueOrDefault(stepDomain, DefaultStepEnabled);
         }
 
         public string GetPresetPrimaryExchange(string assetPairId)
@@ -280,9 +280,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ExchangesStateChanged(assetPairId, enable.Select(t => t.Key), "enabled", reason);
         }
 
-        public ImmutableDictionary<OrderbookGeneratorStepEnum, bool> GetDefaultSteps()
+        public ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool> GetDefaultSteps()
         {
-            return Enum.GetValues(typeof(OrderbookGeneratorStepEnum)).Cast<OrderbookGeneratorStepEnum>()
+            return Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum)).Cast<OrderbookGeneratorStepDomainEnum>()
                 .ToImmutableDictionary(e => e, e => DefaultStepEnabled);
         }
     }

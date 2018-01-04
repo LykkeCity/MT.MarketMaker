@@ -20,7 +20,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             IReadOnlyDictionary<string, BestPrices> bestPrices)
         {
             var isArbitrageFreeSpreadEnabled = _extPricesSettingsService.IsStepEnabled(
-                OrderbookGeneratorStepEnum.GetArbitrageFreeSpread,
+                OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread,
                 primaryOrderbook.AssetPairId);
 
             var arbitrageFreeSpread = isArbitrageFreeSpreadEnabled
