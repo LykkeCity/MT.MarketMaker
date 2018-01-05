@@ -29,7 +29,7 @@ namespace MarginTrading.MarketMaker.Controllers
         [HttpGet]
         public IReadOnlyList<CrossRateCalcInfoModel> List()
         {
-            return _crossRateCalcInfosService.Get().Select(settings => Convert(settings.Key, settings.Value))
+            return _crossRateCalcInfosService.Get().Select(settings => Convert(settings.Value))
                 .OrderBy(m => m.ResultingPairId)
                 .ToList();
         }
@@ -50,17 +50,19 @@ namespace MarginTrading.MarketMaker.Controllers
         /// </summary>
         [HttpGet]
         [Route("{assetPairId}")]
+        [CanBeNull]
         public CrossRateCalcInfoModel Get([NotNull] string assetPairId)
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
-            return Convert(assetPairId, _crossRateCalcInfosService.Get(assetPairId));
+            return Convert(_crossRateCalcInfosService.Get(assetPairId));
         }
 
-        private CrossRateCalcInfoModel Convert(string assetPairId, CrossRateCalcInfo settings)
+        [ContractAnnotation("settings:null => null")]
+        [CanBeNull]
+        private CrossRateCalcInfoModel Convert([CanBeNull] CrossRateCalcInfo settings)
         {
-            var crossRateCalcInfoModel = _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
-            crossRateCalcInfoModel.ResultingPairId = assetPairId;
-            return crossRateCalcInfoModel;
+            if (settings == null) return null;
+            return _convertService.Convert<CrossRateCalcInfo, CrossRateCalcInfoModel>(settings);
         }
 
         private CrossRateCalcInfo Convert(CrossRateCalcInfoModel model)

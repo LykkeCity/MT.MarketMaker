@@ -212,11 +212,12 @@ namespace MarginTrading.MarketMaker
                     consoleLogger);
 
                 azureStorageLogger.Start();
+                
+                services.AddSingleton(azureStorageLogger);
 
                 aggregateLogger.AddLog(azureStorageLogger);
             }
 
-            aggregateLogger.AddLog(new TraceLog());
             return aggregateLogger;
         }
 

@@ -1,22 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
+using Lykke.Logs;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.CandlesHistory.Client;
+using Lykke.SlackNotifications;
 using MarginTrading.MarketMaker.AzureRepositories;
-using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MarginTrading.MarketMaker.Settings;
 using Moq;
-using Trace = MarginTrading.MarketMaker.Infrastructure.Implementation.Trace;
 
 namespace Tests.Integrational
 {
@@ -68,7 +70,7 @@ namespace Tests.Integrational
 
             public SettingsRoot SettingsRoot { get; set; } = new SettingsRoot(
                 ImmutableDictionary<string, AssetPairSettings>.Empty.Add("BTCUSD",
-                    new AssetPairSettings(AssetPairQuotesSourceTypeEnum.External,
+                    new AssetPairSettings(AssetPairQuotesSourceTypeDomainEnum.External,
                         GetDefaultExtPriceSettings(), GetDefaultCrossRateCalcInfo("BTCUSD"))));
 
             public MmTestEnvironment(MmIntegrationalTestSuit suit) : base(suit)
@@ -83,7 +85,10 @@ namespace Tests.Integrational
                         .Returns(() => AssetPairs.ToResponse()))
                     .Setup(new Mock<IMtMmRisksSlackNotificationsSender>().Object)
                     .Setup<ILog>(LogToConsole)
-                    .Setup<ICandleshistoryservice>();
+                    .Setup<ICandleshistoryservice>()
+                    .Setup(new LykkeLogToAzureStorage(null))
+                    .Setup<ISlackNotificationsSender>(s =>
+                        s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()) == Task.CompletedTask);
             }
 
             public override IContainer CreateContainer()
@@ -99,9 +104,9 @@ namespace Tests.Integrational
             return new AssetPairExtPriceSettings("bitmex",
                 0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10, TimeSpan.FromMinutes(5)),
-                Enum.GetValues(typeof(OrderbookGeneratorStepEnum)).Cast<OrderbookGeneratorStepEnum>()
+                Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum)).Cast<OrderbookGeneratorStepDomainEnum>()
                     .ToImmutableDictionary(e => e, e => true)
-                    .SetItem(OrderbookGeneratorStepEnum.GetArbitrageFreeSpread, false),
+                    .SetItem(OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread, false),
                 ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty
                     .Add("bitmex", GetDefaultExtPriceExchangeSettings())
                     .Add("bitfinex", GetDefaultExtPriceExchangeSettings())

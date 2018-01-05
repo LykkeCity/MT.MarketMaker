@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Controllers;
 using MarginTrading.MarketMaker.Enums;

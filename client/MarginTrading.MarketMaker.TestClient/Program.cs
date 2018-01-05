@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using AsyncFriendlyStackTrace;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts;
 using MarginTrading.MarketMaker.Contracts.Client;
 using MarginTrading.MarketMaker.Contracts.Enums;
@@ -34,7 +37,7 @@ namespace MarginTrading.MarketMaker.TestClient
                 }
                 
                 Console.WriteLine(str);
-                throw;
+                Console.WriteLine(e.ToAsyncString());
             }
         }
 
@@ -65,14 +68,23 @@ namespace MarginTrading.MarketMaker.TestClient
             await client.AssetPairs.Add(TestAssetPairId, AssetPairQuotesSourceTypeEnum.External).Dump();
             await client.AssetPairs.Get(TestAssetPairId).Dump();
             await client.AssetPairs.Update(new AssetPairInputModel{AssetPairId = TestAssetPairId, SourceType = AssetPairQuotesSourceTypeEnum.CrossRates}).Dump();
-            await client.AssetPairs.Get(TestAssetPairId).Dump();
+            var updatedPair = await client.AssetPairs.Get(TestAssetPairId).Dump();
+            if (updatedPair.SourceType != "CrossRates")
+            {
+                throw new Exception("SourceType not updated");
+            }
 
             await client.ExtPriceSettings.List().Dump();
             await client.ExtPriceSettings.Get(AssetPairId).Dump();
             var extPriceSettings = await client.ExtPriceSettings.Get(TestAssetPairId).Dump();
             extPriceSettings.OutlierThreshold = 0.9m;
             await client.ExtPriceSettings.Update(extPriceSettings).Dump();
-            await client.ExtPriceSettings.Get(TestAssetPairId).Dump();
+            var extPriceSettings2 = await client.ExtPriceSettings.Get(TestAssetPairId).Dump();
+            if (extPriceSettings2.OutlierThreshold != extPriceSettings.OutlierThreshold)
+            {
+                throw new Exception("extPriceSettings.OutlierThreshold not changed");
+            }
+            
             await client.ExtPriceSettings.GetHedgingPreferences().Dump();
 
             await client.ExtPriceExchanges.List().Dump();
@@ -82,9 +94,15 @@ namespace MarginTrading.MarketMaker.TestClient
             var testExchange = await client.ExtPriceExchanges.Get(TestAssetPairId, TestExchangeName).Dump();
             testExchange.OrderbookOutdatingThreshold *= 2;
             await client.ExtPriceExchanges.Update(testExchange).Dump();
+            var testExchange2 = await client.ExtPriceExchanges.Get(TestAssetPairId, TestExchangeName).Dump();
+            if (testExchange2.OrderbookOutdatingThreshold != testExchange.OrderbookOutdatingThreshold)
+            {
+                throw new Exception("OrderbookOutdatingThreshold not changed");
+            }
+            
             await client.ExtPriceExchanges.Delete(TestAssetPairId, TestExchangeName).Dump();
-            await client.ExtPriceExchanges.Get(TestAssetPairId, TestExchangeName).Dump();
-
+            var deletedExchange = await client.ExtPriceExchanges.Get(TestAssetPairId, TestExchangeName).Dump();
+            if (deletedExchange != null) throw new Exception("Exchange not deleted");
             await client.ExtPriceStatus.List().Dump();
             await client.ExtPriceStatus.Get(AssetPairId).Dump();
             await client.ExtPriceStatus.GetLogs().Dump();
@@ -94,17 +112,25 @@ namespace MarginTrading.MarketMaker.TestClient
             await client.SettingsRoot.Set(root).Dump();
             
             await client.AssetPairs.Delete(TestAssetPairId).Dump();
-            await client.AssetPairs.Get(TestAssetPairId).Dump();
-
-
+            var deletedAssetPair = await client.AssetPairs.Get(TestAssetPairId).Dump();
+            if (deletedAssetPair != null) throw new Exception("deletedAssetPair != null");
             await client.CrossRateCalcInfos.List().Dump();            
             await client.CrossRateCalcInfos.Get("BTCUSD").Dump();
-            var testCrossRate = await client.CrossRateCalcInfos.Get("BTCUSD").Dump();
+            var btcUsdCrossRate = await client.CrossRateCalcInfos.Get("BTCUSD").Dump();
+            if (btcUsdCrossRate != null) throw new Exception("btcUsdCrossRate != null");
+            
+            var testCrossRate = await client.CrossRateCalcInfos.Get("BTCGBP").Dump();
             testCrossRate.Source1.IsTransitoryAssetQuoting = !testCrossRate.Source1.IsTransitoryAssetQuoting; 
             await client.CrossRateCalcInfos.Update(testCrossRate).Dump();            
-            await client.CrossRateCalcInfos.Get("BTCUSD").Dump();
+            var testCrossRate2 = await client.CrossRateCalcInfos.Get("BTCGBP").Dump();
+            if (testCrossRate2.Source1.IsTransitoryAssetQuoting != testCrossRate.Source1.IsTransitoryAssetQuoting)
+            {
+                throw new Exception("IsTransitoryAssetQuoting not changed");
+            }
+                
             testCrossRate.Source1.IsTransitoryAssetQuoting = !testCrossRate.Source1.IsTransitoryAssetQuoting;
             await client.CrossRateCalcInfos.Update(testCrossRate).Dump();         
+            Console.WriteLine("Successfuly finished");
         }
 
         private static async Task TryDeleteOld(IMtMarketMakerClient client)
@@ -118,6 +144,7 @@ namespace MarginTrading.MarketMaker.TestClient
             }
         }
 
+        [CanBeNull]
         public static T Dump<T>(this T o)
         {
             var str = o is string s ? s : JsonConvert.SerializeObject(o);
@@ -125,6 +152,7 @@ namespace MarginTrading.MarketMaker.TestClient
             return o;
         }
         
+        [ItemCanBeNull]
         public static async Task<T> Dump<T>(this Task<T> t)
         {
             var obj = await t;

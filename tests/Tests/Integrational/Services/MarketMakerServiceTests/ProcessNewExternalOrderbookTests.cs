@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Controllers;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services.Common;

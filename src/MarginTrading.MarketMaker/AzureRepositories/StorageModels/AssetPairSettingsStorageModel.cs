@@ -6,7 +6,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
 {
     internal class AssetPairSettingsStorageModel
     {
-        public AssetPairQuotesSourceTypeEnum QuotesSourceType { get; set; }
+        public AssetPairQuotesSourceTypeDomainEnum QuotesSourceType { get; set; }
         [CanBeNull]
         public AssetPairExtPriceSettingsStorageModel ExtPriceSettings { get; set; }
         [CanBeNull]

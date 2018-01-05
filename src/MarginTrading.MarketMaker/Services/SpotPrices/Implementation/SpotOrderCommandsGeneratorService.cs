@@ -3,8 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts.Enums;
+using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Messages;
 
 namespace MarginTrading.MarketMaker.Services.SpotPrices.Implementation
 {

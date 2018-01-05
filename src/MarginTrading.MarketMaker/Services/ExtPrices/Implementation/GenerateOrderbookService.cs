@@ -23,8 +23,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     /// </remarks>
     public class GenerateOrderbookService : ICustomStartup, IDisposable, IGenerateOrderbookService
     {
-        private readonly ReadWriteLockedDictionary<string, (int Hash, DateTime Time)> _sentOrderbooks =
-            new ReadWriteLockedDictionary<string, (int, DateTime)>();
+        private readonly ReadWriteLockedDictionary<string, DateTime> _sentOrderbooks =
+            new ReadWriteLockedDictionary<string, DateTime>();
 
         private readonly IOrderbooksService _orderbooksService;
         private readonly IDisabledOrderbooksService _disabledOrderbooksService;
@@ -113,12 +113,17 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (null, null, "No primary exchange");
             }
 
-            if (primaryExchangeQuality.ErrorState == ExchangeErrorStateEnum.Outlier)
+            var primaryExchangeName = primaryExchangeQuality.ExchangeName;
+            if (primaryExchangeName != orderbook.ExchangeName)
+            {
+                return (null, primaryExchangeQuality, "Orderbook not from primary exchange");
+            }
+
+            if (primaryExchangeQuality.ErrorState == ExchangeErrorStateDomainEnum.Outlier)
             {
                 return (null, primaryExchangeQuality, "Primary exchange is an outlier, skipping price update");
             }
             
-            var primaryExchangeName = primaryExchangeQuality.ExchangeName;
             if (!allOrderbooks.TryGetValue(primaryExchangeName, out var primaryOrderbook))
             {
                 _log.WriteErrorAsync(nameof(GenerateOrderbookService), null,
@@ -143,25 +148,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private string TryFindSkipOrderbookReason(Orderbook orderbook)
         {
             var now = _system.UtcNow;
-            var newHash = Orderbook.Comparer.GetHashCode(orderbook);
             string reason = null;
             var period = _extPricesSettingsService.GetMinOrderbooksSendingPeriod(orderbook.AssetPairId);
-            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => (newHash, now),
-                (k, old) =>
+            _sentOrderbooks.AddOrUpdate(orderbook.AssetPairId, k => now,
+                (k, lastTime) =>
                 {
-                    if (newHash == old.Hash)
-                    {
-                        reason = "Not changed";
-                        return old;
-                    }
-                    if (now.Subtract(old.Time) < period)
+                    if (now.Subtract(lastTime) < period)
                     {
                         reason = "Too frequient update";
-                        return old;
+                        return lastTime;
                     }
                     else
                     {
-                        return (newHash, now);
+                        return now;
                     }
                 });
             return reason;
@@ -180,7 +179,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         /// <summary>
         ///     Detects exchanges errors and disables thm if they get repeated
         /// </summary>
-        private (ImmutableDictionary<string, ExchangeErrorStateEnum>, ImmutableDictionary<string, ExternalOrderbook>)
+        private (ImmutableDictionary<string, ExchangeErrorStateDomainEnum>, ImmutableDictionary<string, ExternalOrderbook>)
             MarkExchangesErrors(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> allOrderbooks,
                 DateTime now)
         {
@@ -193,12 +192,12 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 outdatedExchanges, outliersExchanges, now);
             _disabledOrderbooksService.Disable(assetPairId, repeatedProblemsExchanges, "Repeated outlier");
 
-            var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorStateEnum>()
-                .SetValueForKeys(disabledExchanges, ExchangeErrorStateEnum.Disabled)
-                .SetValueForKeys(outdatedExchanges, ExchangeErrorStateEnum.Outdated)
-                .SetValueForKeys(outliersExchanges, ExchangeErrorStateEnum.Outlier)
-                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorStateEnum.Valid)
-                .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorStateEnum.Disabled)
+            var exchangesErrors = ImmutableDictionary.CreateBuilder<string, ExchangeErrorStateDomainEnum>()
+                .SetValueForKeys(disabledExchanges, ExchangeErrorStateDomainEnum.Disabled)
+                .SetValueForKeys(outdatedExchanges, ExchangeErrorStateDomainEnum.Outdated)
+                .SetValueForKeys(outliersExchanges, ExchangeErrorStateDomainEnum.Outlier)
+                .SetValueForKeys(validOrderbooks.Keys, ExchangeErrorStateDomainEnum.Valid)
+                .SetValueForKeys(repeatedProblemsExchanges, ExchangeErrorStateDomainEnum.Disabled)
                 .ToImmutable();
 
             return (exchangesErrors, validOrderbooks);
@@ -212,7 +211,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ExternalOrderbook primaryOrderbook,
             ImmutableDictionary<string, ExternalOrderbook> validOrderbooks)
         {
-            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.Transform,
+            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepDomainEnum.Transform,
                 primaryOrderbook.AssetPairId))
             {
                 return primaryOrderbook;
@@ -232,7 +231,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ImmutableHashSet<string> outdatedExchanges, ImmutableHashSet<string> outliersExchanges,
             DateTime now)
         {
-            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.FindRepeatedProblems, assetPairId))
+            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepDomainEnum.FindRepeatedProblems, assetPairId))
             {
                 return ImmutableHashSet<string>.Empty;
             }
@@ -250,7 +249,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private (ImmutableHashSet<string>, ImmutableDictionary<string, ExternalOrderbook>) FindOutliers(
             string assetPairId, ImmutableDictionary<string, ExternalOrderbook> freshOrderbooks, DateTime now)
         {
-            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.FindOutliers, assetPairId))
+            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepDomainEnum.FindOutliers, assetPairId))
             {
                 return (ImmutableHashSet<string>.Empty, freshOrderbooks);
             }
@@ -276,7 +275,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             FindOutdated(string assetPairId, ImmutableDictionary<string, ExternalOrderbook> orderbooksByExchanges,
                 DateTime now)
         {
-            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepEnum.FindOutdated, assetPairId))
+            if (!_extPricesSettingsService.IsStepEnabled(OrderbookGeneratorStepDomainEnum.FindOutdated, assetPairId))
             {
                 return (ImmutableHashSet<string>.Empty, orderbooksByExchanges);
             }

@@ -4,14 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
-using Common;
-using JetBrains.Annotations;
-using Lykke.SettingsReader;
+using AsyncFriendlyStackTrace;
+using Lykke.Logs;
+using Lykke.SlackNotifications;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Filters;
-using MarginTrading.MarketMaker.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -19,25 +16,33 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     internal class TraceService : ITraceService, ICustomStartup
     {
+        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        {
+            Converters = {new StringEnumConverter()}
+        };
         private long _counter;
         
         private readonly BlockingCollection<TraceMessage> WritingQueue =
-            new BlockingCollection<TraceMessage>(10000);
+            new BlockingCollection<TraceMessage>(50000);
 
-        private readonly ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>> LastElemsQueues
-            = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
+        private readonly
+            ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>>
+            LastElemsQueues
+                = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
 
         private readonly ISystem _system;
-        private readonly IMessageProducer<TraceMessage> _messageProducer;
+        private readonly LykkeLogToAzureStorage _logToAzureStorage;
+        private readonly ISlackNotificationsSender _slackNotificationsSender;
 
-        public TraceService(ISystem system, IRabbitMqService rabbitMqService,
-            IReloadingManager<MarginTradingMarketMakerSettings> settings)
+        public TraceService(ISystem system,
+            LykkeLogToAzureStorage logToAzureStorage,
+            ISlackNotificationsSender slackNotificationsSender)
         {
             _system = system;
-            _messageProducer =
-                rabbitMqService.GetProducer<TraceMessage>(settings.Nested(s => s.RabbitMq.Publishers.Trace), true, true);
+            _logToAzureStorage = logToAzureStorage;
+            _slackNotificationsSender = slackNotificationsSender;
         }
-        
+
         public void Initialize()
         {
             Task.Run(() =>
@@ -47,30 +52,33 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     {
                         foreach (var m in WritingQueue.GetConsumingEnumerable())
                         {
-                            if (m.Level < TraceLevelGroupEnum.Info)
-                                Console.WriteLine(m.AssetPairId + '\t' + m.Level + '\t' + m.Msg);
-                        
-                            _messageProducer.ProduceAsync(m);
-
                             var lastElemsQueue =
-                                LastElemsQueues.GetOrAdd((m.Level, m.AssetPairId), k => new ConcurrentQueue<TraceMessage>());
+                                LastElemsQueues.GetOrAdd((m.TraceGroup, m.AssetPairId),
+                                    k => new ConcurrentQueue<TraceMessage>());
                             lastElemsQueue.Enqueue(m);
-                        
-                            while (lastElemsQueue.Count > 100) 
+
+                            while (lastElemsQueue.Count > 200)
                                 lastElemsQueue.TryDequeue(out var _);
+
+                            var message = m.AssetPairId + '\t' + m.TraceGroup + '\t' + m.Msg;
+                            Console.WriteLine(message);
+                            _logToAzureStorage.WriteInfoAsync("MtMmTrace",
+                                JsonConvert.SerializeObject(m, JsonSerializerSettings), message);
                         }
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
+                        _slackNotificationsSender.SendErrorAsync(e.ToAsyncString());
                     }
             });
         }
 
         public void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {
-            var id = Interlocked.Increment(ref _counter); 
-            WritingQueue.Add(new TraceMessage(id, levelGroup, assetPairId, msg, obj, _system.UtcNow));
+            var id = Interlocked.Increment(ref _counter);
+            if (!WritingQueue.TryAdd(new TraceMessage(id, levelGroup, assetPairId, msg, obj, _system.UtcNow)))
+                Console.WriteLine("ERROR WRITING TO TRACE QUEUE:\t" + assetPairId + '\t' + levelGroup + '\t' + msg);
         }
 
         public List<TraceModel> GetLast()
@@ -114,15 +122,15 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         public class TraceMessage
         {
             public long Id { get; }
-            public TraceLevelGroupEnum Level { get; }
+            public TraceLevelGroupEnum TraceGroup { get; }
             public string AssetPairId { get; }
             public string Msg { get; }
             public object Data { get; }
             public DateTime Time { get; }
 
-            public TraceMessage(long id, TraceLevelGroupEnum level, string assetPairId, string msg, object data, DateTime time)
+            public TraceMessage(long id, TraceLevelGroupEnum traceGroup, string assetPairId, string msg, object data, DateTime time)
             {
-                Level = level;
+                TraceGroup = traceGroup;
                 AssetPairId = assetPairId;
                 Msg = msg;
                 Data = data;

@@ -52,7 +52,7 @@ namespace Tests.Services.CrossRates
                 .Setup<IBestPricesService>(s => s.Calc(eurUsdOrderbook) == new BestPrices(1.2m, 1.3m))
                 .Setup<IBestPricesService>(s => s.Calc(usdChfOrderbook) == new BestPrices(0.98m, 0.99m))
                 .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600))
-                .Setup<IAssetPairSourceTypeService>(s => s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeEnum.CrossRates);
+                .Setup<IAssetPairSourceTypeService>(s => s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.CrossRates);
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
@@ -107,7 +107,7 @@ namespace Tests.Services.CrossRates
                 .Setup<ICrossRateCalcInfosService>(s => s.GetDependentAssetPairs("USDCHF") == new[] {btcChfCalcInfo})
                 .Setup<ICrossRateCalcInfosService>(s =>
                     s.GetDependentAssetPairs("BTCUSD") == new[] {ethUsdCalcInfo, btcEurCalcInfo, btcChfCalcInfo})
-                .Setup<IAssetPairSourceTypeService>(s => s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeEnum.External);
+                .Setup<IAssetPairSourceTypeService>(s => s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.External);
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
