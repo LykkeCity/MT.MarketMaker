@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
-using Common;
 using FluentAssertions;
 using MarginTrading.MarketMaker.Controllers;
-using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services.Common;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Tests.Integrational.Services.MarketMakerServiceTests
@@ -18,7 +14,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
     public class ProcessNewExternalOrderbookTests
     {
         private readonly MmIntegrationalTestSuit _testSuit = new MmIntegrationalTestSuit();
-
+        
         [Test]
         public async Task SimpleConfig_ShouldProcessSingleMessage()
         {
@@ -28,13 +24,15 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "bitmex"));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", Generate.Decimals()));
 
             //assert
             env.PrintLogs();
-            env.VerifyCommandsSent(("BTCUSD", Generate.Decimals()));
-            env.VerifyTradesStopped("BTCUSD", true);
-            env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitmex");
+            env.VerifyMessagesSent(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals())
+            );
         }
 
         [Test]
@@ -46,109 +44,127 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "bitmex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "bitfinex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Poloniex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Kraken"));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
 
             //assert
             env.PrintLogs();
-            env.VerifyCommandsSent(("BTCUSD", Generate.Decimals()));
-            env.VerifyTradesStopped("BTCUSD", true);
-            env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitmex", "bitfinex"); // note sort by name among equal prio exchanges
+            env.VerifyMessagesSent(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"));
         }
-        
+
         [Test]
         public async Task BitmexHashableButArrivesSecond_ShouldStopTradesAndThenSwitchToBitmex()
         {
             //arrange
             var env = _testSuit.Build();
             env.Setup(b => b.RegisterType<ExtPriceExchangesController>().AsSelf());
-            IContainer container = env.CreateContainer();
+            var container = env.CreateContainer();
             container.ChangeExchangeSettings("BTCUSD", "bitmex", m => m.Hedging.DefaultPreference = 1);
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "bitfinex"));
-            var bitmexDecimals = Generate.Decimals(multiplier: 1.049m); // note default outlier threshold 5%
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(bitmexDecimals, "bitmex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Poloniex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Kraken"));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
+            var bitmexDecimals = Generate.Decimals(1.049m); // note default outlier threshold 5%
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
 
             //assert
             env.PrintLogs();
-            env.VerifyCommandsSent(("BTCUSD", Generate.Decimals()), ("BTCUSD", bitmexDecimals));
-            env.VerifyTradesStopped("BTCUSD", true, false);
-            env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitfinex", "bitmex");
+            env.VerifyMessagesSent(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                env.GetExpectedTradesControls("BTCUSD", false),
+                env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals));
         }
-        
+
         [Test]
         public async Task BitmexPrimary_BecomesOutlier_ShouldSkipUpdates()
         {
             //arrange
             var env = _testSuit.Build();
             env.Setup(b => b.RegisterType<ExtPriceExchangesController>().AsSelf());
-            IContainer container = env.CreateContainer();
+            var container = env.CreateContainer();
             container.ChangeExchangeSettings("BTCUSD", "bitmex", m => m.Hedging.DefaultPreference = 1);
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            var bitmexDecimals = Generate.Decimals(multiplier: 1.05m); // note default outlier threshold 5%
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(bitmexDecimals, "bitmex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Poloniex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Kraken"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(multiplier: 1.06m), "bitmex"));
+            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
+            var bitmexDecimals2 = Generate.Decimals(1.06m);
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals2));
 
             //assert
             env.PrintLogs();
-            env.VerifyCommandsSent(("BTCUSD", bitmexDecimals));
-            env.VerifyTradesStopped("BTCUSD"); // should send no StopOrAllowNewTradesMessages
-            env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitmex");
+            env.VerifyMessagesSent(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals));
+            env.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>().Should().BeEmpty();
         }
-        
+
         [Test]
         public async Task BitmexPrimaryOutlier_BecomesOk_ShouldSendUpdate()
         {
             //arrange
             var env = _testSuit.Build();
             env.Setup(b => b.RegisterType<ExtPriceExchangesController>().AsSelf());
-            IContainer container = env.CreateContainer();
+            var container = env.CreateContainer();
             container.ChangeExchangeSettings("BTCUSD", "bitmex", m => m.Hedging.DefaultPreference = 1);
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            var bitmexDecimals = Generate.Decimals(multiplier: 1.05m); // note default outlier threshold 5%
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(bitmexDecimals, "bitmex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Poloniex"));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(Generate.Decimals(), "Kraken"));
-            var bitmexDecimals2 = Generate.Decimals(multiplier: 1.049m);
-            await marketMakerService.ProcessNewExternalOrderbookAsync(GetMessage(bitmexDecimals2, "bitmex"));
+            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            var firstExpectedBatch = env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals);
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
+            var bitmexDecimals2 = Generate.Decimals(1.049m);
+            env.SleepSecs(5);
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals2));
 
             //assert
             env.PrintLogs();
-            env.VerifyCommandsSent(("BTCUSD", bitmexDecimals), ("BTCUSD", bitmexDecimals2));
-            env.VerifyTradesStopped("BTCUSD"); // should send no StopOrAllowNewTradesMessages
-            env.VerifyPrimaryExchangeSwitched("BTCUSD", "bitmex");
+            env.VerifyMessagesSentWithTime(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                firstExpectedBatch,
+                env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals2));
+            env.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>().Should().BeEmpty();
         }
 
-        private static ExternalExchangeOrderbookMessage GetMessage(Generator<decimal> decimals, string exchangeName)
+        [Test]
+        public async Task BitmexPrimary_BecomesRepeatedOutlier_ShouldDisableIt_AndSwitch()
         {
-            return new ExternalExchangeOrderbookMessage
+            //arrange
+            var env = _testSuit.Build();
+            env.Setup(b => b.RegisterType<ExtPriceExchangesController>().AsSelf());
+            var container = env.CreateContainer();
+            container.ChangeExchangeSettings("BTCUSD", "bitmex", m => m.Hedging.DefaultPreference = 1);
+            var marketMakerService = container.Resolve<IMarketMakerService>();
+
+            //act
+
+            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
+            for (var i = 0; i < 5; i++)
             {
-                Bids = new List<VolumePrice>
-                {
-                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()},
-                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()}
-                },
-                Asks = new List<VolumePrice>
-                {
-                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()},
-                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()}
-                },
-                AssetPairId = "BTCUSD",
-                Source = exchangeName,
-                Timestamp = DateTime.UtcNow.AddSeconds(-1),
-            };
+                await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+                await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
+            }
+
+            //assert
+            env.PrintLogs();
         }
     }
 }

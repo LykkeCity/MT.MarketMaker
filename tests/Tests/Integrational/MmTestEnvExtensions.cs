@@ -6,7 +6,6 @@ using FluentAssertions;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Controllers;
 using MarginTrading.MarketMaker.Enums;
-using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Messages;
 using MoreLinq;
@@ -16,90 +15,59 @@ namespace Tests.Integrational
 {
     internal static class MmTestEnvExtensions
     {
-        public static void VerifyCommandsSent(
-            this IMmTestEnvironment testEnvironment,
-            params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
+        public static void VerifyMessagesSent(this IMmTestEnvironment testEnvironment, params object[] messages)
         {
-            var sent = testEnvironment.StubRabbitMqService.GetSentMessages<OrderCommandsBatchMessage>();
-            var expected = testEnvironment.GetExpectedCommands(pairsData);
-            sent.ShouldAllBeEquivalentTo(expected, o => o.WithStrictOrdering().Excluding(c => c.Timestamp));
-        }
-
-        public static void VerifyCommandsSent(
-            this IMmTestEnvironment testEnvironment,
-            params (string AssetPairId, Generator<decimal> Generator)[] pairsData)
-        {
-            testEnvironment.VerifyCommandsSent(pairsData.Select(p =>
-            {
-                var g = p.Generator.Clone();
-                return (p.AssetPairId, g.Take(4), g.Take(4));
-            }).ToArray());
-        }
-
-        public static void VerifyTradesStopped(this IMmTestEnvironment testEnvironment, string assetPairId, params bool[] isStopped)
-        {
-            testEnvironment.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>()
-                .ShouldAllBeEquivalentTo(
-                    isStopped.Select(s => new
-                    {
-                        AssetPairId = assetPairId,
-                        MarketMakerId = "testMmId",
-                        Stop = s,
-                    }), o => o.WithStrictOrdering().ExcludingMissingMembers());
+            var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
+            sent.ShouldContainEquivalentInOrder(messages,
+                o => o.WithStrictOrdering().ExcludingMissingMembers().Excluding(info =>
+                    info.SelectedMemberPath.EndsWith(".Timestamp", StringComparison.OrdinalIgnoreCase)));
         }
         
-        public static void VerifyPrimaryExchangeSwitched(this IMmTestEnvironment testEnvironment, string assetPairId, params string[] exchangeNames)
+        public static void VerifyMessagesSentWithTime(this IMmTestEnvironment testEnvironment, params object[] messages)
         {
-            testEnvironment.StubRabbitMqService.GetSentMessages<PrimaryExchangeSwitchedMessage>()
-                .ShouldAllBeEquivalentTo(
-                    exchangeNames.Select(e => new
-                    {
-                        AssetPairId = assetPairId,
-                        MarketMakerId = "testMmId",
-                        NewPrimaryExchange = new { ExchangeName = e },
-                    }), o => o.WithStrictOrdering().ExcludingMissingMembers());
+            var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
+            sent.ShouldContainEquivalentInOrder(messages, o => o.WithStrictOrdering().ExcludingMissingMembers());
+        }
+
+        public static object GetExpectedTradesControls(this IMmTestEnvironment testEnvironment,
+            string assetPairId, bool isStopped)
+        {
+            return new
+            {
+                AssetPairId = assetPairId,
+                MarketMakerId = "testMmId",
+                Stop = isStopped,
+            };
         }
         
-        public static IEnumerable<OrderCommandsBatchMessage> GetExpectedCommands(
-            this IMmTestEnvironment testEnvironment,
-            params (string AssetPairId, IEnumerable<decimal> Bids, IEnumerable<decimal> Asks)[] pairsData)
+        public static object GetExpectedPrimaryExchangeMessage(this IMmTestEnvironment testEnvironment,
+            string assetPairId, string exchange)
         {
-            foreach (var (assetPairId, bids, asks) in pairsData)
+            return new
             {
-                var commands = new List<OrderCommand>
-                {
-                    new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
-                };
-
-                commands.AddRange(GetCommands(bids, OrderDirectionEnum.Buy).OrderByDescending(e => e.Price));
-                commands.AddRange(GetCommands(asks, OrderDirectionEnum.Sell).OrderBy(e => e.Price));
-
-                yield return new OrderCommandsBatchMessage
-                {
-                    AssetPairId = assetPairId,
-                    Commands = commands,
-                    MarketMakerId = "testMmId",
-                    Timestamp = testEnvironment.UtcNow,
-                };
-            }
+                AssetPairId = assetPairId,
+                MarketMakerId = "testMmId",
+                NewPrimaryExchange = new {ExchangeName = exchange},
+            };
         }
-
+        
         public static void PrintLogs(this IMmTestEnvironment testEnvironment)
         {
             Console.WriteLine(JsonConvert.SerializeObject(Trace.TraceService.GetLast(), Formatting.Indented));
         }
-        
-        public static void Sleep(this IMmTestEnvironment env, TimeSpan time)
+
+        public static DateTime Sleep(this IMmTestEnvironment env, TimeSpan time)
         {
-            env.UtcNow += time;
-        }
-        
-        public static void SleepSecs(this IMmTestEnvironment env, double seconds)
-        {
-            env.Sleep(TimeSpan.FromSeconds(seconds));
+            return env.UtcNow += time;
         }
 
-        public static void ChangeExchangeSettings(this IContainer container, string assetPairId, string exchangeName, Action<ExchangeExtPriceSettingsModel> update)
+        public static DateTime SleepSecs(this IMmTestEnvironment env, double seconds)
+        {
+            return env.Sleep(TimeSpan.FromSeconds(seconds));
+        }
+
+        public static void ChangeExchangeSettings(this IContainer container, string assetPairId, string exchangeName,
+            Action<ExchangeExtPriceSettingsModel> update)
         {
             var extPriceExchangesController = container.Resolve<ExtPriceExchangesController>();
             var settings = extPriceExchangesController.Get(assetPairId, exchangeName).RequiredNotNull("settings");
@@ -107,7 +75,8 @@ namespace Tests.Integrational
             extPriceExchangesController.Update(settings);
         }
 
-        public static void ChangeAssetSettings(this IContainer container, string assetPairId, Action<AssetPairExtPriceSettingsModel> update)
+        public static void ChangeAssetSettings(this IContainer container, string assetPairId,
+            Action<AssetPairExtPriceSettingsModel> update)
         {
             var extPriceExchangesController = container.Resolve<ExtPriceSettingsController>();
             var settings = extPriceExchangesController.Get(assetPairId).RequiredNotNull("settings");
@@ -115,7 +84,49 @@ namespace Tests.Integrational
             extPriceExchangesController.Update(settings);
         }
 
-        private static IEnumerable<OrderCommand> GetCommands(IEnumerable<decimal> src, OrderDirectionEnum orderDirection)
+        public static ExternalExchangeOrderbookMessage GetInpMessage(this IMmTestEnvironment testEnvironment, string exchangeName, Generator<decimal> decimals)
+        {
+            return new ExternalExchangeOrderbookMessage
+            {
+                Bids = new List<VolumePrice>
+                {
+                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()},
+                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()}
+                },
+                Asks = new List<VolumePrice>
+                {
+                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()},
+                    new VolumePrice {Price = decimals.Next(), Volume = decimals.Next()}
+                },
+                AssetPairId = "BTCUSD",
+                Source = exchangeName,
+                Timestamp = testEnvironment.UtcNow,
+            };
+        }
+
+        public static OrderCommandsBatchMessage GetExpectedCommandsBatch(this IMmTestEnvironment testEnvironment, string assetPairId,
+            Generator<decimal> generator)
+        {
+            generator = generator.Clone();
+            var commands = new List<OrderCommand>
+            {
+                new OrderCommand {CommandType = OrderCommandTypeEnum.DeleteOrder}
+            };
+
+            commands.AddRange(GetCommands(generator.Take(4), OrderDirectionEnum.Buy).OrderByDescending(e => e.Price));
+            commands.AddRange(GetCommands(generator.Take(4), OrderDirectionEnum.Sell).OrderBy(e => e.Price));
+
+            return new OrderCommandsBatchMessage
+            {
+                AssetPairId = assetPairId,
+                Commands = commands,
+                MarketMakerId = "testMmId",
+                Timestamp = testEnvironment.UtcNow,
+            };
+        }
+
+        private static IEnumerable<OrderCommand> GetCommands(IEnumerable<decimal> src,
+            OrderDirectionEnum orderDirection)
         {
             return src.Batch(2, d => d.ToList()).Select(l => new OrderCommand
             {
