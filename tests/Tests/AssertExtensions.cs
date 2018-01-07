@@ -10,18 +10,20 @@ namespace Tests
 {
     public static class AssertExtensions
     {
-        public static void ShouldContainEquivalentInOrder<T>(this IEnumerable<T> subjectEnumerable,
-            IEnumerable expectationEnumerable,
-            Func<EquivalencyAssertionOptions<T>, EquivalencyAssertionOptions<T>> config)
+        public static void ShouldContainEquivalentInOrder<TSubject, TExpectation>(
+            this IEnumerable<TSubject> subjectEnumerable,
+            IEnumerable<TExpectation> expectationEnumerable,
+            Func<EquivalencyAssertionOptions<TExpectation>, EquivalencyAssertionOptions<TExpectation>> config)
         {
             AssertIsNotNull(subjectEnumerable);
-            var subject = subjectEnumerable.ToArray();
-            var expectation = expectationEnumerable.Cast<object>().ToArray();
-            AssertLengthSufficient(subject.Length, expectation.Length);
+            var subject = subjectEnumerable.ToList();
+            var expectation = expectationEnumerable.ToList();
+            AssertLengthSufficient(subject.Count, expectation.Count);
             AssertContais(subject, expectation, config);
         }
 
-        public static void ShouldContainEquivalentInOrder<T>(this IEnumerable<T> subject, IEnumerable expectation)
+        public static void ShouldContainEquivalentInOrder<TSubject, TExpectation>(this IEnumerable<TSubject> subject,
+            IEnumerable<TExpectation> expectation)
         {
             subject.ShouldContainEquivalentInOrder(expectation, o => o);
         }
@@ -36,31 +38,38 @@ namespace Tests
             subjectLength.Should().BeGreaterOrEqualTo(expectationLength);
         }
 
-        private static void AssertContais<T>(T[] subjects, object[] expectations, Func<EquivalencyAssertionOptions<T>, EquivalencyAssertionOptions<T>> config)
+        private static void AssertContais<TSubject, TExpectation>(IReadOnlyList<TSubject> subjects,
+            IReadOnlyList<TExpectation> expectations,
+            Func<EquivalencyAssertionOptions<TExpectation>, EquivalencyAssertionOptions<TExpectation>> config)
         {
             var subjectIndex = 0;
             var matchedExpectationsCount = 0;
-            for (var expectationIndex = 0; expectationIndex < expectations.Length; expectationIndex++)
+            foreach (var expectation in expectations)
             {
-                while (subjectIndex < subjects.Length)
+                while (subjectIndex < subjects.Count)
                 {
+                    var subject = subjects[subjectIndex];
+                    if (subject.GetType() != expectation.GetType())
+                    {
+                        subjectIndex++;
+                        continue;
+                    }
                     try
                     {
-                        var subject = subjects[subjectIndex];
-                        var expectation = expectations[expectationIndex];
-                        subject.ShouldBeEquivalentTo(expectation, config);
+                        subject.Should().BeEquivalentTo(expectation, config);
                         subjectIndex++;
                         matchedExpectationsCount++;
                         break;
                     }
-                    catch (AssertionException) when (subjectIndex < subjects.Length)
+                    catch (AssertionException e) when (subjectIndex < subjects.Count)
                     {
                         subjectIndex++;
+                        Console.WriteLine(e);
                     }
                 }
             }
 
-            matchedExpectationsCount.Should().Be(expectations.Length);
+            matchedExpectationsCount.Should().Be(expectations.Count);
         }
     }
 }

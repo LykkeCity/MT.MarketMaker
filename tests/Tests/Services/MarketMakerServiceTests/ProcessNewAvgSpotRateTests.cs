@@ -95,7 +95,7 @@ namespace Tests.Services.MarketMakerServiceTests
                 MakeOrderCommandsBatchMessage("cross pair 1", 10),
                 MakeOrderCommandsBatchMessage("cross pair 2", 20),
             };
-            _sentMessages.ShouldAllBeEquivalentTo(expectation);
+            _sentMessages.Should().BeEquivalentTo(expectation);
         }
 
         public static OrderCommandsBatchMessage MakeOrderCommandsBatchMessage(string pairId, int m)

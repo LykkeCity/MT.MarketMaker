@@ -18,7 +18,7 @@ namespace Tests
             var invocation = subject.Invoking(s => s.ShouldContainEquivalentInOrder(expectation));
 
             //assert
-            invocation.ShouldThrow<AssertionException>()
+            invocation.Should().Throw<AssertionException>()
                 .And.Message.Should().StartWith("Expected object not to be <null>.");
         }
 
@@ -33,7 +33,7 @@ namespace Tests
             var invocation = subject.Invoking(s => s.ShouldContainEquivalentInOrder(expectation));
 
             //assert
-            invocation.ShouldThrow<AssertionException>()
+            invocation.Should().Throw<AssertionException>()
                 .And.Message.Should()
                 .StartWith("Expected a value greater or equal to 5, but found 4.");
         }
@@ -50,7 +50,7 @@ namespace Tests
             var invocation = subject.Invoking(s => s.ShouldContainEquivalentInOrder(expectation));
 
             //assert
-            invocation.ShouldThrow<AssertionException>()
+            invocation.Should().Throw<AssertionException>()
                 .And.Message.Should()
                 .StartWith("Expected value to be ");
         }

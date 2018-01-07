@@ -153,7 +153,6 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-
             var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using FluentAssertions;
+using FluentAssertions.Equivalency;
+using FluentAssertions.Primitives;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Controllers;
-using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Messages;
 using MoreLinq;
@@ -19,40 +20,38 @@ namespace Tests.Integrational
     {
         public static void VerifyMessagesSent(this IMmTestEnvironment testEnvironment, params object[] messages)
         {
-            var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
-            sent.ShouldContainEquivalentInOrder(messages,
-                o => o.WithStrictOrdering().ExcludingMissingMembers().Excluding(info =>
-                    info.SelectedMemberPath.EndsWith(".Timestamp", StringComparison.OrdinalIgnoreCase)));
-        }
-        
-        public static void VerifyMessagesSentWithTime(this IMmTestEnvironment testEnvironment, params object[] messages)
-        {
-            var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
-            sent.ShouldContainEquivalentInOrder(messages, o => o.WithStrictOrdering().ExcludingMissingMembers());
+            VerifyMessagesSentCore(testEnvironment, messages, o => o
+                .Excluding(i => i.SelectedMemberPath.EndsWith(".Timestamp", StringComparison.OrdinalIgnoreCase)));
         }
 
-        public static object GetExpectedTradesControls(this IMmTestEnvironment testEnvironment,
+        public static void VerifyMessagesSentWithTime(this IMmTestEnvironment testEnvironment, params object[] messages)
+        {
+            VerifyMessagesSentCore(testEnvironment, messages, o => o);
+        }
+
+        public static StopOrAllowNewTradesMessage GetExpectedTradesControls(this IMmTestEnvironment testEnvironment,
             string assetPairId, bool isStopped)
         {
-            return new
+            return new StopOrAllowNewTradesMessage
             {
                 AssetPairId = assetPairId,
                 MarketMakerId = "testMmId",
                 Stop = isStopped,
             };
         }
-        
-        public static object GetExpectedPrimaryExchangeMessage(this IMmTestEnvironment testEnvironment,
+
+        public static PrimaryExchangeSwitchedMessage GetExpectedPrimaryExchangeMessage(
+            this IMmTestEnvironment testEnvironment,
             string assetPairId, string exchange)
         {
-            return new
+            return new PrimaryExchangeSwitchedMessage
             {
                 AssetPairId = assetPairId,
                 MarketMakerId = "testMmId",
-                NewPrimaryExchange = new {ExchangeName = exchange},
+                NewPrimaryExchange = new ExchangeQualityMessage {ExchangeName = exchange},
             };
         }
-        
+
         public static void PrintLogs(this IMmTestEnvironment testEnvironment)
         {
             Console.WriteLine(JsonConvert.SerializeObject(Trace.TraceService.GetLast(), Formatting.Indented));
@@ -86,7 +85,8 @@ namespace Tests.Integrational
             extPriceExchangesController.Update(settings);
         }
 
-        public static ExternalExchangeOrderbookMessage GetInpMessage(this IMmTestEnvironment testEnvironment, string exchangeName, Generator<decimal> decimals)
+        public static ExternalExchangeOrderbookMessage GetInpMessage(this IMmTestEnvironment testEnvironment,
+            string exchangeName, Generator<decimal> decimals)
         {
             return new ExternalExchangeOrderbookMessage
             {
@@ -106,7 +106,8 @@ namespace Tests.Integrational
             };
         }
 
-        public static OrderCommandsBatchMessage GetExpectedCommandsBatch(this IMmTestEnvironment testEnvironment, string assetPairId,
+        public static OrderCommandsBatchMessage GetExpectedCommandsBatch(this IMmTestEnvironment testEnvironment,
+            string assetPairId,
             Generator<decimal> generator)
         {
             generator = generator.Clone();
@@ -125,6 +126,32 @@ namespace Tests.Integrational
                 MarketMakerId = "testMmId",
                 Timestamp = testEnvironment.UtcNow,
             };
+        }
+
+        private static void VerifyMessagesSentCore(this IMmTestEnvironment testEnvironment,
+            IEnumerable<object> messages,
+            Func<EquivalencyAssertionOptions<object>, EquivalencyAssertionOptions<object>> config)
+        {
+            var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
+            sent.ShouldContainEquivalentInOrder(messages,
+                o => config(o.Using<object>(CustomCompare).When(s => true)));
+        }
+
+        private static void CustomCompare(IAssertionContext<object> a)
+        {
+            if (a.Expectation != null)
+            {
+                if (a.Expectation is ExchangeQualityMessage msgExp
+                    && a.Subject is ExchangeQualityMessage msgSubj)
+                {
+                    msgSubj.ExchangeName.Should().Be(msgExp.ExchangeName);
+                }
+                else
+                {
+                    a.Subject.Should().BeEquivalentTo(a.Expectation,
+                        o => o.Using<object>(CustomCompare).When(s => true));
+                }
+            }
         }
 
         private static IEnumerable<OrderCommand> GetCommands(IEnumerable<decimal> src,
