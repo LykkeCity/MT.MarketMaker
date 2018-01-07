@@ -19,7 +19,7 @@ namespace Tests
 
             //assert
             invocation.Should().Throw<AssertionException>()
-                .And.Message.Should().StartWith("Expected object not to be <null>.");
+                .And.Message.Should().StartWith("Expected object not to be <null> because subject collection should not be null.");
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace Tests
             //assert
             invocation.Should().Throw<AssertionException>()
                 .And.Message.Should()
-                .StartWith("Expected a value greater or equal to 5, but found 4.");
+                .StartWith("Expected a value greater or equal to 5 because subject collection should be long enouth, but found 4.");
         }
 
         [TestCase("2,2,3")]
