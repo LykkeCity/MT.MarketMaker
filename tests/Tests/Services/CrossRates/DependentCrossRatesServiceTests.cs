@@ -116,7 +116,7 @@ namespace Tests.Services.CrossRates
             var result = _testSuit.Sut.GetDependentAssetPairs("BTCUSD").ToArray();
 
             //assert
-            result.ShouldAllBeEquivalentTo(new List<CrossRateCalcInfo>
+            result.Should().BeEquivalentTo(new List<CrossRateCalcInfo>
             {
                 new CrossRateCalcInfo("BTCEUR", new CrossRateSourceAssetPair("BTCUSD", true),
                     new CrossRateSourceAssetPair("EURUSD", true)),

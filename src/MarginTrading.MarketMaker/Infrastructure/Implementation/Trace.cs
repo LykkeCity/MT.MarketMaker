@@ -6,7 +6,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
     internal static class Trace
     {
         [CanBeNull]
-        public static ITraceService TraceService { get; set; }
+        internal static ITraceService TraceService { get; set; }
 
         public static void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {

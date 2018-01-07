@@ -19,28 +19,16 @@ namespace Tests
             _sut = CreateLazy();
         }
 
-        public TestSuit<TSut> Setup<TMocked>(Func<Mock<TMocked>, IReturnsResult<Mock<TMocked>>> setup) where TMocked : class
-        {
-            var mock = GetMock<TMocked>();
-            setup(mock);
-            return this;
-        }
-
         public TestSuit<TSut> Setup<TMocked>(Expression<Func<TMocked, bool>> setup)
             where TMocked : class
         {
-            var mock = GetMock<TMocked>();
-            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed - it has side effects
-            TestSuitQueryable<TMocked>.CreateMockQuery(mock).First(setup);
+            SetupCore(setup);
             return this;
         }
 
         public TestSuit<TSut> Setup<TMocked>(params Action<Mock<TMocked>>[] setups) where TMocked : class
         {
-            var mock = GetMock<TMocked>();
-            foreach (var setup in setups)
-                setup(mock);
-
+            SetupCore(setups);
             return this;
         }
 
@@ -56,32 +44,48 @@ namespace Tests
         }
     }
 
-    public abstract class TestSuit
+    public abstract class TestSuit : TestSuitBase
     {
-        private readonly ConcurrentDictionary<Type, Mock> _mocks
-            = new ConcurrentDictionary<Type, Mock>();
-
         public static TestSuit<TSut> Create<TSut>() where TSut : class
         {
             return new TestSuit<TSut>();
         }
+    }
 
-        public virtual Mock<TMocked> GetMock<TMocked>() where TMocked : class
+    public abstract class TestSuitBase
+    {
+        protected readonly ConcurrentDictionary<Type, Mock> Mocks = new ConcurrentDictionary<Type, Mock>();
+
+        public Mock<TMocked> GetMock<TMocked>() where TMocked : class
         {
-            return (Mock<TMocked>) _mocks.GetOrAdd(typeof(TMocked), t => Cache<TMocked>.CreateMock.Value());
+            return (Mock<TMocked>) Mocks.GetOrAdd(typeof(TMocked), t => Cache<TMocked>.CreateMock.Value());
         }
 
         public TMocked GetMockObj<TMocked>() where TMocked : class
         {
             return GetMock<TMocked>().Object;
         }
-
+        
         public virtual void Reset()
         {
-            foreach (var p in _mocks)
-            {
+            foreach (var p in Mocks)
                 p.Value.Reset();
-            }
+        }
+        
+        protected Mock<TMocked> SetupCore<TMocked>(Expression<Func<TMocked, bool>> setup) where TMocked : class
+        {
+            var mock = GetMock<TMocked>();
+            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed - it has side effects
+            TestSuitQueryable<TMocked>.CreateMockQuery(mock).First(setup);
+            return mock;
+        }
+
+        protected Mock<TMocked> SetupCore<TMocked>(IEnumerable<Action<Mock<TMocked>>> setups) where TMocked : class
+        {
+            var mock = GetMock<TMocked>();
+            foreach (var setup in setups)
+                setup(mock);
+            return mock;
         }
 
         #region Implementation details (aka "don't even try to understand")
