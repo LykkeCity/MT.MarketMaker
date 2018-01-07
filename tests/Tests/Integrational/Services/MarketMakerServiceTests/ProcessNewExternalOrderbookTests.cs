@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Controllers;
-using MarginTrading.MarketMaker.Messages;
 using MarginTrading.MarketMaker.Services.Common;
 using NUnit.Framework;
 
@@ -15,7 +12,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
     public class ProcessNewExternalOrderbookTests
     {
         private readonly MmIntegrationalTestSuit _testSuit = new MmIntegrationalTestSuit();
-        
+
         [Test]
         public async Task SimpleConfig_ShouldProcessSingleMessage()
         {
@@ -46,8 +43,10 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
 
             //act
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", Generate.Decimals()));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("bitfinex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
 
             //assert
@@ -70,10 +69,12 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
-            var bitmexDecimals = Generate.Decimals(1.049m); // note default outlier threshold 5%
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("bitfinex", Generate.Decimals()));
+            var bitmexDecimals = Generate.Decimals(1.049m); // note outlier threshold 5%
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
 
             //assert
@@ -98,9 +99,10 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            var bitmexDecimals = Generate.Decimals(1.05m); // note outlier threshold 5%
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
             var bitmexDecimals2 = Generate.Decimals(1.06m);
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals2));
@@ -124,10 +126,11 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            var bitmexDecimals = Generate.Decimals(1.05m); // note outlier threshold 5%
             var firstExpectedBatch = env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals);
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
             var bitmexDecimals2 = Generate.Decimals(1.049m);
             env.SleepSecs(5);
@@ -153,18 +156,33 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            var bitmexDecimals = Generate.Decimals(1.05m); // note default outlier threshold 5%
+            var bitmexDecimals = Generate.Decimals(1.01m); // note outlier threshold 5%
+            var firstExpectedBatch = env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals);
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(
+                env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
-            for (var i = 0; i < 5; i++)
+
+            var bitmexBadDecimals = Generate.Decimals(1.05m); // note outlier threshold 5%
+            for (var i = 0; i < 11; i++) // note repeated outlier sequence threshold is 10
             {
-                await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Poloniex", Generate.Decimals()));
-                await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
+                env.Sleep(new TimeSpan(1)); // timestamps should be different for repeated outlier functionality to work
+                await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex",
+                    bitmexBadDecimals.Clone()));
             }
+
+            env.SleepSecs(2);
+            var krakenDecimals = Generate.Decimals(1.01m);
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", krakenDecimals));
 
             //assert
             env.PrintLogs();
+            env.VerifyMessagesSentWithTime(
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                firstExpectedBatch,
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "Kraken"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", krakenDecimals));
         }
     }
 }

@@ -30,12 +30,12 @@ namespace Tests
 
         private static void AssertIsNotNull(object subject)
         {
-            subject.Should().NotBeNull();
+            subject.Should().NotBeNull(" subject collection should not be null");
         }
 
         private static void AssertLengthSufficient(int subjectLength, int expectationLength)
         {
-            subjectLength.Should().BeGreaterOrEqualTo(expectationLength);
+            subjectLength.Should().BeGreaterOrEqualTo(expectationLength, " subject collection should be long enouth");
         }
 
         private static void AssertContais<TSubject, TExpectation>(IReadOnlyList<TSubject> subjects,
@@ -69,7 +69,7 @@ namespace Tests
                 }
             }
 
-            matchedExpectationsCount.Should().Be(expectations.Count);
+            matchedExpectationsCount.Should().Be(expectations.Count, " all expected objects should be found");
         }
     }
 }
