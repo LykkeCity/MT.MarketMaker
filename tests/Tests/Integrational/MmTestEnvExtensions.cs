@@ -4,7 +4,6 @@ using System.Linq;
 using Autofac;
 using FluentAssertions;
 using FluentAssertions.Equivalency;
-using FluentAssertions.Primitives;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Contracts.Models;
@@ -65,6 +64,18 @@ namespace Tests.Integrational
         public static DateTime SleepSecs(this IMmTestEnvironment env, double seconds)
         {
             return env.Sleep(TimeSpan.FromSeconds(seconds));
+        }
+
+        public static ExchangeExtPriceSettingsModel GetExchangeSettings(this IContainer container, string assetPairId,
+            string exchangeName)
+        {
+            return container.Resolve<ExtPriceExchangesController>().Get(assetPairId, exchangeName)
+                .RequiredNotNull("settings");
+        }
+        
+        public static IReadOnlyList<ExtPriceStatusModel> GetStatus(this IContainer container, string assetPairId)
+        {
+            return container.Resolve<ExtPriceStatusController>().Get(assetPairId).RequiredNotNull("settings");
         }
 
         public static void ChangeExchangeSettings(this IContainer container, string assetPairId, string exchangeName,

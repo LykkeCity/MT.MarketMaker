@@ -64,7 +64,7 @@ namespace Tests
                     catch (AssertionException e) when (subjectIndex < subjects.Count)
                     {
                         subjectIndex++;
-                        Console.WriteLine(e);
+                        Console.WriteLine("Compare problem trace: " + e);
                     }
                 }
             }
