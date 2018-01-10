@@ -39,6 +39,11 @@ namespace Tests.Integrational
             };
         }
 
+        public static StartedMessage GetStartedMessage(this IMmTestEnvironment testEnvironment)
+        {
+            return new StartedMessage {MarketMakerId = "testMmId"};
+        }
+
         public static PrimaryExchangeSwitchedMessage GetExpectedPrimaryExchangeMessage(
             this IMmTestEnvironment testEnvironment,
             string assetPairId, string exchange)
@@ -144,8 +149,8 @@ namespace Tests.Integrational
             Func<EquivalencyAssertionOptions<object>, EquivalencyAssertionOptions<object>> config)
         {
             var sent = testEnvironment.StubRabbitMqService.GetSentMessages();
-            sent.ShouldContainEquivalentInOrder(messages,
-                o => config(o.Using<object>(CustomCompare).When(s => true)));
+            sent.Should().BeEquivalentTo(messages,
+                o => config(o.WithStrictOrdering().Using<object>(CustomCompare).When(s => true)));
         }
 
         private static void CustomCompare(IAssertionContext<object> a)
@@ -160,7 +165,7 @@ namespace Tests.Integrational
                 else
                 {
                     a.Subject.Should().BeEquivalentTo(a.Expectation,
-                        o => o.Using<object>(CustomCompare).When(s => true));
+                        o => o.WithStrictOrdering().Using<object>(CustomCompare).When(s => true));
                 }
             }
         }

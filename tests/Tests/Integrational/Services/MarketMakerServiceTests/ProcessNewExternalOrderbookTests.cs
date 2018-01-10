@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Autofac;
 using FluentAssertions;
-using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Controllers;
 using MarginTrading.MarketMaker.Services.Common;
@@ -28,6 +27,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSent(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 env.GetExpectedTradesControls("BTCUSD", true),
                 env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals())
@@ -43,9 +43,11 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             var marketMakerService = container.Resolve<IMarketMakerService>();
 
             //act
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", Generate.Decimals()));
+            var bitmexDecimals = Generate.Decimals(1.01m);
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            var bitfinexDecimals = Generate.Decimals();
             await marketMakerService.ProcessNewExternalOrderbookAsync(
-                env.GetInpMessage("bitfinex", Generate.Decimals()));
+                env.GetInpMessage("bitfinex", bitfinexDecimals));
             await marketMakerService.ProcessNewExternalOrderbookAsync(
                 env.GetInpMessage("Poloniex", Generate.Decimals()));
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
@@ -53,14 +55,16 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSent(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 env.GetExpectedTradesControls("BTCUSD", true),
-                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
-                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"));
+                env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"),
+                env.GetExpectedCommandsBatch("BTCUSD", bitfinexDecimals));
         }
 
         [Test]
-        public async Task BitmexHashableButArrivesSecond_ShouldStopTradesAndThenSwitchToBitmex()
+        public async Task BitmexHadgableButArrivesSecond_ShouldStopTradesAndThenSwitchToBitmex()
         {
             //arrange
             var env = _testSuit.Build();
@@ -81,6 +85,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSent(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"),
                 env.GetExpectedTradesControls("BTCUSD", true),
                 env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
@@ -118,9 +123,9 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSent(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 expectedBitmexBatch);
-            env.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>().Should().BeEmpty();
             container.GetStatus("BTCUSD").Should().ContainSingle(m => m.ExchangeName == "bitmex").Which.ErrorState
                 .Should().Be("Outlier");
         }
@@ -149,10 +154,10 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSentWithTime(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 firstExpectedBatch,
                 env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals2));
-            env.StubRabbitMqService.GetSentMessages<StopOrAllowNewTradesMessage>().Should().BeEmpty();
         }
 
         [Test]
@@ -195,6 +200,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSentWithTime(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 firstExpectedBatch,
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "Kraken"),
@@ -230,6 +236,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSentWithTime(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 firstExpectedBatch,
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "Kraken"),
@@ -266,6 +273,7 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             //assert
             env.PrintLogs();
             env.VerifyMessagesSentWithTime(
+                env.GetStartedMessage(),
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
                 firstExpectedBatch,
                 env.GetExpectedPrimaryExchangeMessage("BTCUSD", "Kraken"),
