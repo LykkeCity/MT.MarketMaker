@@ -32,7 +32,40 @@ namespace Tests.Integrational
             {
                 MarketMakerId = "testMmId",
                 Db = new DbSettings {QueuePersistanceRepositoryConnString = "fake"}
-            }
+            },
+            RiskInformingSettings = new RiskInformingSettings {Data = new []
+            {
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM01",
+                    Level = AlertSeverityLevel.Critical,
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM02",
+                    Level = AlertSeverityLevel.Warning,
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM03",
+                    Level = AlertSeverityLevel.Information,
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM04",
+                    Level = AlertSeverityLevel.Warning,
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM05",
+                    Level = AlertSeverityLevel.Information,
+                    System = "MarketMaker",
+                },
+            }}
         };
 
         public MmIntegrationalTestSuit()
@@ -83,7 +116,6 @@ namespace Tests.Integrational
                     .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow))
                     .Setup<IAssetsService>(m => m.Setup(s => s.GetAssetPairsWithHttpMessagesAsync(default, default))
                         .Returns(() => AssetPairs.ToResponse()))
-                    .Setup(new Mock<IMtMmRisksSlackNotificationsSender>().Object)
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>()
                     .Setup(new LykkeLogToAzureStorage(null))

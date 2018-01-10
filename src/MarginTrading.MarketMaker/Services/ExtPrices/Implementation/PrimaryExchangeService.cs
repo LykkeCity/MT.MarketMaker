@@ -105,7 +105,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     return primaryQuality;
                 case ExchangeErrorStateDomainEnum.Outlier when primaryPreference > 0:
                     _alertService.AlertRiskOfficer(assetPairId,
-                        $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.");
+                        $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.", EventTypeEnum.OutlierDetected);
                     return primaryQuality;
                 default:
                     primaryQuality = SwitchPrimaryExchange(assetPairId, primaryQuality, exchangeQualities,
@@ -138,7 +138,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     AllExchangesStates = exchangeQualities.Values.Select(Convert).ToImmutableArray(),
                     NewPrimaryExchange = Convert(newPrimary),
                 });
-            _alertService.AlertRiskOfficer(assetPairId, alertMessage(newPrimary));
+            _alertService.AlertRiskOfficer(assetPairId, alertMessage(newPrimary), EventTypeEnum.PrimaryExchangeChanged);
             return newPrimary;
         }
 
@@ -234,7 +234,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"{assetPairId}: now {validHedgableCount} valid & available for hedging, " +
                         $"{validCount} valid, {activeCount} active, {exchangeQualities.Count} configured exchanges: \r\n" +
-                        GetExchangesQualitiesString(exchangeQualities.Values));
+                        GetExchangesQualitiesString(exchangeQualities.Values), EventTypeEnum.StatusInfo);
                 });
             }
         }
