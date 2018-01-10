@@ -97,7 +97,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var ending = exchangesStr.Contains(',') ? "s" : "";
 
             _alertService.AlertRiskOfficer(assetPairId,
-                $"Exchange{ending} {exchangesStr} for {assetPairId} became {stateChangeDescription} because {reason}");
+                $"Exchange{ending} {exchangesStr} for {assetPairId} became {stateChangeDescription} because {reason}", EventTypeEnum.ExchangeDisabled);
         }
 
         public bool IsExchangeConfigured(string assetPairId, string exchangeName)

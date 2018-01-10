@@ -33,6 +33,7 @@ namespace MarginTrading.MarketMaker.Modules
             RegisterDefaultImplementations(builder);
 
             builder.RegisterInstance(_settings.Nested(s => s.MarginTradingMarketMaker)).SingleInstance();
+            builder.RegisterInstance(_settings.Nested(s => s.RiskInformingSettings)).SingleInstance();
             builder.RegisterInstance(_log).As<ILog>().SingleInstance();
             builder.RegisterType<SystemService>().As<ISystem>().SingleInstance();
 
