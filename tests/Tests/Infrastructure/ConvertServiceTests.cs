@@ -55,7 +55,7 @@ namespace Tests.Infrastructure
             //assert
             settings.Exchanges.Should().BeEmpty();
             result.AssetPairId.Should().BeNull();
-            result.ShouldBeEquivalentTo(model, o => o.Excluding(m => m.AssetPairId));
+            result.Should().BeEquivalentTo(model, o => o.Excluding(m => m.AssetPairId));
         }
     }
 }

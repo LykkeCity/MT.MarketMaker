@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
@@ -59,7 +60,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 ImmutableDictionary<string, ExchangeQuality>.Empty);
         }
 
-        public string GetPrimaryExchange(string assetPairId,
+        public ExchangeQuality GetPrimaryExchange(string assetPairId,
             ImmutableDictionary<string, ExchangeErrorStateDomainEnum> errors,
             DateTime now, string currentProcessingExchange)
         {
@@ -67,18 +68,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             {
                 var presetPrimaryExchange = _extPricesSettingsService.GetPresetPrimaryExchange(assetPairId);
                 _primaryExchanges[assetPairId] = presetPrimaryExchange;
-                return presetPrimaryExchange;
+                return new ExchangeQuality(presetPrimaryExchange, 0, ExchangeErrorStateDomainEnum.Valid, false, null);
             }
 
             var exchangeQualities = CalcExchangeQualities(assetPairId, errors, now, currentProcessingExchange);
             var primaryQuality = CheckPrimaryStatusAndSwitchIfNeeded(assetPairId, exchangeQualities);
+            if (primaryQuality == null) return null;
+            
             _stopTradesService.SetPrimaryOrderbookState(assetPairId, primaryQuality.ExchangeName, now,
                 primaryQuality.HedgingPreference, primaryQuality.ErrorState);
-            return primaryQuality.ErrorState == ExchangeErrorStateDomainEnum.Outlier
-                ? null
-                : primaryQuality.ExchangeName;
+            return primaryQuality;
         }
 
+        [CanBeNull]
         private ExchangeQuality CheckPrimaryStatusAndSwitchIfNeeded(string assetPairId,
             ImmutableDictionary<string, ExchangeQuality> exchangeQualities)
         {
