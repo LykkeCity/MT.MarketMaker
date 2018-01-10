@@ -55,7 +55,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         {
             var (slackChannelType, traceLevel) = _alertSeverityLevelService.GetLevel(eventType);
             Trace.Write(traceLevel, assetPairId, $"{nameof(AlertRiskOfficer)}: {message}", new {});
-            _slack.SendAsync(slackChannelType, "MT MarketMaker", message);
+            if (!string.IsNullOrWhiteSpace(slackChannelType))
+                _slack.SendAsync(slackChannelType, "MT MarketMaker", message);
         }
 
         public void AlertStarted()
