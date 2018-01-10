@@ -87,7 +87,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             var primaryExchange = _primaryExchanges.GetOrDefault(assetPairId);
             var originalPrimaryExchange = primaryExchange;
 
-            if (primaryExchange == null)
+            var primaryQuality = primaryExchange == null ? null : exchangeQualities.GetValueOrDefault(primaryExchange);
+            if (primaryQuality == null)
             {
                 var result = SwitchPrimaryExchange(assetPairId, null, exchangeQualities,
                     newPrimary =>
@@ -96,7 +97,6 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return result;
             }
 
-            var primaryQuality = exchangeQualities.GetValueOrDefault(primaryExchange);
             var primaryPreference = primaryQuality.HedgingPreference;
             var primaryError = primaryQuality.ErrorState;
             switch (primaryError)
