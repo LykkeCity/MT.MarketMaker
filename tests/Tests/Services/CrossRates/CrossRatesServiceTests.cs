@@ -67,7 +67,7 @@ namespace Tests.Services.CrossRates
             //BTCEUR = BTCUSD * (ask EURUSD)^-1
             //BTCCHF = BTCUSD * USDCHF
             //ETHUSD = ETHBTC * BTCUSD
-            btcUsdResult.ShouldAllBeEquivalentTo(
+            btcUsdResult.Should().BeEquivalentTo(
                 new[]
                 {
                     new Orderbook("BTCEUR",

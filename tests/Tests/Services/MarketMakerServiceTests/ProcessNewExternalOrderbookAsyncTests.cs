@@ -250,7 +250,7 @@ namespace Tests.Services.MarketMakerServiceTests
                 MakeOrderCommandsBatchMessage("dependent pair 2", 20),
                 MakeOrderCommandsBatchMessage("resulting pair", 30),
             };
-            AssertionExtensions.ShouldAllBeEquivalentTo<OrderCommandsBatchMessage>(_sentMessages, expectation);
+            _sentMessages.Should().BeEquivalentTo(expectation, o=> o.WithAutoConversion());
         }
 
         public static OrderCommandsBatchMessage MakeOrderCommandsBatchMessage(string pairId, int m)

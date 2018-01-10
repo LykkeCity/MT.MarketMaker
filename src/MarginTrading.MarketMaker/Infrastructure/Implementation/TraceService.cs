@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncFriendlyStackTrace;
 using Lykke.Logs;
@@ -19,11 +20,12 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         {
             Converters = {new StringEnumConverter()}
         };
-
-        private static readonly BlockingCollection<TraceMessage> WritingQueue =
+        private long _counter;
+        
+        private readonly BlockingCollection<TraceMessage> WritingQueue =
             new BlockingCollection<TraceMessage>(50000);
 
-        private static readonly
+        private readonly
             ConcurrentDictionary<(TraceLevelGroupEnum Group, string AssetPairId), ConcurrentQueue<TraceMessage>>
             LastElemsQueues
                 = new ConcurrentDictionary<(TraceLevelGroupEnum, string), ConcurrentQueue<TraceMessage>>();
@@ -74,22 +76,23 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public void Write(TraceLevelGroupEnum levelGroup, string assetPairId, string msg, object obj)
         {
-            if (!WritingQueue.TryAdd(new TraceMessage(levelGroup, assetPairId, msg, obj, _system.UtcNow)))
+            var id = Interlocked.Increment(ref _counter);
+            if (!WritingQueue.TryAdd(new TraceMessage(id, levelGroup, assetPairId, msg, obj, _system.UtcNow)))
                 Console.WriteLine("ERROR WRITING TO TRACE QUEUE:\t" + assetPairId + '\t' + levelGroup + '\t' + msg);
         }
 
         public List<TraceModel> GetLast()
         {
-            return GetLastCore().OrderByDescending(t => t.Time).ToList();
+            return GetLastCore().OrderByDescending(t => t.Time).ThenBy(t => t.Id).ToList();
         }
 
         public List<TraceModel> GetLast(string contains)
         {
             return GetLastCore().Where(l => Contains(l.Group + '\t' + l.Message, contains))
-                .OrderByDescending(t => t.Time).ToList();
+                .OrderByDescending(t => t.Time).ThenBy(t => t.Id).ToList();
         }
 
-        private static IEnumerable<TraceModel> GetLastCore()
+        private IEnumerable<TraceModel> GetLastCore()
         {
             return LastElemsQueues.ToArray()
                 .SelectMany(q =>
@@ -97,6 +100,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                     var gr = q.Key.AssetPairId + ' ' + q.Key.Group;
                     return q.Value.ToArray().Select(m => new TraceModel
                     {
+                        Id = m.Id,
                         Time = m.Time,
                         Group = gr,
                         Message = m.Msg,
@@ -117,20 +121,21 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
         public class TraceMessage
         {
+            public long Id { get; }
             public TraceLevelGroupEnum TraceGroup { get; }
             public string AssetPairId { get; }
             public string Msg { get; }
             public object Data { get; }
             public DateTime Time { get; }
 
-            public TraceMessage(TraceLevelGroupEnum traceGroup, string assetPairId, string msg, object data,
-                DateTime time)
+            public TraceMessage(long id, TraceLevelGroupEnum traceGroup, string assetPairId, string msg, object data, DateTime time)
             {
                 TraceGroup = traceGroup;
                 AssetPairId = assetPairId;
                 Msg = msg;
                 Data = data;
                 Time = time;
+                Id = id;
             }
         }
     }

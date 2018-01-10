@@ -81,7 +81,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 {
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"{orderbook.ExchangeName} is a repeated outlier exchange for {assetPairId}.\r\n" +
-                        $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max {repeatedOutliersParams.MaxAvg * 100:f4}% " +
+                        $"It had {avg * 100:f4}% (i.e. {outliersCount} / {statsCount}) of max " +
+                        $"{repeatedOutliersParams.MaxAvg * 100:f4}% " +
                         $"outlier orderbooks during last {repeatedOutliersParams.MaxAvgAge.TotalSeconds:f0} secs.");
                     Trace.Write(TraceLevelGroupEnum.ErrorTrace, assetPairId, "Repeated outlier (avg)",
                         new
