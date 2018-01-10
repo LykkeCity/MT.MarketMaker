@@ -66,5 +66,10 @@ namespace Tests.Integrational
         {
             return FromLambda<int>((o, i) => i + 1);
         }
+
+        public static Generator<T> Values<T>(params T[] values)
+        {
+            return FromLambda<T>((o, i) => values[i]);
+        }
     }
 }

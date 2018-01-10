@@ -4,6 +4,7 @@ using Autofac;
 using FluentAssertions;
 using MarginTrading.MarketMaker.Contracts.Models;
 using MarginTrading.MarketMaker.Controllers;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Services.Common;
 using NUnit.Framework;
 
@@ -32,6 +33,80 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
                 env.GetExpectedTradesControls("BTCUSD", true),
                 env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals())
             );
+        }
+        
+        [TestCase(-1, 1)]
+        [TestCase(0, 1)]
+        [TestCase(2, 1)]
+        [TestCase(10, 50/3d)]
+        [TestCase(10, 50/3d + 0.001)]
+        public async Task ExchangeBroken_ShouldMarkBroken(double bid, double ask)
+        {
+            //arrange
+            var env = _testSuit.Build();
+            env.Setup(b => b.RegisterType<ExtPriceStatusController>().AsSelf());
+            var container = env.CreateContainer();
+            var marketMakerService = container.Resolve<IMarketMakerService>();
+            var brokenDecimals = Generate.Values(
+                (decimal)bid, 1, -10, 1, // bids
+                (decimal)ask, 1, int.MaxValue, 1 // asks
+            );
+
+            //act
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", brokenDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals(1.01m)));
+
+            //assert
+            env.PrintLogs();
+            env.VerifyMessagesSent(
+                env.GetStartedMessage(),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals(1.01m)));
+            container.GetStatus("BTCUSD").Should().BeEquivalentTo(new []
+            {
+                new ExtPriceStatusModel{ExchangeName = "bitfinex", ErrorState = "Valid"},
+                new ExtPriceStatusModel{ExchangeName = "bitmex", ErrorState = "Broken"},
+                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = null},
+                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = null},
+            }, o => o.Including(m => m.ExchangeName).Including(m => m.ErrorState));
+        }
+        
+        [Test]
+        public async Task SpreadLessThen50Percent_ShouldNotMarkBroken()
+        {
+            //arrange
+            var env = _testSuit.Build();
+            env.Setup(b => b.RegisterType<ExtPriceStatusController>().AsSelf());
+            var container = env.CreateContainer();
+            var marketMakerService = container.Resolve<IMarketMakerService>();
+            var bitmexDecimals = Generate.Values(
+                10, 1, -10, 1, // bids
+                50/3m - 0.001m, 1, int.MaxValue, 1 // asks
+            );
+
+            //act
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitfinex", Generate.Decimals(1.01m)));
+
+            //assert
+            env.PrintLogs();
+            env.VerifyMessagesSent(
+                env.GetStartedMessage(),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitfinex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals()),
+                env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals(1.01m)));
+            container.GetStatus("BTCUSD").Should().BeEquivalentTo(new []
+            {
+                new ExtPriceStatusModel{ExchangeName = "bitfinex", ErrorState = "Valid"},
+                new ExtPriceStatusModel{ExchangeName = "bitmex", ErrorState = "Valid"},
+                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = null},
+                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = null},
+            }, o => o.Including(m => m.ExchangeName).Including(m => m.ErrorState));
         }
 
         [Test]
