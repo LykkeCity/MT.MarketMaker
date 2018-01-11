@@ -21,14 +21,17 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         private readonly IBestPricesService _bestPricesService;
         private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
         private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
+        private readonly IPriceRoundingService _priceRoundingService;
 
         public CrossRatesService(IBestPricesService bestPricesService,
             ICrossRateCalcInfosService crossRateCalcInfosService,
-            IAssetPairSourceTypeService assetPairSourceTypeService)
+            IAssetPairSourceTypeService assetPairSourceTypeService,
+            IPriceRoundingService priceRoundingService)
         {
             _bestPricesService = bestPricesService;
             _crossRateCalcInfosService = crossRateCalcInfosService;
             _assetPairSourceTypeService = assetPairSourceTypeService;
+            _priceRoundingService = priceRoundingService;
         }
 
         [ItemNotNull]
@@ -72,11 +75,12 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                 ImmutableArray.Create(new OrderbookPosition(crossAsk, 1)));
         }
 
-        private static decimal GetCrossRate(BestPrices bba1, BestPrices bba2, CrossRateCalcInfo info, bool bid)
+        private decimal GetCrossRate(BestPrices bba1, BestPrices bba2, CrossRateCalcInfo info, bool bid)
         {
             var first = GetRate(bba1, bid, !info.Source1.IsTransitoryAssetQuoting);
             var second = GetRate(bba2, bid, info.Source2.IsTransitoryAssetQuoting);
-            return first * second;
+            var crossRate = first * second;
+            return _priceRoundingService.Round(info.ResultingPairId, crossRate);
         }
 
         private static decimal GetRate(BestPrices bestPrices, bool bid, bool invert)

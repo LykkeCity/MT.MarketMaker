@@ -97,7 +97,8 @@ namespace Tests.Integrational
                     Id = "BTCUSD",
                     QuotingAssetId = "USD",
                     Source = "",
-                    Source2 = ""
+                    Source2 = "",
+                    Accuracy = 3,
                 }
             };
 
