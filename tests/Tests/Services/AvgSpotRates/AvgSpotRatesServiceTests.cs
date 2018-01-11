@@ -36,13 +36,15 @@ namespace Tests.Services.AvgSpotRates
                 .Setup<ICandleshistoryservice>(s =>
                     s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", CandlePriceType.Mid, CandleTimeInterval.Min5,
                         now.AddHours(-12), now, null, default) == history.ToResponse<object>())
-                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25) == Task.CompletedTask);
+                // round the actual result of 25 to the new, "rounded", result of 36
+                .Setup<IPriceRoundingService>(s => s.Round("LKKUSD", 25) == 36)
+                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 36, 36) == Task.CompletedTask);
 
             //act
             await _testSuit.Sut.Execute();
 
             //assert
-            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25), Times.Once);
+            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("LKKUSD", 36, 36), Times.Once);
         }
     }
 }
