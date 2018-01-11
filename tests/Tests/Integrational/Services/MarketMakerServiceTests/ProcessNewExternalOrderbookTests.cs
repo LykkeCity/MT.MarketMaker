@@ -69,8 +69,8 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             {
                 new ExtPriceStatusModel{ExchangeName = "bitfinex", ErrorState = "Valid"},
                 new ExtPriceStatusModel{ExchangeName = "bitmex", ErrorState = "Broken"},
-                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = null},
-                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = null},
+                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = "NoOrderbook"},
+                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = "NoOrderbook"},
             }, o => o.Including(m => m.ExchangeName).Including(m => m.ErrorState));
         }
         
@@ -104,8 +104,8 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             {
                 new ExtPriceStatusModel{ExchangeName = "bitfinex", ErrorState = "Valid"},
                 new ExtPriceStatusModel{ExchangeName = "bitmex", ErrorState = "Valid"},
-                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = null},
-                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = null},
+                new ExtPriceStatusModel{ExchangeName = "Kraken", ErrorState = "NoOrderbook"},
+                new ExtPriceStatusModel{ExchangeName = "Poloniex", ErrorState = "NoOrderbook"},
             }, o => o.Including(m => m.ExchangeName).Including(m => m.ErrorState));
         }
 
