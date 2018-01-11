@@ -56,6 +56,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             model.AssetPairId = assetPairId;
             model.ExchangeName = exchangeName;
             model.IsPrimary = isPrimary;
+            model.ErrorState = model.ErrorState ?? "NoOrderbook";
             model.BestPrices = _convertService.Convert<BestPrices, BestPricesModel>(bestPrice);
             return model;
         }
