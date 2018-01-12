@@ -17,19 +17,17 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
     {
         private readonly ICandleshistoryservice _candlesHistoryService;
         private readonly IMarketMakerService _marketMakerService;
-        private readonly IPriceRoundingService _priceRoundingService;
         private readonly ISystem _system;
         private readonly ILog _log;
         
         public AvgSpotRatesService(ILog log, ICandleshistoryservice candlesHistoryService, ISystem system,
-            IMarketMakerService marketMakerService, IPriceRoundingService priceRoundingService)
+            IMarketMakerService marketMakerService)
             : base(Startup.ServiceName + '_' + nameof(AvgSpotRatesService),
                 (int) TimeSpan.FromMinutes(1).TotalMilliseconds, log)
         {
             _candlesHistoryService = candlesHistoryService;
             _system = system;
             _marketMakerService = marketMakerService;
-            _priceRoundingService = priceRoundingService;
             _log = log;
         }
 
@@ -61,8 +59,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
                 return null;
             }
 
-            var average = (decimal) candlesHistory.History.SelectMany(h => new[] {h.Open, h.Close}).Average();
-            return _priceRoundingService.Round(assetPairId, average);
+            return (decimal) candlesHistory.History.SelectMany(h => new[] {h.Open, h.Close}).Average();
         }
 
         public void Run()

@@ -3,20 +3,16 @@ using System.Collections.Immutable;
 using System.Linq;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
-using MarginTrading.MarketMaker.Services.Common;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
     public class TransformOrderbookService : ITransformOrderbookService
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
-        private readonly IPriceRoundingService _priceRoundingService;
 
-        public TransformOrderbookService(IExtPricesSettingsService extPricesSettingsService,
-            IPriceRoundingService priceRoundingService)
+        public TransformOrderbookService(IExtPricesSettingsService extPricesSettingsService)
         {
             _extPricesSettingsService = extPricesSettingsService;
-            _priceRoundingService = priceRoundingService;
         }
 
         public Orderbook Transform(ExternalOrderbook primaryOrderbook,
@@ -41,17 +37,16 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 volumeMultiplier);
         }
 
-        private Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift,
+        private static Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift,
             decimal volumeMultiplier)
         {
-            var roundFunc = _priceRoundingService.GetRoundFunc(orderbook.AssetPairId);
             return new Orderbook(
                 orderbook.AssetPairId,
                 orderbook.Bids.Select(b => 
-                        new OrderbookPosition(roundFunc(b.Price + bidShift), b.Volume * volumeMultiplier))
+                        new OrderbookPosition(b.Price + bidShift, b.Volume * volumeMultiplier))
                     .ToImmutableArray(),
                 orderbook.Asks.Select(b =>
-                        new OrderbookPosition(roundFunc(b.Price + askShift), b.Volume * volumeMultiplier))
+                        new OrderbookPosition(b.Price + askShift, b.Volume * volumeMultiplier))
                     .ToImmutableArray());
         }
 

@@ -54,10 +54,7 @@ namespace Tests.Services.CrossRates
                 .Setup<IBestPricesService>(s => s.Calc(usdChfOrderbook) == new BestPrices(0.98m, 0.99m))
                 .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600))
                 .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.CrossRates)
-                .Setup<IPriceRoundingService>(m =>
-                    m.Setup(s => s.Round(It.IsNotNull<string>(), It.IsAny<decimal>()))
-                        .Returns<string, decimal>((ap, p) => p));
+                    s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.CrossRates);
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
