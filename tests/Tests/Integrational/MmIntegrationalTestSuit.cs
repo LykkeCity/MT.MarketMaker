@@ -38,31 +38,31 @@ namespace Tests.Integrational
                 new RiskInformingParams
                 {
                     EventTypeCode = "MM01",
-                    Level = AlertSeverityLevel.Critical,
+                    Level = "None",
                     System = "MarketMaker",
                 },
                 new RiskInformingParams
                 {
                     EventTypeCode = "MM02",
-                    Level = AlertSeverityLevel.Warning,
+                    Level = "None",
                     System = "MarketMaker",
                 },
                 new RiskInformingParams
                 {
                     EventTypeCode = "MM03",
-                    Level = AlertSeverityLevel.Information,
+                    Level = "None",
                     System = "MarketMaker",
                 },
                 new RiskInformingParams
                 {
                     EventTypeCode = "MM04",
-                    Level = AlertSeverityLevel.Warning,
+                    Level = "None",
                     System = "MarketMaker",
                 },
                 new RiskInformingParams
                 {
                     EventTypeCode = "MM05",
-                    Level = AlertSeverityLevel.Information,
+                    Level = "None",
                     System = "MarketMaker",
                 },
             }}
