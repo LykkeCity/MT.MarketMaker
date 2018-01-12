@@ -36,20 +36,18 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             }
         }
 
-        private static (string SlackChannelType, TraceLevelGroupEnum TraceLevel) ConvertLevel(AlertSeverityLevel alertSeverityLevel)
+        private static (string SlackChannelType, TraceLevelGroupEnum TraceLevel) ConvertLevel(string alertSeverityLevel)
         {
             switch (alertSeverityLevel)
             {
-                case AlertSeverityLevel.None:
+                case "None":
                     return (null, TraceLevelGroupEnum.AlertRiskOfficerInfo);
-                case AlertSeverityLevel.Information:
-                    return ("mt-information", TraceLevelGroupEnum.AlertRiskOfficerInfo);
-                case AlertSeverityLevel.Warning:
+                case "Warning":
                     return ("mt-warning", TraceLevelGroupEnum.AlertRiskOfficerWarn);
-                case AlertSeverityLevel.Critical:
+                case "Critical":
                     return ("mt-critical", TraceLevelGroupEnum.AlertRiskOfficerCrit);
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(RiskInformingParams.Level), alertSeverityLevel, null);
+                    return ("mt-information", TraceLevelGroupEnum.AlertRiskOfficerInfo);
             }
         }
 
