@@ -1,4 +1,5 @@
 ﻿using System;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
@@ -11,33 +12,46 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             root.AssetPairs.RequiredNotNull("root.AssetPairs");
             foreach (var (assetPairId, pairSettings) in root.AssetPairs)
-                new AssetPairValidator(assetPairId, pairSettings).Validate();
+                new AssetPairValidator(assetPairId, pairSettings, root).Validate();
         }
 
         private struct AssetPairValidator
         {
             private readonly string _assetPairId;
             private readonly AssetPairSettings _pairSettings;
+            private readonly SettingsRoot _root;
 
-            public AssetPairValidator(string assetPairId, AssetPairSettings pairSettings)
+            public AssetPairValidator(string assetPairId, AssetPairSettings pairSettings, SettingsRoot root)
             {
                 _assetPairId = assetPairId;
                 _pairSettings = pairSettings;
+                _root = root;
             }
 
             public void Validate()
             {
                 _pairSettings.RequiredNotNull("_pairSettings for pair " + _assetPairId);
-                _pairSettings.QuotesSourceType.RequiredEnum(
-                    "_pairSettings.QuotesSourceType for pair " + _assetPairId);
-                Validate(_pairSettings.CrossRateCalcInfo);
-                Validate(_pairSettings.ExtPriceSettings);
+                _pairSettings.QuotesSourceType.RequiredEnum("_pairSettings.QuotesSourceType for pair " + _assetPairId);
+                switch (_pairSettings.QuotesSourceType)
+                {
+                    case AssetPairQuotesSourceTypeDomainEnum.External:
+                        Validate(_pairSettings.ExtPriceSettings);
+                        break;
+                    case AssetPairQuotesSourceTypeDomainEnum.CrossRates:
+                        Validate(_pairSettings.CrossRateCalcInfo);
+                        break;
+                }
             }
 
             private void Validate(AssetPairExtPriceSettings extPriceSettings)
             {
+                extPriceSettings.RequiredNotNull("extPriceSettings for pair " + _assetPairId);
+                
+                extPriceSettings.Exchanges.RequiredNotNullOrEmpty(
+                    "extPriceSettings.Exchanges for pair " + _assetPairId);
+                
                 extPriceSettings.PresetDefaultExchange.RequiredInSet(extPriceSettings.Exchanges.Keys,
-                    "extPriceSettings.Exchanges.Keys for pair " + _assetPairId);
+                    "extPriceSettings.PresetDefaultExchange for pair " + _assetPairId);
                 extPriceSettings.OutlierThreshold.RequiredBetween(0.00001m, 0.5m,
                     "extPriceSettings.OutlierThreshold for " + _assetPairId);
                 extPriceSettings.MinOrderbooksSendingPeriod.RequiredBetween(TimeSpan.Zero, TimeSpan.FromHours(1),
@@ -54,8 +68,6 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                     TimeSpan.FromHours(1), "extPriceSettings.RepeatedOutliers.MaxAvgAge for " + _assetPairId);
                 extPriceSettings.Steps.RequiredNotNull("extPriceSettings.Steps for " + _assetPairId);
                     
-                extPriceSettings.Exchanges.RequiredNotNull(
-                    "extPriceSettings.Exchanges for pair " + _assetPairId);
                 foreach (var (exchangeName, exchangeSettings) in extPriceSettings.Exchanges)
                     new ExchangeValidator(_assetPairId, exchangeName, exchangeSettings).Validate();
             }
@@ -63,17 +75,19 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             private void Validate(CrossRateCalcInfo crossRateCalcInfo)
             {
                 crossRateCalcInfo.RequiredNotNull("crossRateCalcInfo for pair " + _assetPairId);
-                crossRateCalcInfo.ResultingPairId.RequiredNotNull(
+                crossRateCalcInfo.ResultingPairId.RequiredEqualsTo(_assetPairId,
                     "crossRateCalcInfo.ResultingPairId for pair " + _assetPairId);
                 Validate(crossRateCalcInfo.Source1);
                 Validate(crossRateCalcInfo.Source2);
+                crossRateCalcInfo.Source1.Id.RequiredNotEqualsTo(crossRateCalcInfo.Source2.Id,
+                    "crossRateCalcInfo.Source1.Id equals crossRateCalcInfo.Source2.Id for pair " + _assetPairId);
             }
 
             private void Validate(CrossRateSourceAssetPair crossRateSourceAssetPair)
             {
                 crossRateSourceAssetPair.RequiredNotNull("crossRateSourceAssetPair for pair " + _assetPairId);
-                crossRateSourceAssetPair.Id.RequiredNotNull("crossRateSourceAssetPair.Id for pair " +
-                                                            _assetPairId);
+                crossRateSourceAssetPair.Id.RequiredInSet(_root.AssetPairs.Keys,
+                    "crossRateSourceAssetPair.Id for pair " + _assetPairId);
             }
         }
 
@@ -94,8 +108,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             {
                 _exchangeSettings.RequiredNotNull(
                     $"_exchangeSettings for pair {_assetPairId} and exchange {_exchangeName}");
-                _exchangeSettings.OrderbookOutdatingThreshold.RequiredBetween(TimeSpan.FromMilliseconds(10),
-                    TimeSpan.FromHours(1),
+                _exchangeSettings.OrderbookOutdatingThreshold.RequiredBetween(
+                    TimeSpan.FromMilliseconds(10), TimeSpan.FromHours(1),
                     $"_exchangeSettings.OrderbookOutdatingThreshold for pair {_assetPairId} and exchange {_exchangeName}");
                 _exchangeSettings.Disabled.RequiredNotNull(
                     $"_exchangeSettings.Disabled for pair {_assetPairId} and exchange {_exchangeName}");
@@ -107,8 +121,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                     $"_exchangeSettings.OrderGeneration for pair {_assetPairId} and exchange {_exchangeName}");
                 _exchangeSettings.OrderGeneration.VolumeMultiplier.RequiredGreaterThan(0,
                     $"_exchangeSettings.OrderGeneration.VolumeMultiplier for pair {_assetPairId} and exchange {_exchangeName}");
-                _exchangeSettings.OrderGeneration.VolumeMultiplier.RequiredGreaterThan(0,
-                    $"_exchangeSettings.OrderGeneration.VolumeMultiplier for pair {_assetPairId} and exchange {_exchangeName}");
+                _exchangeSettings.OrderGeneration.OrderRenewalDelay.RequiredBetween(TimeSpan.Zero, TimeSpan.FromHours(1), 
+                    $"_exchangeSettings.OrderGeneration.OrderRenewalDelay for pair {_assetPairId} and exchange {_exchangeName}");
             }
         }
     }
