@@ -15,19 +15,6 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             _log = log;
         }
 
-        public decimal Round(string assetPairId, decimal price)
-        {
-            var accuracy = _assetPairsInfoService.Get(assetPairId)?.Accuracy;
-            if (accuracy == null)
-            {
-                _log.WriteWarningAsync(nameof(PriceRoundingService), new {AssetPairId = assetPairId}.ToJson(),
-                    $"Accuracy for assetPair {assetPairId} was not found");
-                return price;
-            }
-                    
-            return Math.Round(price, accuracy.Value);
-        }
-
         public Func<decimal, decimal> GetRoundFunc(string assetPairId)
         {
             var accuracy = _assetPairsInfoService.Get(assetPairId)?.Accuracy;
