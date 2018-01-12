@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Common;
 using JetBrains.Annotations;
 
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
@@ -336,12 +337,12 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         [CanBeNull]
         [ContractAnnotation("value:null => null")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T? RequiredIn<T>(this T? value, T minValue, T maxValue, string paramName, string message = null)
+        public static T? RequiredBetween<T>(this T? value, T minValue, T maxValue, string paramName, string message = null)
             where T : struct, IComparable
         {
             if (value != null)
             {
-                value.Value.RequiredIn(minValue, maxValue, paramName, message);
+                value.Value.RequiredBetween(minValue, maxValue, paramName, message);
             }
 
             return value;
@@ -350,7 +351,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         [CanBeNull]
         [ContractAnnotation("value:null => null")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T? RequiredIn<T>(this T? value, T? minValue, T? maxValue, string paramName, string message = null)
+        public static T? RequiredBetween<T>(this T? value, T? minValue, T? maxValue, string paramName, string message = null)
             where T : struct, IComparable
         {
             if (value == null)
@@ -360,7 +361,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 
             if (minValue != null && maxValue != null)
             {
-                value.Value.RequiredIn(minValue.Value, maxValue.Value, paramName, message);
+                value.Value.RequiredBetween(minValue.Value, maxValue.Value, paramName, message);
             }
             else if (minValue != null)
             {
@@ -375,7 +376,7 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T RequiredIn<T>(this T value, T minValue, T maxValue, string paramName, string message = null)
+        public static T RequiredBetween<T>(this T value, T minValue, T maxValue, string paramName, string message = null)
             where T : IComparable
         {
             if (value.CompareTo(minValue) >= 0 && value.CompareTo(maxValue) <= 0)
@@ -386,6 +387,23 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             if (string.IsNullOrEmpty(message))
             {
                 message = $"{paramName} = {value} should be within interval {minValue} .. {maxValue}.";
+            }
+
+            throw new ArgumentOutOfRangeException(paramName, message);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T RequiredInSet<T>(this T value, IEnumerable<T> set, string paramName, string message = null)
+            where T : IEquatable<T>
+        {
+            if (set.Any(value.Equals))
+            {
+                return value;
+            }
+
+            if (string.IsNullOrEmpty(message))
+            {
+                message = $"{paramName} = {value} should be one of {string.Join(", ", set)}.";
             }
 
             throw new ArgumentOutOfRangeException(paramName, message);
