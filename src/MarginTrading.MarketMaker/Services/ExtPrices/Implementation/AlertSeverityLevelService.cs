@@ -4,6 +4,7 @@ using System.Linq;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Settings;
+using MoreLinq;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
@@ -11,6 +12,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     {
         private readonly IReloadingManager<ReadOnlyCollection<(EventTypeEnum Event, 
             (string SlackChannelType, TraceLevelGroupEnum TraceLevel) Level)>> _levels;
+
+        private static readonly (string, TraceLevelGroupEnum AlertRiskOfficerInfo) _defaultLevel =
+            ("mt-critical", TraceLevelGroupEnum.AlertRiskOfficerInfo);
 
         public AlertSeverityLevelService(IReloadingManager<RiskInformingSettings> settings)
         {
@@ -42,18 +46,19 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             {
                 case "None":
                     return (null, TraceLevelGroupEnum.AlertRiskOfficerInfo);
+                case "Information":
+                    return ("mt-information", TraceLevelGroupEnum.AlertRiskOfficerCrit);
                 case "Warning":
                     return ("mt-warning", TraceLevelGroupEnum.AlertRiskOfficerWarn);
-                case "Critical":
-                    return ("mt-critical", TraceLevelGroupEnum.AlertRiskOfficerCrit);
                 default:
-                    return ("mt-information", TraceLevelGroupEnum.AlertRiskOfficerInfo);
+                    return _defaultLevel;
             }
         }
 
         public (string SlackChannelType, TraceLevelGroupEnum TraceLevel) GetLevel(EventTypeEnum eventType)
         {
-            return _levels.CurrentValue.Single(l => l.Event == eventType).Level;
+            return _levels.CurrentValue.Where(l => l.Event == eventType).Select(l => l.Level)
+                .FallbackIfEmpty(_defaultLevel).Single();
         }
     }
 }
