@@ -2,6 +2,7 @@
 {
     public enum OrderbookGeneratorStepDomainEnum
     {
+        FindBroken = 20,
         FindOutdated = 30,
         FindOutliers = 40,
         FindRepeatedProblems = 50,
