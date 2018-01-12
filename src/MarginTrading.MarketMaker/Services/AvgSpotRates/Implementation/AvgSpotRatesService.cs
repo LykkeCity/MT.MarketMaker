@@ -58,7 +58,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
                         {Data = {{"AssetPairId", assetPairId}}});
                 return null;
             }
-
+            
             return (decimal) candlesHistory.History.SelectMany(h => new[] {h.Open, h.Close}).Average();
         }
 

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models;
 
@@ -33,20 +34,16 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 _extPricesSettingsService.GetVolumeMultiplier(primaryOrderbook.AssetPairId,
                     primaryOrderbook.ExchangeName);
             var priceMarkups = _extPricesSettingsService.GetPriceMarkups(primaryOrderbook.AssetPairId);
-            return Transform(primaryOrderbook, bidShift + priceMarkups.Bid, askShift + priceMarkups.Ask,
-                volumeMultiplier);
+            return Transform(primaryOrderbook, bidShift + priceMarkups.Bid, askShift + priceMarkups.Ask, volumeMultiplier);
         }
 
-        private static Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift,
-            decimal volumeMultiplier)
+        private static Orderbook Transform(Orderbook orderbook, decimal bidShift, decimal askShift, decimal volumeMultiplier)
         {
             return new Orderbook(
                 orderbook.AssetPairId,
-                orderbook.Bids.Select(b => 
-                        new OrderbookPosition(b.Price + bidShift, b.Volume * volumeMultiplier))
+                orderbook.Bids.Select(b => new OrderbookPosition(b.Price + bidShift, b.Volume * volumeMultiplier))
                     .ToImmutableArray(),
-                orderbook.Asks.Select(b =>
-                        new OrderbookPosition(b.Price + askShift, b.Volume * volumeMultiplier))
+                orderbook.Asks.Select(b => new OrderbookPosition(b.Price + askShift, b.Volume * volumeMultiplier))
                     .ToImmutableArray());
         }
 

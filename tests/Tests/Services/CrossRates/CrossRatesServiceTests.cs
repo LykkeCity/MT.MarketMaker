@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using FluentAssertions;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
@@ -53,8 +52,7 @@ namespace Tests.Services.CrossRates
                 .Setup<IBestPricesService>(s => s.Calc(eurUsdOrderbook) == new BestPrices(1.2m, 1.3m))
                 .Setup<IBestPricesService>(s => s.Calc(usdChfOrderbook) == new BestPrices(0.98m, 0.99m))
                 .Setup<IBestPricesService>(s => s.Calc(btcUsdOrderbook) == new BestPrices(6500, 6600))
-                .Setup<IAssetPairSourceTypeService>(s =>
-                    s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.CrossRates);
+                .Setup<IAssetPairSourceTypeService>(s => s.Get(It.IsNotNull<string>()) == AssetPairQuotesSourceTypeDomainEnum.CrossRates);
 
             //act
             var ethBtcResult = _testSuit.Sut.CalcDependentOrderbooks(ethBtcOrderbook);
