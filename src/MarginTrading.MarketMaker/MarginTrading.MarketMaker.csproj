@@ -50,9 +50,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\client\MarginTrading.MarketMaker.Contracts\MarginTrading.MarketMaker.Contracts.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\Api" />
-  </ItemGroup>
   <ProjectExtensions>
     <VisualStudio>
       <UserProperties />
