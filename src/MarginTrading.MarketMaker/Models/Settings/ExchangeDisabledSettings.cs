@@ -7,7 +7,7 @@ namespace MarginTrading.MarketMaker.Models.Settings
         public ExchangeDisabledSettings(bool isTemporarilyDisabled, string reason)
         {
             IsTemporarilyDisabled = isTemporarilyDisabled;
-            Reason = reason ?? throw new ArgumentNullException(nameof(reason));
+            Reason = reason;
         }
 
         public bool IsTemporarilyDisabled { get; }

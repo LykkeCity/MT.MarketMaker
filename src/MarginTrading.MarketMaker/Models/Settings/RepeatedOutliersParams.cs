@@ -9,7 +9,8 @@ namespace MarginTrading.MarketMaker.Models.Settings
         public decimal MaxAvg { get; }
         public TimeSpan MaxAvgAge { get; }
 
-        public RepeatedOutliersParams(int maxSequenceLength, TimeSpan maxSequenceAge, decimal maxAvg, TimeSpan maxAvgAge)
+        public RepeatedOutliersParams(int maxSequenceLength, TimeSpan maxSequenceAge, decimal maxAvg,
+            TimeSpan maxAvgAge)
         {
             MaxSequenceLength = maxSequenceLength;
             MaxSequenceAge = maxSequenceAge;

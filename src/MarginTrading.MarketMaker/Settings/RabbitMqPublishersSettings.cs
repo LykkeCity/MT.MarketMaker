@@ -7,6 +7,5 @@
         public RabbitConnectionSettings StopNewTrades { get; set; }
         public RabbitConnectionSettings Started { get; set; }
         public RabbitConnectionSettings Stopping { get; set; }
-        public RabbitConnectionSettings Trace { get; set; }
     }
 }

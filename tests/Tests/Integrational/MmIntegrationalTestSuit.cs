@@ -103,7 +103,7 @@ namespace Tests.Integrational
         {
             return new AssetPairExtPriceSettings("bitmex",
                 0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
-                new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10, TimeSpan.FromMinutes(5)),
+                new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 1, TimeSpan.FromMinutes(5)),
                 Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum)).Cast<OrderbookGeneratorStepDomainEnum>()
                     .ToImmutableDictionary(e => e, e => true)
                     .SetItem(OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread, false),
