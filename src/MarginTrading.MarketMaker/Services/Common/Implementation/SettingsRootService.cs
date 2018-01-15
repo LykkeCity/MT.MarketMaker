@@ -12,15 +12,21 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
     {
         private readonly ISettingsStorageService _settingsStorageService;
         private readonly ISettingsValidationService _settingsValidationService;
-        
+        private readonly ISettingsChangesAuditService _settingsChangesAuditService;
+        private readonly ISettingsChangesAuditRepository _settingsChangesAuditRepository;
+
         [CanBeNull] private SettingsRoot _cache;
         private static readonly object _updateLock = new object();
 
         public SettingsRootService(ISettingsStorageService settingsStorageService,
-            ISettingsValidationService settingsValidationService)
+            ISettingsValidationService settingsValidationService,
+            ISettingsChangesAuditService settingsChangesAuditService,
+            ISettingsChangesAuditRepository settingsChangesAuditRepository)
         {
             _settingsStorageService = settingsStorageService;
             _settingsValidationService = settingsValidationService;
+            _settingsChangesAuditService = settingsChangesAuditService;
+            _settingsChangesAuditRepository = settingsChangesAuditRepository;
         }
 
         public SettingsRoot Get()
@@ -36,7 +42,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public void Set([NotNull] SettingsRoot settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
-            lock (_updateLock) WriteUnsafe(settings);
+            lock (_updateLock) WriteUnsafe(Get(), settings);
         }
 
         public void Update([NotNull] string assetPairId,
@@ -80,13 +86,17 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             {
                 var oldSettings = Get();
                 var settings = changeFunc(oldSettings);
-                WriteUnsafe(settings);
+                WriteUnsafe(oldSettings, settings);
             }
         }
 
-        private void WriteUnsafe(SettingsRoot settings)
+        private void WriteUnsafe(SettingsRoot oldSettings, SettingsRoot settings)
         {
             _settingsValidationService.Validate(settings);
+            var audit = _settingsChangesAuditService.GetAudit(oldSettings, settings);
+            if (audit == null) return; // nothing changed
+            
+            _settingsChangesAuditRepository.Insert(audit);
             _settingsStorageService.Write(settings);
             _cache = settings;
         }
@@ -94,7 +104,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public void Initialize()
         {
             var settingsRoot = _settingsStorageService.Read()
-                               ?? new SettingsRoot(ImmutableDictionary<string, AssetPairSettings>.Empty);
+                               ?? new SettingsRoot(ImmutableSortedDictionary<string, AssetPairSettings>.Empty);
             _settingsValidationService.Validate(settingsRoot);
             _cache = settingsRoot;
         }

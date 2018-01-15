@@ -11,5 +11,6 @@ namespace Tests.Integrational
         StubRabbitMqService StubRabbitMqService { get; }
         IList<AssetPairResponseModel> AssetPairs { get; set; }
         SettingsRoot SettingsRoot { get; set; }
+        InMemoryTableStorageFactory TableStorageFactory { get; }
     }
 }

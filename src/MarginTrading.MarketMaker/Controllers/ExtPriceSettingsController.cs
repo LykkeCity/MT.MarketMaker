@@ -104,18 +104,18 @@ namespace MarginTrading.MarketMaker.Controllers
             return model;
         }
 
-        private ImmutableDictionary<OrderbookGeneratorStepEnum, bool> Convert(ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool> steps)
+        private ImmutableSortedDictionary<OrderbookGeneratorStepEnum, bool> Convert(ImmutableSortedDictionary<OrderbookGeneratorStepDomainEnum, bool> steps)
         {
             return _convertService
-                .Convert<ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool>,
-                    ImmutableDictionary<OrderbookGeneratorStepEnum, bool>>(steps);
+                .Convert<ImmutableSortedDictionary<OrderbookGeneratorStepDomainEnum, bool>,
+                    ImmutableSortedDictionary<OrderbookGeneratorStepEnum, bool>>(steps);
         }
 
         private AssetPairExtPriceSettings Convert(AssetPairExtPriceSettingsModel model)
         {
             var settings = _convertService.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model,
                 o => o.ConfigureMap(MemberList.Destination).ForCtorParam("exchanges",
-                        e => e.ResolveUsing(m => ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty))
+                        e => e.ResolveUsing(m => ImmutableSortedDictionary<string, ExchangeExtPriceSettings>.Empty))
                     .ForMember(e => e.Exchanges, e => e.Ignore()));
             return settings;
         }
