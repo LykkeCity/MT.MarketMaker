@@ -13,11 +13,11 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
         public MarkupsParams Markups { get; set; } = new MarkupsParams();
         public RepeatedOutliersParams RepeatedOutliers { get; set; } = new RepeatedOutliersParams();
 
-        public ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool> Steps { get; set; }
-            = ImmutableDictionary<OrderbookGeneratorStepDomainEnum, bool>.Empty;
+        public ImmutableSortedDictionary<OrderbookGeneratorStepDomainEnum, bool> Steps { get; set; }
+            = ImmutableSortedDictionary<OrderbookGeneratorStepDomainEnum, bool>.Empty;
 
-        public ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel> Exchanges { get; set; }
-            = ImmutableDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty;
+        public ImmutableSortedDictionary<string, ExchangeExtPriceSettingsStorageModel> Exchanges { get; set; }
+            = ImmutableSortedDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty;
 
         public class MarkupsParams
         {

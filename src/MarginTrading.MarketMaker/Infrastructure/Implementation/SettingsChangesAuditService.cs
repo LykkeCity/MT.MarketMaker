@@ -1,8 +1,12 @@
-﻿using System.Linq;
-using KellermanSoftware.CompareNetObjects;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using Aqua.GraphCompare;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Settings;
-using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http;
 using MoreLinq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -16,45 +20,52 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             Converters = {new StringEnumConverter()}
         };
 
-        private readonly CompareLogic _compareLogic = CreateCompareLogic();
-        private readonly Factory<IHttpConnectionFeature> _httpConnectionFeatureFactory;
-        private readonly Factory<IHttpRequestFeature> _httpRequestFeatureFactory;
+        private readonly ISystem _system;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-
-        public SettingsChangesAuditService(Factory<IHttpConnectionFeature> httpConnectionFeatureFactory,
-            Factory<IHttpRequestFeature> httpRequestFeatureFactory)
+        public SettingsChangesAuditService(ISystem system, IHttpContextAccessor httpContextAccessor)
         {
-            _httpConnectionFeatureFactory = httpConnectionFeatureFactory;
-            _httpRequestFeatureFactory = httpRequestFeatureFactory;
+            _system = system;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public SettingsChangesAuditInfo GetChanges(SettingsRoot old, SettingsRoot changed)
+        public SettingsChangesAuditInfo GetAudit(SettingsRoot old, SettingsRoot changed)
         {
-            var diff = _compareLogic.Compare(old, changed);
-            if (diff.AreEqual)
+            var diff = new GraphComparer(GetDisplayString).Compare(old, changed);
+            if (diff.IsMatch)
                 return null;
 
             var diffStr = JsonConvert.SerializeObject(
-                diff.Differences.ToDictionary(d => d.PropertyName, d => new[] {d.Object1, d.Object2}),
+                diff.Deltas.ToDictionary(d => PrintBreadcrump(d.Breadcrumb),
+                    d => new[] {d.ChangeType, d.OldValue, d.NewValue}),
                 JsonSerializerSettings);
 
-            var httpConnectionFeature = _httpConnectionFeatureFactory.Get();
-            var httpRequestFeature = _httpRequestFeatureFactory.Get();
-            return new SettingsChangesAuditInfo(httpConnectionFeature.RemoteIpAddress,
-                httpRequestFeature.Headers["User-Info"].ToDelimitedString(", "), httpRequestFeature.Path, diffStr);
+            var httpContext = _httpContextAccessor.HttpContext;
+            return new SettingsChangesAuditInfo(_system.UtcNow, httpContext?.Connection.RemoteIpAddress,
+                httpContext?.Request.Headers["User-Info"].ToDelimitedString(", "), $"{httpContext?.Request.Method} {httpContext?.Request.Path}", diffStr);
+        } 
+        
+        private static string PrintBreadcrump(Breadcrumb breadcrumb)
+        {
+            var results = new List<string>();
+            do
+            {
+                results.Add(breadcrumb.DisplayString);
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            } while ((breadcrumb = breadcrumb.Parent) != null);
+
+            results.Reverse();
+            return results.ToDelimitedString(".");
         }
 
-        private static CompareLogic CreateCompareLogic()
+        private static string GetDisplayString(object item, PropertyInfo prop)
         {
-            return new CompareLogic(new ComparisonConfig
-            {
-                MaxDifferences = int.MaxValue,
-                AutoClearCache = false,
-                MaxByteArrayDifferences = int.MaxValue,
-                MaxStructDepth = int.MaxValue,
-                ExpectedName = "Old",
-                ActualName = "New",
-            });
+            var type = item.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                return '[' + ((dynamic) item).Key.ToString() + ']';
+
+            var displayString = prop?.Name;
+            return string.IsNullOrEmpty(displayString) ? "Root" : displayString;
         }
     }
 }

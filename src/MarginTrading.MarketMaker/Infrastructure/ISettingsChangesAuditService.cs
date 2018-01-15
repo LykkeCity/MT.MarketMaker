@@ -6,6 +6,6 @@ namespace MarginTrading.MarketMaker.Infrastructure
 {
     public interface ISettingsChangesAuditService
     {
-        [CanBeNull] SettingsChangesAuditInfo GetChanges(SettingsRoot old, SettingsRoot changed);
+        [CanBeNull] SettingsChangesAuditInfo GetAudit(SettingsRoot old, SettingsRoot changed);
     }
 }

@@ -16,8 +16,8 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
         {
             return new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap(typeof(ImmutableDictionary<,>), typeof(ImmutableDictionary<,>))
-                    .ConvertUsing(typeof(ImmutableDictionaryConverter<,,,>));
+                cfg.CreateMap(typeof(ImmutableSortedDictionary<,>), typeof(ImmutableSortedDictionary<,>))
+                    .ConvertUsing(typeof(ImmutableSortedDictionaryConverter<,,,>));
             }).CreateMapper();
         }
 
@@ -32,14 +32,14 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             return _mapper.Map<TSource, TResult>(source);
         }
 
-        public class ImmutableDictionaryConverter<TKey1, TValue1, TKey2, TValue2>
-            : ITypeConverter<ImmutableDictionary<TKey1, TValue1>, ImmutableDictionary<TKey2, TValue2>>
+        public class ImmutableSortedDictionaryConverter<TKey1, TValue1, TKey2, TValue2>
+            : ITypeConverter<ImmutableSortedDictionary<TKey1, TValue1>, ImmutableSortedDictionary<TKey2, TValue2>>
         {
-            public ImmutableDictionary<TKey2, TValue2> Convert(ImmutableDictionary<TKey1, TValue1> source,
-                ImmutableDictionary<TKey2, TValue2> destination, ResolutionContext context)
+            public ImmutableSortedDictionary<TKey2, TValue2> Convert(ImmutableSortedDictionary<TKey1, TValue1> source,
+                ImmutableSortedDictionary<TKey2, TValue2> destination, ResolutionContext context)
             {
                 return source.Select(p => new KeyValuePair<TKey2, TValue2>(context.Mapper.Map<TKey1, TKey2>(p.Key),
-                    context.Mapper.Map<TValue1, TValue2>(p.Value))).ToImmutableDictionary();
+                    context.Mapper.Map<TValue1, TValue2>(p.Value))).ToImmutableSortedDictionary();
             }
         }
     }

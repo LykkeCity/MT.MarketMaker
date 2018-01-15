@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using Autofac;
 using Autofac.Core;
+using Autofac.Extensions.DependencyInjection;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
 namespace Tests.Integrational
@@ -32,7 +35,8 @@ namespace Tests.Integrational
         protected class TestEnvironment : ITestEnvironment
         {
             private readonly IntegrationalTestSuit _suit;
-            private readonly List<Action<ContainerBuilder>> _builders = new List<Action<ContainerBuilder>>();  
+            private readonly List<Action<ContainerBuilder>> _builders = new List<Action<ContainerBuilder>>();
+            [CanBeNull] private IContainer _container;
 
             public TestEnvironment(IntegrationalTestSuit suit)
             {
@@ -62,14 +66,17 @@ namespace Tests.Integrational
 
             public virtual IContainer CreateContainer()
             {
+                if (_container != null) return _container;
                 var builder = new ContainerBuilder();
+                builder.Populate(new ServiceCollection()); // this registers an IServiceProvider
                 foreach (var module in _suit._modules)
                     builder.RegisterModule(module);
 
                 foreach (var b in _builders)
                     b(builder);
 
-                return builder.Build();
+                _container = builder.Build();
+                return _container;
             }
         }
     }

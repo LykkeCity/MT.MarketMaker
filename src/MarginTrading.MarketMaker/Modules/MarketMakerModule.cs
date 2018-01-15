@@ -12,6 +12,7 @@ using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -42,7 +43,7 @@ namespace MarginTrading.MarketMaker.Modules
                     _settings.Nested(s => s.MarginTradingMarketMaker.Db.QueuePersistanceRepositoryConnString)))
                 .As<IRabbitMqService>().SingleInstance();
 
-            builder.RegisterGeneric(typeof(Factory<>)).As(typeof(Factory<>));
+            builder.RegisterType<HttpContextAccessor>().As<IHttpContextAccessor>().SingleInstance();
         }
 
         /// <summary>

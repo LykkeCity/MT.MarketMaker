@@ -39,14 +39,14 @@ namespace Tests.Infrastructure
                     MaxSequenceLength = 7,
                     MaxSequenceAge = TimeSpan.FromMinutes(8),
                 },
-                Steps = ImmutableDictionary.Create<OrderbookGeneratorStepEnum, bool>()
+                Steps = ImmutableSortedDictionary.Create<OrderbookGeneratorStepEnum, bool>()
                     .Add(OrderbookGeneratorStepEnum.FindOutliers, false),
             };
 
             //act
             var settings = _testSuit.Sut.Convert<AssetPairExtPriceSettingsModel, AssetPairExtPriceSettings>(model, o =>
                 o.ConfigureMap(MemberList.Destination).ForCtorParam("exchanges",
-                        e => e.ResolveUsing(m => ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty))
+                        e => e.ResolveUsing(m => ImmutableSortedDictionary<string, ExchangeExtPriceSettings>.Empty))
                     .ForMember(e => e.Exchanges, e => e.Ignore()));
 
             var result = _testSuit.Sut.Convert<AssetPairExtPriceSettings, AssetPairExtPriceSettingsModel>(settings,
