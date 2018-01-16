@@ -7,5 +7,11 @@ namespace MarginTrading.MarketMaker.Settings
     {
         public MarginTradingMarketMakerSettings MarginTradingMarketMaker { get; set; }
 
-        [CanBeNull, Optional]        public SlackNotificationsSettings SlackNotifications { get; set; }        public ExternalServiceClientSettings CandlesHistoryServiceClient { get; set; }    }
+        [CanBeNull, Optional]
+        public SlackNotificationsSettings SlackNotifications { get; set; }
+
+        public ExternalServiceClientSettings CandlesHistoryServiceClient { get; set; }
+        
+        public RiskInformingSettings RiskInformingSettings { get; set; }
+    }
 }

@@ -1,10 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Lykke.SettingsReader;
+using Lykke.SlackNotifications;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 {
@@ -12,14 +15,17 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     {
         private readonly IRabbitMqService _rabbitMqService;
         private readonly IReloadingManager<MarginTradingMarketMakerSettings> _settings;
-        private readonly IMtMmRisksSlackNotificationsSender _slack;
+        private readonly ISlackNotificationsSender _slack;
+        private readonly IAlertSeverityLevelService _alertSeverityLevelService;
 
         public AlertService(IRabbitMqService rabbitMqService,
-            IReloadingManager<MarginTradingMarketMakerSettings> settings, IMtMmRisksSlackNotificationsSender slack)
+            IReloadingManager<MarginTradingMarketMakerSettings> settings, ISlackNotificationsSender slack,
+            IAlertSeverityLevelService alertSeverityLevelService)
         {
             _rabbitMqService = rabbitMqService;
             _settings = settings;
             _slack = slack;
+            _alertSeverityLevelService = alertSeverityLevelService;
         }
 
         public void AlertPrimaryExchangeSwitched(PrimaryExchangeSwitchedMessage message)
@@ -42,18 +48,20 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     Stop = stop
                 });
 
-            AlertRiskOfficer(assetPairId + ' ' + nameof(StopOrAllowNewTrades), $"{(stop ? "Stop" : "Allow")}NewTrades for {assetPairId} because: {reason}");
+            AlertRiskOfficer(assetPairId + ' ' + nameof(StopOrAllowNewTrades), $"{(stop ? "Stop" : "Allow")}NewTrades for {assetPairId} because: {reason}", EventTypeEnum.StopNewTrades);
         }
 
-        public Task AlertRiskOfficer(string assetPairId, string message)
+        public void AlertRiskOfficer(string assetPairId, string message, EventTypeEnum eventType)
         {
-            Trace.Write(TraceLevelGroupEnum.AlertRiskOfficerTrace, assetPairId, $"{nameof(AlertRiskOfficer)}: {message}", new {});
-            return _slack.SendAsync(null, "MarketMaker", message);
+            var (slackChannelType, traceLevel) = _alertSeverityLevelService.GetLevel(eventType);
+            Trace.Write(traceLevel, assetPairId, $"{nameof(AlertRiskOfficer)}: {message}", new {});
+            if (!string.IsNullOrWhiteSpace(slackChannelType))
+                _slack.SendAsync(slackChannelType, "MT MarketMaker", message);
         }
 
         public void AlertStarted()
         {
-            AlertRiskOfficer(null, "Market maker started");
+            AlertRiskOfficer(null, "Market maker started", EventTypeEnum.StatusInfo);
             var startedMessage = new StartedMessage {MarketMakerId = GetMarketMakerId()};
             _rabbitMqService.GetProducer<StartedMessage>(
                     _settings.Nested(s => s.RabbitMq.Publishers.Started), true, false)
@@ -62,11 +70,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
 
         public Task AlertStopping()
         {
-            return Task.WhenAll(
-                AlertRiskOfficer(null, "Market maker stopping"),
-                _rabbitMqService.GetProducer<StoppingMessage>(
-                        _settings.Nested(s => s.RabbitMq.Publishers.Stopping), true, false)
-                    .ProduceAsync(new StoppingMessage {MarketMakerId = GetMarketMakerId()}));
+            AlertRiskOfficer(null, "Market maker stopping", EventTypeEnum.StatusInfo);
+            return _rabbitMqService.GetProducer<StoppingMessage>(
+                    _settings.Nested(s => s.RabbitMq.Publishers.Stopping), true, false)
+                .ProduceAsync(new StoppingMessage {MarketMakerId = GetMarketMakerId()});
         }
 
         private string GetMarketMakerId()
