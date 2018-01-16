@@ -110,6 +110,30 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
         }
 
         [Test]
+        public async Task Always_ShouldRoundPrices()
+        {
+            //arrange
+            var env = _testSuit.Build();
+            var container = env.CreateContainer();
+            var marketMakerService = container.Resolve<IMarketMakerService>();
+            var decimals = Generate.Decimals(1.12345678m);
+
+            //act
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", decimals.Clone()));
+
+            //assert
+            env.PrintLogs();
+            env.VerifyMessagesSent(
+                env.GetStartedMessage(),
+                env.GetExpectedPrimaryExchangeMessage("BTCUSD", "bitmex"),
+                env.GetExpectedTradesControls("BTCUSD", true),
+                env.GetExpectedCommandsBatch("BTCUSD",
+                    Generate.FromLambda<decimal>((o, i) => i % 2 == 0 // do not round volumes
+                        ? Math.Round(decimals.Next(), 3)
+                        : decimals.Next())));
+        }
+
+        [Test]
         public async Task SimpleConfig_ShouldProcessMultipleValidMessages()
         {
             //arrange
@@ -340,10 +364,11 @@ namespace Tests.Integrational.Services.MarketMakerServiceTests
             env.SleepSecs(31);
             var krakenExpectedBatch = env.GetExpectedCommandsBatch("BTCUSD", Generate.Decimals());
             await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("Kraken", Generate.Decimals()));
-            
+
             env.SleepSecs(1);
             var lastExpectedBatch = env.GetExpectedCommandsBatch("BTCUSD", bitmexDecimals);
-            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex", bitmexDecimals.Clone()));
+            await marketMakerService.ProcessNewExternalOrderbookAsync(env.GetInpMessage("bitmex",
+                bitmexDecimals.Clone()));
 
             //assert
             env.PrintLogs();
