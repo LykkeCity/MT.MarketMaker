@@ -19,14 +19,8 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         public Orderbook Transform(ExternalOrderbook primaryOrderbook,
             IReadOnlyDictionary<string, BestPrices> bestPrices)
         {
-            var isArbitrageFreeSpreadEnabled = _extPricesSettingsService.IsStepEnabled(
-                OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread,
-                primaryOrderbook.AssetPairId);
-
-            var arbitrageFreeSpread = isArbitrageFreeSpreadEnabled
-                ? GetArbitrageFreeSpread(bestPrices)
-                : GetArbitrageFreeSpread(
-                    ImmutableDictionary.CreateRange(bestPrices.Where(p => p.Key == primaryOrderbook.ExchangeName)));
+            var arbitrageFreeSpread = GetArbitrageFreeSpread(
+                ImmutableDictionary.CreateRange(bestPrices.Where(p => p.Key == primaryOrderbook.ExchangeName)));
             var primaryBestPrices = bestPrices[primaryOrderbook.ExchangeName];
             var bidShift = arbitrageFreeSpread.WorstBid - primaryBestPrices.BestBid; // negative
             var askShift = arbitrageFreeSpread.WorstAsk - primaryBestPrices.BestAsk; // positive
