@@ -19,34 +19,39 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
         private readonly IMarketMakerService _marketMakerService;
         private readonly ISystem _system;
         private readonly ILog _log;
-        
+        private readonly IAssetPairSourceTypeService _assetPairSourceTypeService;
+
         public AvgSpotRatesService(ILog log, ICandleshistoryservice candlesHistoryService, ISystem system,
-            IMarketMakerService marketMakerService)
+            IMarketMakerService marketMakerService, IAssetPairSourceTypeService assetPairSourceTypeService)
             : base(Startup.ServiceName + '_' + nameof(AvgSpotRatesService),
                 (int) TimeSpan.FromMinutes(1).TotalMilliseconds, log)
         {
             _candlesHistoryService = candlesHistoryService;
             _system = system;
             _marketMakerService = marketMakerService;
+            _assetPairSourceTypeService = assetPairSourceTypeService;
             _log = log;
         }
 
         public override async Task Execute()
         {
-            var now = _system.UtcNow;
-            const string assetPairId = "LKKUSD";
-            var avg = await GetAvg(assetPairId, CandlePriceType.Mid, now);
-            if (avg == null)
-            {
-                return;
-            }
+            var pairs = _assetPairSourceTypeService.GetPairsByQuotesSourceType(
+                AssetPairQuotesSourceTypeDomainEnum.SpotAgvPrices);
             
-            await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avg.Value, avg.Value);
-            Trace.Write(TraceLevelGroupEnum.Trace, assetPairId, $"Avg spot quotes sent: {avg}",
-                new {avg.Value, Event = "AvgSpotRatesSent"});
+            foreach (var assetPairId in pairs)
+            {
+                var now = _system.UtcNow;
+                var avg = await GetAvg(assetPairId, CandlePriceType.Mid, now);
+                if (avg == null)
+                    continue;
+
+                await _marketMakerService.ProcessNewAvgSpotRate(assetPairId, avg.Value, avg.Value);
+                Trace.Write(TraceLevelGroupEnum.Trace, assetPairId, $"Avg spot quotes sent: {avg}",
+                    new {avg.Value, Event = "AvgSpotRatesSent"});
+            }
         }
 
-        [ItemCanBeNull] 
+        [ItemCanBeNull]
         private async Task<decimal?> GetAvg(string assetPairId, CandlePriceType priceType, DateTime now)
         {
             var candlesHistory = await _candlesHistoryService.GetCandlesHistoryAsync(assetPairId, priceType,
@@ -58,7 +63,7 @@ namespace MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation
                         {Data = {{"AssetPairId", assetPairId}}});
                 return null;
             }
-            
+
             return (decimal) candlesHistory.History.SelectMany(h => new[] {h.Open, h.Close}).Average();
         }
 

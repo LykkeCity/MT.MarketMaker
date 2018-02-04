@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Tests.Integrational
+namespace Tests
 {
     internal class Generator<T> : IEnumerable<T>
     {

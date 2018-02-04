@@ -8,13 +8,16 @@ namespace MarginTrading.MarketMaker.Models.Settings
         public AssetPairQuotesSourceTypeDomainEnum QuotesSourceType { get; }
         public AssetPairExtPriceSettings ExtPriceSettings { get; }
         public CrossRateCalcInfo CrossRateCalcInfo { get; }
+        public AggregateOrderbookSettings AggregateOrderbookSettings { get; }
 
         public AssetPairSettings(AssetPairQuotesSourceTypeDomainEnum quotesSourceType,
-            AssetPairExtPriceSettings extPriceSettings, CrossRateCalcInfo crossRateCalcInfo)
+            AssetPairExtPriceSettings extPriceSettings, CrossRateCalcInfo crossRateCalcInfo,
+            AggregateOrderbookSettings aggregateOrderbookSettings)
         {
             QuotesSourceType = quotesSourceType;
             ExtPriceSettings = extPriceSettings;
             CrossRateCalcInfo = crossRateCalcInfo;
+            AggregateOrderbookSettings = aggregateOrderbookSettings;
         }
     }
 }

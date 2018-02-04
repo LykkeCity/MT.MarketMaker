@@ -22,9 +22,9 @@ namespace Tests.Services.CrossRates
 
         private static readonly DateTime _now = DateTime.UtcNow;
 
-        private static readonly IList<AssetPairResponseModel> AssetPairs = new[]
+        private static readonly IList<AssetPair> AssetPairs = new[]
         {
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "BTC",
                 Id = "BTCEUR",
@@ -32,7 +32,7 @@ namespace Tests.Services.CrossRates
                 Source = "BTCUSD",
                 Source2 = "EURUSD"
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "BTC",
                 Id = "BTCAUD",
@@ -40,7 +40,7 @@ namespace Tests.Services.CrossRates
                 Source = "BTCUSD",
                 Source2 = "AUDUSD"
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "ETH",
                 Id = "ETHUSD",
@@ -48,25 +48,25 @@ namespace Tests.Services.CrossRates
                 Source = "ETHBTC",
                 Source2 = "BTCUSD"
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "ETH",
                 Id = "ETHBTC",
                 QuotingAssetId = "BTC",
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "AUD",
                 Id = "AUDUSD",
                 QuotingAssetId = "USD",
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "EUR",
                 Id = "EURUSD",
                 QuotingAssetId = "USD",
             },
-            new AssetPairResponseModel
+            new AssetPair
             {
                 BaseAssetId = "BTC",
                 Id = "BTCUSD",
@@ -97,7 +97,7 @@ namespace Tests.Services.CrossRates
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
                 .Setup<IAssetsService>(p =>
-                    p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+                    p.AssetPairGetAllWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
             //act
             return _testSuit.Sut.GetDependentAssetPairs(assetPairId).Select(i => i.ResultingPairId).ToArray();
@@ -110,7 +110,7 @@ namespace Tests.Services.CrossRates
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
                 .Setup<IAssetsService>(p =>
-                    p.GetAssetPairsWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+                    p.AssetPairGetAllWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
 
             //act
             var result = _testSuit.Sut.GetDependentAssetPairs("BTCUSD").ToArray();

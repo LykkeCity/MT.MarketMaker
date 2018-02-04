@@ -1,40 +1,37 @@
-﻿using System.Text;
-using AzureStorage;
-using AzureStorage.Blob;
-using Common;
-using Lykke.SettingsReader;
+﻿using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.AzureRepositories.StorageModels;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models.Settings;
-using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MarginTrading.MarketMaker.Settings;
-using Newtonsoft.Json;
 
 namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
 {
     internal class SettingsStorageService : ISettingsStorageService
     {
         private readonly IConvertService _convertService;
-        private readonly IBlobStorage _blobStorage;
+        private readonly ISettingsMigrationService _settingsMigrationService;
+        private readonly IAzureBlobJsonStorage _blobStorage;
         private const string BlobContainer = "MtMmSettings";
         private const string Key = "SettingsRoot";
+        internal const int CurrentStorageModelVersion = 2;
 
-        public SettingsStorageService(IReloadingManager<MarginTradingMarketMakerSettings> settings, IConvertService convertService)
+        public SettingsStorageService(IReloadingManager<MarginTradingMarketMakerSettings> settings,
+            IConvertService convertService, ISettingsMigrationService settingsMigrationService,
+            IAzureBlobStorageFactoryService azureBlobStorageFactoryService)
         {
             _convertService = convertService;
-            _blobStorage = AzureBlobStorage.Create(settings.Nested(s => s.Db.ConnectionString));
+            _settingsMigrationService = settingsMigrationService;
+            _blobStorage = azureBlobStorageFactoryService.Create(settings.Nested(s => s.Db.ConnectionString));
         }
 
         public SettingsRoot Read()
         {
-            if (_blobStorage.HasBlobAsync(BlobContainer, Key).Result)
-            {
-                var data = _blobStorage.GetAsync(BlobContainer, Key).GetAwaiter().GetResult().ToBytes();
-                var str = Encoding.UTF8.GetString(data);
-                return Convert(JsonConvert.DeserializeObject<SettingsRootStorageModel>(str));
-            }
+            var settingsRootStorageModel = _blobStorage.Read<SettingsRootStorageModel>(BlobContainer, Key);
+            if (settingsRootStorageModel == null)
+                return null;
 
-            return null;
+            _settingsMigrationService.Migrate(settingsRootStorageModel);
+            return Convert(settingsRootStorageModel);
         }
 
         private SettingsRoot Convert(SettingsRootStorageModel model)
@@ -44,13 +41,15 @@ namespace MarginTrading.MarketMaker.AzureRepositories.Implementation
 
         private SettingsRootStorageModel Convert(SettingsRoot root)
         {
-            return _convertService.Convert<SettingsRoot, SettingsRootStorageModel>(root);
+            return _convertService.Convert<SettingsRoot, SettingsRootStorageModel>(root,
+                o => o.ConfigureMap().ForMember(m => m.Version, c => c.Ignore()));
         }
 
-        public void Write(SettingsRoot model)
+        public void Write(SettingsRoot root)
         {
-            var data = JsonConvert.SerializeObject(Convert(model)).ToUtf8Bytes();
-            _blobStorage.SaveBlobAsync(BlobContainer, Key, data).GetAwaiter().GetResult();
+            var storageModel = Convert(root);
+            storageModel.Version = CurrentStorageModelVersion;
+            _blobStorage.Write(BlobContainer, Key, storageModel);
         }
     }
 }

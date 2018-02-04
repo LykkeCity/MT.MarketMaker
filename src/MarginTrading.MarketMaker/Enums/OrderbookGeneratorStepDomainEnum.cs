@@ -8,6 +8,7 @@
         FindRepeatedProblems = 50,
         ChoosePrimary = 60,
         GetArbitrageFreeSpread = 70,
-        Transform = 80
+        Transform = 80,
+        AggregateOrderbook = 90,
     }
 }

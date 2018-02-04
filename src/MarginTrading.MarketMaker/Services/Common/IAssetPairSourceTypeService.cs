@@ -12,5 +12,8 @@ namespace MarginTrading.MarketMaker.Services.Common
         ImmutableDictionary<string, AssetPairQuotesSourceTypeDomainEnum> Get();
         [CanBeNull] AssetPairQuotesSourceTypeDomainEnum? Get(string assetPairId);
         void Delete(string assetPairId);
+
+        ImmutableHashSet<string> GetPairsByQuotesSourceType(
+            AssetPairQuotesSourceTypeDomainEnum quotesSourceType);
     }
 }

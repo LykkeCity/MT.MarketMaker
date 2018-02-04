@@ -17,7 +17,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         private readonly IAssetsService _assetsService;
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
         private readonly ISystem _system;
-        private readonly ICachedCalculation<Dictionary<string, AssetPairResponseModel>> _assetPairs;
+        private readonly ICachedCalculation<Dictionary<string, AssetPair>> _assetPairs;
         private readonly ICachedCalculation<ImmutableHashSet<(string, string)>> _configuredCrossPairs;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _existingAssetPairs;
 
@@ -44,9 +44,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _existingAssetPairs.Get().SelectMany(gr => gr).Select(i => i.ResultingPairId).Distinct();
         }
 
-        public CrossRateCalcInfo GetForResultingPairId(string assetPairId)
+        public CrossRateCalcInfo CalculateDefault(string assetPairId)
         {
-            return _existingAssetPairs.Get().SelectMany(gr => gr).FirstOrDefault(i => i.ResultingPairId == assetPairId);
+            var assetPairs = _assetPairs.Get();
+            var resultingAssetPair = assetPairs.GetValueOrDefault(assetPairId);
+            if (resultingAssetPair == null)
+                return null;
+            
+            return GetCrossRateCalcInfo(resultingAssetPair, assetPairs);
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
@@ -79,17 +84,21 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                     .ToImmutableHashSet());
         }
 
-        private ICachedCalculation<Dictionary<string, AssetPairResponseModel>> GetAssetPairs()
+        private ICachedCalculation<Dictionary<string, AssetPair>> GetAssetPairs()
         {
             return Calculate.Cached(() => _system.UtcNow,
                 (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
-                now => _assetsService.GetAssetPairs().Where(p => !p.IsDisabled).ToDictionary(p => p.Id));
+                now => _assetsService.AssetPairGetAll().Where(p => !p.IsDisabled).ToDictionary(p => p.Id));
         }
 
-        private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPairResponseModel resultingPair, Dictionary<string, AssetPairResponseModel> assetPairs)
+        [CanBeNull]
+        private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPair resultingPair, Dictionary<string, AssetPair> assetPairs)
         {
-            var sourcePair1 = assetPairs[resultingPair.Source];
-            var sourcePair2 = assetPairs[resultingPair.Source2];
+            var sourcePair1 = assetPairs.GetValueOrDefault(resultingPair.Source);
+            var sourcePair2 = assetPairs.GetValueOrDefault(resultingPair.Source2);
+            if (sourcePair1 == null || sourcePair2 == null)
+                return null;
+            
             var baseAssetId = GetBaseCrossRateAsset(sourcePair1, sourcePair2);
             return new CrossRateCalcInfo(resultingPair.Id, new CrossRateSourceAssetPair(resultingPair.Source, sourcePair1.QuotingAssetId == baseAssetId),
                 new CrossRateSourceAssetPair(resultingPair.Source2, sourcePair2.QuotingAssetId == baseAssetId));
@@ -99,7 +108,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         /// Base asset is the one that is common in two source pairs used for cross-rate calculating.<br/>
         /// Ex: ETHUSD is calculated based on BTC from ETHBTC and BTCUSD.
         /// </summary>
-        private static string GetBaseCrossRateAsset(AssetPairResponseModel sourcePair1, AssetPairResponseModel sourcePair2)
+        private static string GetBaseCrossRateAsset(AssetPair sourcePair1, AssetPair sourcePair2)
         {
             var sourceAssets1 = new[] { sourcePair1.BaseAssetId, sourcePair1.QuotingAssetId };
             var sourceAssets2 = new[] { sourcePair2.BaseAssetId, sourcePair2.QuotingAssetId };
