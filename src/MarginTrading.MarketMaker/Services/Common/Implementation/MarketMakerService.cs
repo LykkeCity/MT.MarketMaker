@@ -32,6 +32,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         private readonly ILog _log;
         private readonly IGenerateOrderbookService _generateOrderbookService;
         private readonly ICrossRatesService _crossRatesService;
+        private readonly IPriceRoundingService _priceRoundingService;
 
         public MarketMakerService(IAssetPairSourceTypeService assetPairSourceTypeService,
             IRabbitMqService rabbitMqService,
@@ -40,7 +41,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             ISpotOrderCommandsGeneratorService spotOrderCommandsGeneratorService,
             ILog log,
             IGenerateOrderbookService generateOrderbookService,
-            ICrossRatesService crossRatesService)
+            ICrossRatesService crossRatesService, IPriceRoundingService priceRoundingService)
         {
             _assetPairSourceTypeService = assetPairSourceTypeService;
             _system = system;
@@ -49,6 +50,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             _log = log;
             _generateOrderbookService = generateOrderbookService;
             _crossRatesService = crossRatesService;
+            _priceRoundingService = priceRoundingService;
             _messageProducer = new Lazy<IMessageProducer<OrderCommandsBatchMessage>>(() =>
                 CreateRabbitMqMessageProducer(settings, rabbitMqService));
         }
@@ -63,8 +65,10 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
             }
 
             var externalOrderbook = new ExternalOrderbook(orderbook.AssetPairId, orderbook.Source, _system.UtcNow,
-                orderbook.Bids.OrderByDescending(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray(),
-                orderbook.Asks.OrderBy(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume)).ToImmutableArray());
+                orderbook.Bids.OrderByDescending(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume))
+                    .ToImmutableArray(),
+                orderbook.Asks.OrderBy(p => p.Price).Select(b => new OrderbookPosition(b.Price, b.Volume))
+                    .ToImmutableArray());
             var resultingOrderbook = _generateOrderbookService.OnNewOrderbook(externalOrderbook);
             if (resultingOrderbook == null)
             {
@@ -85,7 +89,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                 return Task.CompletedTask;
             }
 
-            var commands = _spotOrderCommandsGeneratorService.GenerateOrderCommands(orderbook.AssetPair, orderbook.IsBuy,
+            var commands = _spotOrderCommandsGeneratorService.GenerateOrderCommands(orderbook.AssetPair,
+                orderbook.IsBuy,
                 orderbook.Prices[0].Price, OrdersVolume);
 
             return SendOrderCommandsAsync(orderbook.AssetPair, commands);
@@ -189,9 +194,12 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         private Task SendOrderCommandsAsync(string assetPairId, IReadOnlyList<OrderCommand> commands)
         {
             if (commands.Count == 0)
-            {
                 return Task.CompletedTask;
-            }
+
+            var round = _priceRoundingService.GetRoundFunc(assetPairId);
+            foreach (var command in commands)
+                if (command.Price != null)
+                    command.Price = round(command.Price.Value);
 
             return _messageProducer.Value.ProduceAsync(new OrderCommandsBatchMessage
             {

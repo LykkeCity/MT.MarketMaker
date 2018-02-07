@@ -32,7 +32,40 @@ namespace Tests.Integrational
             {
                 MarketMakerId = "testMmId",
                 Db = new DbSettings {QueuePersistanceRepositoryConnString = "fake"}
-            }
+            },
+            RiskInformingSettings = new RiskInformingSettings {Data = new []
+            {
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM01",
+                    Level = "None",
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM02",
+                    Level = "None",
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM03",
+                    Level = "None",
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM04",
+                    Level = "None",
+                    System = "MarketMaker",
+                },
+                new RiskInformingParams
+                {
+                    EventTypeCode = "MM05",
+                    Level = "None",
+                    System = "MarketMaker",
+                },
+            }}
         };
 
         public MmIntegrationalTestSuit()
@@ -68,7 +101,8 @@ namespace Tests.Integrational
                     Id = "BTCUSD",
                     QuotingAssetId = "USD",
                     Source = "",
-                    Source2 = ""
+                    Source2 = "",
+                    Accuracy = 3,
                 }
             };
 
@@ -85,7 +119,6 @@ namespace Tests.Integrational
                         m => m.Setup(s => s.GetRandom()).Returns(Random))
                     .Setup<IAssetsService>(m => m.Setup(s => s.AssetPairGetAllWithHttpMessagesAsync(default, default))
                         .Returns(() => AssetPairs.ToResponse()))
-                    .Setup(new Mock<IMtMmRisksSlackNotificationsSender>().Object)
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>()
                     .Setup(new LykkeLogToAzureStorage(null))

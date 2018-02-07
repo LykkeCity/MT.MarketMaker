@@ -7,6 +7,8 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
+using MarginTrading.MarketMaker.Models;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MoreLinq;
 
@@ -14,20 +16,16 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 {
     internal class DependentCrossRatesService : IDependentCrossRatesService
     {
-        private readonly IAssetsService _assetsService;
         private readonly ICrossRatesSettingsService _crossRatesSettingsService;
-        private readonly ISystem _system;
-        private readonly ICachedCalculation<Dictionary<string, AssetPair>> _assetPairs;
+        private readonly IAssetPairsInfoService _assetPairsInfoService;
         private readonly ICachedCalculation<ImmutableHashSet<(string, string)>> _configuredCrossPairs;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _existingAssetPairs;
 
-        public DependentCrossRatesService(IAssetsService assetsService,
-            ICrossRatesSettingsService crossRatesSettingsService, ISystem system)
+        public DependentCrossRatesService(ICrossRatesSettingsService crossRatesSettingsService,
+            IAssetPairsInfoService assetPairsInfoService)
         {
-            _assetsService = assetsService;
             _crossRatesSettingsService = crossRatesSettingsService;
-            _system = system;
-            _assetPairs = GetAssetPairs();
+            _assetPairsInfoService = assetPairsInfoService;
             _configuredCrossPairs = GetConfiguredCrossPairs();
             _existingAssetPairs = GetExistingAssetPairs();
         }
@@ -46,7 +44,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public CrossRateCalcInfo CalculateDefault(string assetPairId)
         {
-            var assetPairs = _assetPairs.Get();
+            var assetPairs = _assetPairsInfoService.Get();
             var resultingAssetPair = assetPairs.GetValueOrDefault(assetPairId);
             if (resultingAssetPair == null)
                 return null;
@@ -59,7 +57,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return Calculate.Cached(
                 () => new
                 {
-                    AllPairs = _assetPairs.Get(), /* ex: [btceur, btcusd, eurusd] */
+                    AllPairs = _assetPairsInfoService.Get(), /* ex: [btceur, btcusd, eurusd] */
                     CrossPairs = _configuredCrossPairs.Get() /* ex: [(btc, eur), (eur, btc)] */
                 },
                 (o, n) => o.AllPairs == n.AllPairs && o.CrossPairs == n.CrossPairs,
@@ -84,15 +82,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
                     .ToImmutableHashSet());
         }
 
-        private ICachedCalculation<Dictionary<string, AssetPair>> GetAssetPairs()
-        {
-            return Calculate.Cached(() => _system.UtcNow,
-                (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
-                now => _assetsService.AssetPairGetAll().Where(p => !p.IsDisabled).ToDictionary(p => p.Id));
-        }
-
-        [CanBeNull]
-        private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPair resultingPair, Dictionary<string, AssetPair> assetPairs)
+        private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPairInfo resultingPair, IReadOnlyDictionary<string, AssetPairInfo> assetPairs)
         {
             var sourcePair1 = assetPairs.GetValueOrDefault(resultingPair.Source);
             var sourcePair2 = assetPairs.GetValueOrDefault(resultingPair.Source2);
@@ -108,7 +98,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         /// Base asset is the one that is common in two source pairs used for cross-rate calculating.<br/>
         /// Ex: ETHUSD is calculated based on BTC from ETHBTC and BTCUSD.
         /// </summary>
-        private static string GetBaseCrossRateAsset(AssetPair sourcePair1, AssetPair sourcePair2)
+        private static string GetBaseCrossRateAsset(AssetPairInfo sourcePair1, AssetPairInfo sourcePair2)
         {
             var sourceAssets1 = new[] { sourcePair1.BaseAssetId, sourcePair1.QuotingAssetId };
             var sourceAssets2 = new[] { sourcePair2.BaseAssetId, sourcePair2.QuotingAssetId };

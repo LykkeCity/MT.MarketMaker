@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using FluentAssertions;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
+using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Settings;
+using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.CrossRates;
 using MarginTrading.MarketMaker.Services.CrossRates.Implementation;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
@@ -22,9 +21,9 @@ namespace Tests.Services.CrossRates
 
         private static readonly DateTime _now = DateTime.UtcNow;
 
-        private static readonly IList<AssetPair> AssetPairs = new[]
+        private static readonly IReadOnlyDictionary<string, AssetPairInfo> AssetPairs = new[]
         {
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "BTC",
                 Id = "BTCEUR",
@@ -32,7 +31,7 @@ namespace Tests.Services.CrossRates
                 Source = "BTCUSD",
                 Source2 = "EURUSD"
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "BTC",
                 Id = "BTCAUD",
@@ -40,7 +39,7 @@ namespace Tests.Services.CrossRates
                 Source = "BTCUSD",
                 Source2 = "AUDUSD"
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "ETH",
                 Id = "ETHUSD",
@@ -48,31 +47,31 @@ namespace Tests.Services.CrossRates
                 Source = "ETHBTC",
                 Source2 = "BTCUSD"
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "ETH",
                 Id = "ETHBTC",
                 QuotingAssetId = "BTC",
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "AUD",
                 Id = "AUDUSD",
                 QuotingAssetId = "USD",
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "EUR",
                 Id = "EURUSD",
                 QuotingAssetId = "USD",
             },
-            new AssetPair
+            new AssetPairInfo
             {
                 BaseAssetId = "BTC",
                 Id = "BTCUSD",
                 QuotingAssetId = "USD",
             },
-        };
+        }.ToDictionary(p => p.Id);
 
         private static readonly CrossRatesSettings[] CrossRatesSettings =
         {
@@ -96,8 +95,7 @@ namespace Tests.Services.CrossRates
             //arrange
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
-                .Setup<IAssetsService>(p =>
-                    p.AssetPairGetAllWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+                .Setup<IAssetPairsInfoService>(p => p.Get() == AssetPairs);
 
             //act
             return _testSuit.Sut.GetDependentAssetPairs(assetPairId).Select(i => i.ResultingPairId).ToArray();
@@ -109,8 +107,7 @@ namespace Tests.Services.CrossRates
             //arrange
             _testSuit
                 .Setup<ICrossRatesSettingsService>(p => p.Get() == CrossRatesSettings)
-                .Setup<IAssetsService>(p =>
-                    p.AssetPairGetAllWithHttpMessagesAsync(null, CancellationToken.None) == AssetPairs.ToResponse());
+                .Setup<IAssetPairsInfoService>(p => p.Get() == AssetPairs);
 
             //act
             var result = _testSuit.Sut.GetDependentAssetPairs("BTCUSD").ToArray();
