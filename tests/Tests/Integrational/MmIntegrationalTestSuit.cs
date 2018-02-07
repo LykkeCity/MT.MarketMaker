@@ -56,9 +56,9 @@ namespace Tests.Integrational
             public DateTime UtcNow { get; set; } = DateTime.UtcNow;
             public StubRabbitMqService StubRabbitMqService { get; } = new StubRabbitMqService();
             public InMemoryTableStorageFactory TableStorageFactory { get; } = new InMemoryTableStorageFactory();
-
             public InMemoryBlobStorageSingleObjectFactory BlobStorageFactory { get; } =
                 new InMemoryBlobStorageSingleObjectFactory();
+            public TestRandom Random { get; } = new TestRandom();
 
             public IList<AssetPair> AssetPairs { get; set; } = new List<AssetPair>
             {
@@ -81,7 +81,8 @@ namespace Tests.Integrational
             public MmTestEnvironment(MmIntegrationalTestSuit suit) : base(suit)
             {
                 Setup<IRabbitMqService>(StubRabbitMqService)
-                    .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow))
+                    .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow),
+                        m => m.Setup(s => s.GetRandom()).Returns(Random))
                     .Setup<IAssetsService>(m => m.Setup(s => s.AssetPairGetAllWithHttpMessagesAsync(default, default))
                         .Returns(() => AssetPairs.ToResponse()))
                     .Setup(new Mock<IMtMmRisksSlackNotificationsSender>().Object)

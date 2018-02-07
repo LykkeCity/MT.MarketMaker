@@ -69,7 +69,7 @@ namespace Tests
 
         public static Generator<T> Values<T>(params T[] values)
         {
-            return FromLambda<T>((o, i) => values[i]);
+            return FromLambda<T>((o, i) => values[i % values.Length]);
         }
     }
 }

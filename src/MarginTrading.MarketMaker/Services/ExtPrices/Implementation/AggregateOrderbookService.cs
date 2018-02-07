@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Settings;
 
@@ -10,10 +12,12 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
     public class AggregateOrderbookService : IAggregateOrderbookService
     {
         private readonly IExtPricesSettingsService _extPricesSettingsService;
+        private readonly ISystem _system;
 
-        public AggregateOrderbookService(IExtPricesSettingsService extPricesSettingsService)
+        public AggregateOrderbookService(IExtPricesSettingsService extPricesSettingsService, ISystem system)
         {
             _extPricesSettingsService = extPricesSettingsService;
+            _system = system;
         }
 
         public Orderbook Aggregate(Orderbook originalOrderbook)
@@ -30,42 +34,53 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 Aggregate(settings, originalOrderbook.Asks));
         }
 
-        private static ImmutableArray<OrderbookPosition> Aggregate(AggregateOrderbookSettings settings,
+        private ImmutableArray<OrderbookPosition> Aggregate(AggregateOrderbookSettings settings,
             ImmutableArray<OrderbookPosition> positions)
         {
             if (settings.AsIsLevelsCount >= positions.Length)
                 return positions;
 
-            var aggregatedLevels = new Stack<decimal>(settings.CumulativeVolumeLevels.Reverse());
+            var r = _system.GetRandom();
+            var aggregatedLevels = new Stack<decimal>(settings.CumulativeVolumeLevels.Reverse()
+                .Select(n => n * (1 + ((decimal) r.NextDouble() - 0.5m) * settings.RandomFraction)));
             var result = ImmutableArray.CreateBuilder<OrderbookPosition>(settings.AsIsLevelsCount
-                                                                         + aggregatedLevels.Count);
+                                                                         + aggregatedLevels.Count); 
             result.AddRange(positions.Take(settings.AsIsLevelsCount));
 
-            if (aggregatedLevels.Count == 0)
+            var prevLevelCumulativeVolume = result.Sum(p => p.Volume);
+            if (!TryGetNewLimit(aggregatedLevels, prevLevelCumulativeVolume, out var currentLimit))
                 return result.ToImmutable();
 
-            var asIsOrdersVolume = result.Sum(p => p.Volume);
-            var cumulativeVolume = asIsOrdersVolume;
             var currentVolume = 0m;
-            var currentLimit = aggregatedLevels.Pop();
+            var cumulativeVolume = prevLevelCumulativeVolume;
             foreach (var position in positions.Skip(settings.AsIsLevelsCount))
             {
                 cumulativeVolume += position.Volume;
                 currentVolume += position.Volume;
                 if (cumulativeVolume >= currentLimit)
                 {
-                    if (currentVolume > 0 && cumulativeVolume - position.Volume > asIsOrdersVolume)
-                    {
-                        result.Add(new OrderbookPosition(position.Price, currentVolume));
-                        currentVolume = 0;
-                    }
-
-                    if (!aggregatedLevels.TryPop(out currentLimit))
+                    result.Add(new OrderbookPosition(position.Price, currentVolume));
+                    prevLevelCumulativeVolume = cumulativeVolume;
+                    currentVolume = 0;
+                    if (!TryGetNewLimit(aggregatedLevels, prevLevelCumulativeVolume, out currentLimit))
                         break;
                 }
             }
 
             return result.ToImmutable();
+        }
+
+        private static bool TryGetNewLimit(Stack<decimal> aggregatedLevels, decimal prevLevelCumulativeVolume,
+            out decimal currentLimit)
+        {
+            do
+            {
+                var gotLevel = aggregatedLevels.TryPop(out  currentLimit);
+                if (!gotLevel)
+                    return false;
+                
+            } while (currentLimit <= prevLevelCumulativeVolume);
+            return true;
         }
     }
 }
