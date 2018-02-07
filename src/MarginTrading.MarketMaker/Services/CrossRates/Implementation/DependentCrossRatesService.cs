@@ -42,9 +42,14 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
             return _existingAssetPairs.Get().SelectMany(gr => gr).Select(i => i.ResultingPairId).Distinct();
         }
 
-        public CrossRateCalcInfo GetForResultingPairId(string assetPairId)
+        public CrossRateCalcInfo CalculateDefault(string assetPairId)
         {
-            return _existingAssetPairs.Get().SelectMany(gr => gr).FirstOrDefault(i => i.ResultingPairId == assetPairId);
+            var assetPairs = _assetPairsInfoService.Get();
+            var resultingAssetPair = assetPairs.GetValueOrDefault(assetPairId);
+            if (resultingAssetPair == null)
+                return null;
+            
+            return GetCrossRateCalcInfo(resultingAssetPair, assetPairs);
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> GetExistingAssetPairs()
@@ -79,8 +84,11 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         private static CrossRateCalcInfo GetCrossRateCalcInfo(AssetPairInfo resultingPair, IReadOnlyDictionary<string, AssetPairInfo> assetPairs)
         {
-            var sourcePair1 = assetPairs[resultingPair.Source];
-            var sourcePair2 = assetPairs[resultingPair.Source2];
+            var sourcePair1 = assetPairs.GetValueOrDefault(resultingPair.Source);
+            var sourcePair2 = assetPairs.GetValueOrDefault(resultingPair.Source2);
+            if (sourcePair1 == null || sourcePair2 == null)
+                return null;
+            
             var baseAssetId = GetBaseCrossRateAsset(sourcePair1, sourcePair2);
             return new CrossRateCalcInfo(resultingPair.Id, new CrossRateSourceAssetPair(resultingPair.Source, sourcePair1.QuotingAssetId == baseAssetId),
                 new CrossRateSourceAssetPair(resultingPair.Source2, sourcePair2.QuotingAssetId == baseAssetId));

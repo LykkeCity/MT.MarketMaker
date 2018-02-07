@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Tests.Integrational
+namespace Tests
 {
     internal class Generator<T> : IEnumerable<T>
     {
@@ -69,7 +69,7 @@ namespace Tests.Integrational
 
         public static Generator<T> Values<T>(params T[] values)
         {
-            return FromLambda<T>((o, i) => values[i]);
+            return FromLambda<T>((o, i) => values[i % values.Length]);
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
@@ -12,15 +11,13 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.CandlesHistory.Client;
 using Lykke.SlackNotifications;
 using MarginTrading.MarketMaker.AzureRepositories;
+using MarginTrading.MarketMaker.AzureRepositories.Implementation;
+using MarginTrading.MarketMaker.AzureRepositories.StorageModels;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
-using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Modules;
-using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MarginTrading.MarketMaker.Settings;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Moq;
 
 namespace Tests.Integrational
@@ -92,10 +89,13 @@ namespace Tests.Integrational
             public DateTime UtcNow { get; set; } = DateTime.UtcNow;
             public StubRabbitMqService StubRabbitMqService { get; } = new StubRabbitMqService();
             public InMemoryTableStorageFactory TableStorageFactory { get; } = new InMemoryTableStorageFactory();
+            public InMemoryBlobStorageSingleObjectFactory BlobStorageFactory { get; } =
+                new InMemoryBlobStorageSingleObjectFactory();
+            public TestRandom Random { get; } = new TestRandom();
 
-            public IList<AssetPairResponseModel> AssetPairs { get; set; } = new[]
+            public IList<AssetPair> AssetPairs { get; set; } = new List<AssetPair>
             {
-                new AssetPairResponseModel
+                new AssetPair
                 {
                     BaseAssetId = "BTC",
                     Id = "BTCUSD",
@@ -106,63 +106,119 @@ namespace Tests.Integrational
                 }
             };
 
-            public SettingsRoot SettingsRoot { get; set; } = new SettingsRoot(
-                ImmutableSortedDictionary<string, AssetPairSettings>.Empty.Add("BTCUSD",
-                    new AssetPairSettings(AssetPairQuotesSourceTypeDomainEnum.External,
-                        GetDefaultExtPriceSettings(), GetDefaultCrossRateCalcInfo("BTCUSD"))));
+            public SettingsRootStorageModel SettingsRoot
+            {
+                get => BlobStorageFactory.Blob.GetObject<SettingsRootStorageModel>();
+                set => BlobStorageFactory.Blob.Object = value;
+            }
 
             public MmTestEnvironment(MmIntegrationalTestSuit suit) : base(suit)
             {
-                Setup<ISettingsStorageService>(
-                        m => m.Setup(s => s.Read()).Returns(() => SettingsRoot),
-                        m => m.Setup(s => s.Write(It.IsNotNull<SettingsRoot>()))
-                            .Callback<SettingsRoot>(r => SettingsRoot = r))
-                    .Setup<IRabbitMqService>(StubRabbitMqService)
-                    .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow))
-                    .Setup<IAssetsService>(m => m.Setup(s => s.GetAssetPairsWithHttpMessagesAsync(default, default))
+                Setup<IRabbitMqService>(StubRabbitMqService)
+                    .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow),
+                        m => m.Setup(s => s.GetRandom()).Returns(Random))
+                    .Setup<IAssetsService>(m => m.Setup(s => s.AssetPairGetAllWithHttpMessagesAsync(default, default))
                         .Returns(() => AssetPairs.ToResponse()))
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>()
                     .Setup(new LykkeLogToAzureStorage(null))
                     .Setup<ISlackNotificationsSender>(s =>
                         s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()) == Task.CompletedTask)
-                    .Setup<IAzureTableStorageFactoryService>(TableStorageFactory);
+                    .Setup<IAzureTableStorageFactoryService>(TableStorageFactory)
+                    .Setup<IAzureBlobStorageFactoryService>(BlobStorageFactory);
             }
 
             public override IContainer CreateContainer()
             {
                 var container = base.CreateContainer();
                 Trace.TraceService = container.Resolve<ITraceService>();
+                SettingsRoot = GetDefaultSettingsRoot();
                 return container;
+            }
+
+            private static SettingsRootStorageModel GetDefaultSettingsRoot()
+            {
+                return new SettingsRootStorageModel
+                {
+                    AssetPairs = ImmutableSortedDictionary<string, AssetPairSettingsStorageModel>.Empty.Add("BTCUSD",
+                        new AssetPairSettingsStorageModel
+                        {
+                            QuotesSourceType = AssetPairQuotesSourceTypeDomainEnum.External,
+                            AggregateOrderbookSettings = GetDefaultAggregateOrderbookSettings(),
+                            CrossRateCalcInfo = GetDefaultCrossRateCalcInfo("BTCUSD"),
+                            ExtPriceSettings = GetDefaultExtPriceSettings(),
+                        }),
+                    Version = SettingsStorageService.CurrentStorageModelVersion,
+                };
             }
         }
 
-        private static AssetPairExtPriceSettings GetDefaultExtPriceSettings()
+        private static AssetPairExtPriceSettingsStorageModel GetDefaultExtPriceSettings()
         {
-            return new AssetPairExtPriceSettings("bitmex",
-                0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
-                new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 1, TimeSpan.FromMinutes(5)),
-                Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum)).Cast<OrderbookGeneratorStepDomainEnum>()
+            return new AssetPairExtPriceSettingsStorageModel
+            {
+                PresetDefaultExchange = "bitmex",
+                OutlierThreshold = 0.05m,
+                MinOrderbooksSendingPeriod = TimeSpan.Zero,
+                Markups = new AssetPairExtPriceSettingsStorageModel.MarkupsParamsStorageModel(),
+                RepeatedOutliers = new AssetPairExtPriceSettingsStorageModel.RepeatedOutliersParamsStorageModel
+                {
+                    MaxSequenceLength = 10,
+                    MaxSequenceAge = TimeSpan.FromMinutes(5),
+                    MaxAvg = 1,
+                    MaxAvgAge = TimeSpan.FromMinutes(5)
+                },
+                Steps = Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum))
+                    .Cast<OrderbookGeneratorStepDomainEnum>()
                     .ToImmutableSortedDictionary(e => e, e => true)
                     .SetItem(OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread, false),
-                ImmutableSortedDictionary<string, ExchangeExtPriceSettings>.Empty
+                Exchanges = ImmutableSortedDictionary<string, ExchangeExtPriceSettingsStorageModel>.Empty
                     .Add("bitmex", GetDefaultExtPriceExchangeSettings())
                     .Add("bitfinex", GetDefaultExtPriceExchangeSettings())
                     .Add("Poloniex", GetDefaultExtPriceExchangeSettings())
-                    .Add("Kraken", GetDefaultExtPriceExchangeSettings()));
-        }
- 
-        private static ExchangeExtPriceSettings GetDefaultExtPriceExchangeSettings()
-        {
-            return new ExchangeExtPriceSettings(TimeSpan.FromSeconds(30), new ExchangeDisabledSettings(false, ""),
-                new ExchangeHedgingSettings(0, false),
-                new ExchangeOrderGenerationSettings(1, TimeSpan.FromSeconds(10)));
+                    .Add("Kraken", GetDefaultExtPriceExchangeSettings())
+            };
         }
 
-        private static CrossRateCalcInfo GetDefaultCrossRateCalcInfo(string assetPairId)
+        private static ExchangeExtPriceSettingsStorageModel GetDefaultExtPriceExchangeSettings()
         {
-            return new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false),
-                new CrossRateSourceAssetPair(string.Empty, false));
+            return new ExchangeExtPriceSettingsStorageModel
+            {
+                OrderbookOutdatingThreshold = TimeSpan.FromSeconds(30),
+                Disabled = new ExchangeExtPriceSettingsStorageModel.DisabledSettings {Reason = ""},
+                Hedging = new ExchangeExtPriceSettingsStorageModel.HedgingSettings(),
+                OrderGeneration = new ExchangeExtPriceSettingsStorageModel.OrderGenerationSettings
+                {
+                    VolumeMultiplier = 1,
+                    OrderRenewalDelay = TimeSpan.FromSeconds(10)
+                }
+            };
+        }
+
+        private static CrossRateCalcInfoStorageModel GetDefaultCrossRateCalcInfo(string assetPairId)
+        {
+            return new CrossRateCalcInfoStorageModel
+            {
+                ResultingPairId = assetPairId,
+                Source1 = new CrossRateCalcInfoStorageModel.CrossRateSourceAssetPair
+                {
+                    Id = string.Empty,
+                },
+                Source2 = new CrossRateCalcInfoStorageModel.CrossRateSourceAssetPair
+                {
+                    Id = string.Empty,
+                },
+            };
+        }
+
+        private static AggregateOrderbookSettingsStorageModel GetDefaultAggregateOrderbookSettings()
+        {
+            return new AggregateOrderbookSettingsStorageModel
+            {
+                AsIsLevelsCount = int.MaxValue,
+                CumulativeVolumeLevels = ImmutableSortedSet<decimal>.Empty,
+                RandomFraction = 0.05m
+            };
         }
     }
 }

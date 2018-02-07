@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
+using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Settings;
 
 namespace MarginTrading.MarketMaker.Services.ExtPrices
@@ -25,12 +26,14 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices
         void UpdateWithoutExchanges(string assetPairId, AssetPairExtPriceSettings setting, string reason);
         ImmutableSortedDictionary<string, AssetPairExtPriceSettings> Get();
         [CanBeNull] AssetPairExtPriceSettings Get(string assetPairId);
-        AssetPairExtPriceSettings GetDefault();
+        AssetPairExtPriceSettings GetDefaultExtPriceSettings();
+        AggregateOrderbookSettings GetDefaultAggregateOrderbookSettings();
         ImmutableSortedDictionary<OrderbookGeneratorStepDomainEnum, bool> GetDefaultSteps();
         ImmutableSortedDictionary<string, ImmutableSortedDictionary<string, ExchangeExtPriceSettings>> GetExchanges();
         ExchangeExtPriceSettings Get(string assetPairId, string exchangeName);
         ExchangeExtPriceSettings Add(string assetPairId, string exchangeName, string reason);
         void Update(string assetPairId, string exchangeName, ExchangeExtPriceSettings settings, string reason);
         void Delete(string assetPairId, string exchangeName, string reason);
+        AggregateOrderbookSettings GetAggregateOrderbookSettings(string assetPairId);
     }
 }

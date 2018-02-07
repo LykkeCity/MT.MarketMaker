@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common;
 using FluentAssertions;
 using FluentAssertions.Equivalency;
 using Microsoft.Rest;
@@ -39,6 +40,12 @@ namespace Tests
                     return false;
                 }
             });
+        }
+
+        public static T Trace<T>(this T o)
+        {
+            Console.WriteLine(o.ToJson());
+            return o;
         }
     }
 }

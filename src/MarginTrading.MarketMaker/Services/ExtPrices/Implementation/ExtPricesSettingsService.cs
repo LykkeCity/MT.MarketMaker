@@ -154,6 +154,13 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 old.Exchanges.Remove(exchangeName)), reason);
         }
 
+        public AggregateOrderbookSettings GetAggregateOrderbookSettings(string assetPairId)
+        {
+            return _settingsRootService.Get(assetPairId)?.AggregateOrderbookSettings
+                   ?? throw new ArgumentException($"Settings for asset pair {assetPairId} not found",
+                       nameof(assetPairId));
+        }
+
         [CanBeNull]
         public ImmutableSortedDictionary<string, ImmutableSortedDictionary<string, ExchangeExtPriceSettings>> GetExchanges()
         {
@@ -166,13 +173,18 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             return _settingsRootService.Get(assetPairId)?.ExtPriceSettings;
         }
 
-        public AssetPairExtPriceSettings GetDefault()
+        public AssetPairExtPriceSettings GetDefaultExtPriceSettings()
         {
             return new AssetPairExtPriceSettings("",
                 0.05m, TimeSpan.FromSeconds(0.5), new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 10,
                     TimeSpan.FromMinutes(5)),
                 GetDefaultSteps(), ImmutableSortedDictionary<string, ExchangeExtPriceSettings>.Empty);
+        }
+
+        public AggregateOrderbookSettings GetDefaultAggregateOrderbookSettings()
+        {
+            return new AggregateOrderbookSettings(10000, ImmutableSortedSet<decimal>.Empty, 0.05m);
         }
 
         private static ExchangeExtPriceSettings GetDefaultExchange()
@@ -231,7 +243,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 oldExchanges = old.ExtPriceSettings.Exchanges;
                 var newSettings = changeFunc(old.ExtPriceSettings);
                 newExchanges = newSettings.Exchanges;
-                return new AssetPairSettings(old.QuotesSourceType, newSettings, old.CrossRateCalcInfo);
+                return new AssetPairSettings(old.QuotesSourceType, newSettings, old.CrossRateCalcInfo, old.AggregateOrderbookSettings);
             });
 
             oldExchanges.RequiredNotNull(nameof(oldExchanges));

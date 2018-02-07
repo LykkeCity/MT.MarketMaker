@@ -39,8 +39,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             return Calculate.Cached(() => _system.UtcNow,
                 (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
-                now => _assetsService.GetAssetPairs().ToDictionary(p => p.Id,
-                    p => _convertService.Convert<AssetPairResponseModel, AssetPairInfo>(p,
+                now => _assetsService.AssetPairGetAll().ToDictionary(p => p.Id,
+                    p => _convertService.Convert<AssetPair, AssetPairInfo>(p,
                         o => o.ConfigureMap(MemberList.Destination))));
         }
     }

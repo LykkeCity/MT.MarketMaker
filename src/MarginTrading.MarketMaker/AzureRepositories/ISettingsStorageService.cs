@@ -6,6 +6,6 @@ namespace MarginTrading.MarketMaker.AzureRepositories
     internal interface ISettingsStorageService
     {
         [CanBeNull] SettingsRoot Read();
-        void Write(SettingsRoot model);
+        void Write(SettingsRoot root);
     }
 }

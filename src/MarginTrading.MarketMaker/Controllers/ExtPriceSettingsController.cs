@@ -38,7 +38,7 @@ namespace MarginTrading.MarketMaker.Controllers
         {
             if (setting == null) throw new ArgumentNullException(nameof(setting));
             _extPricesSettingsService.UpdateWithoutExchanges(setting.AssetPairId, Convert(setting),
-                "settings was manually changed");
+                "settings were manually changed");
             return Ok(new {success = true});
         }
 
