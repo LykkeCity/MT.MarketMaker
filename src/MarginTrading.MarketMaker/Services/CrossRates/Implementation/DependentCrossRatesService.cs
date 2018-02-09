@@ -46,7 +46,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         {
             var assetPairs = _assetPairsInfoService.Get();
             var resultingAssetPair = assetPairs.GetValueOrDefault(assetPairId);
-            if (resultingAssetPair == null)
+            if (resultingAssetPair == null || resultingAssetPair.Source == null || resultingAssetPair.Source2 == null)
                 return null;
             
             return GetCrossRateCalcInfo(resultingAssetPair, assetPairs);
