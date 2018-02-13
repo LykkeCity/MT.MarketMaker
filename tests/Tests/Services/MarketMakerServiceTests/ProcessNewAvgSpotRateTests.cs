@@ -83,7 +83,8 @@ namespace Tests.Services.MarketMakerServiceTests
                 .Setup<ISystem>(s => s.UtcNow == _now)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
                     s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"})
-                .Setup<ICrossRatesService>(s => s.CalcDependentOrderbooks(resultingOrderbook.Equivalent()) == crossOrderbooks);
+                .Setup<ICrossRatesService>(s => s.CalcDependentOrderbooks(resultingOrderbook.Equivalent()) == crossOrderbooks)
+                .Setup<IPriceRoundingService>(m => m.Setup(s => s.GetRoundFunc(It.IsNotNull<string>())).Returns(p => p));
 
             //act
             await _testSuit.Sut.ProcessNewAvgSpotRate("pair", 1, 2);

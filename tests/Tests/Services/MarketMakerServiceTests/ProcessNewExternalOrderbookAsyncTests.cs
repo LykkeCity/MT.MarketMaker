@@ -237,7 +237,8 @@ namespace Tests.Services.MarketMakerServiceTests
                     s.OnNewOrderbook(externalOrderbook.Equivalent()) == resultingOrderbook)
                 .Setup<ICrossRatesService>(s => s.CalcDependentOrderbooks(resultingOrderbook) == dependentOrderbooks)
                 .Setup<IReloadingManager<MarginTradingMarketMakerSettings>>(s =>
-                    s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"});
+                    s.CurrentValue == new MarginTradingMarketMakerSettings {MarketMakerId = "mm id"})
+                .Setup<IPriceRoundingService>(m => m.Setup(s => s.GetRoundFunc(It.IsNotNull<string>())).Returns(p => p));
 
 
             //act
