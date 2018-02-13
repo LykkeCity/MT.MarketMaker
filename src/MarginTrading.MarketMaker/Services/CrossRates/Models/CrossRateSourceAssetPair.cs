@@ -18,7 +18,7 @@
 
         public CrossRateSourceAssetPair(string id, bool isTransitoryAssetQuoting)
         {
-            Id = id ?? throw new System.ArgumentNullException(nameof(id));
+            Id = id;
             IsTransitoryAssetQuoting = isTransitoryAssetQuoting;
         }
     }
