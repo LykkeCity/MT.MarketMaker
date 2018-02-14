@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
@@ -18,6 +19,8 @@ using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Modules;
 using MarginTrading.MarketMaker.Services.CrossRates.Models;
 using MarginTrading.MarketMaker.Settings;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Moq;
 
 namespace Tests.Integrational
@@ -88,6 +91,7 @@ namespace Tests.Integrational
         {
             public DateTime UtcNow { get; set; } = DateTime.UtcNow;
             public StubRabbitMqService StubRabbitMqService { get; } = new StubRabbitMqService();
+            public InMemoryTableStorageFactory TableStorageFactory { get; } = new InMemoryTableStorageFactory();
 
             public IList<AssetPairResponseModel> AssetPairs { get; set; } = new[]
             {
@@ -103,7 +107,7 @@ namespace Tests.Integrational
             };
 
             public SettingsRoot SettingsRoot { get; set; } = new SettingsRoot(
-                ImmutableDictionary<string, AssetPairSettings>.Empty.Add("BTCUSD",
+                ImmutableSortedDictionary<string, AssetPairSettings>.Empty.Add("BTCUSD",
                     new AssetPairSettings(AssetPairQuotesSourceTypeDomainEnum.External,
                         GetDefaultExtPriceSettings(), GetDefaultCrossRateCalcInfo("BTCUSD"))));
 
@@ -121,7 +125,8 @@ namespace Tests.Integrational
                     .Setup<ICandleshistoryservice>()
                     .Setup(new LykkeLogToAzureStorage(null))
                     .Setup<ISlackNotificationsSender>(s =>
-                        s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()) == Task.CompletedTask);
+                        s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()) == Task.CompletedTask)
+                    .Setup<IAzureTableStorageFactoryService>(TableStorageFactory);
             }
 
             public override IContainer CreateContainer()
@@ -138,15 +143,15 @@ namespace Tests.Integrational
                 0.05m, TimeSpan.Zero, new AssetPairMarkupsParams(0, 0),
                 new RepeatedOutliersParams(10, TimeSpan.FromMinutes(5), 1, TimeSpan.FromMinutes(5)),
                 Enum.GetValues(typeof(OrderbookGeneratorStepDomainEnum)).Cast<OrderbookGeneratorStepDomainEnum>()
-                    .ToImmutableDictionary(e => e, e => true)
+                    .ToImmutableSortedDictionary(e => e, e => true)
                     .SetItem(OrderbookGeneratorStepDomainEnum.GetArbitrageFreeSpread, false),
-                ImmutableDictionary<string, ExchangeExtPriceSettings>.Empty
+                ImmutableSortedDictionary<string, ExchangeExtPriceSettings>.Empty
                     .Add("bitmex", GetDefaultExtPriceExchangeSettings())
                     .Add("bitfinex", GetDefaultExtPriceExchangeSettings())
                     .Add("Poloniex", GetDefaultExtPriceExchangeSettings())
                     .Add("Kraken", GetDefaultExtPriceExchangeSettings()));
         }
-
+ 
         private static ExchangeExtPriceSettings GetDefaultExtPriceExchangeSettings()
         {
             return new ExchangeExtPriceSettings(TimeSpan.FromSeconds(30), new ExchangeDisabledSettings(false, ""),

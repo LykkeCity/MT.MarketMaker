@@ -11,7 +11,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             _extPricesSettingsService = extPricesSettingsService;
         }
 
-        public ImmutableDictionary<string, decimal> Get(string assetPairId)
+        public ImmutableSortedDictionary<string, decimal> Get(string assetPairId)
         {
             // for now - get from settings
             return _extPricesSettingsService.GetHedgingPreferences(assetPairId);

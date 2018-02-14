@@ -6,7 +6,7 @@ namespace MarginTrading.MarketMaker.AzureRepositories.StorageModels
     {
         public int Version => 1;
         
-        public ImmutableDictionary<string, AssetPairSettingsStorageModel> AssetPairs
-            = ImmutableDictionary<string, AssetPairSettingsStorageModel>.Empty;
+        public ImmutableSortedDictionary<string, AssetPairSettingsStorageModel> AssetPairs
+            = ImmutableSortedDictionary<string, AssetPairSettingsStorageModel>.Empty;
     }
 }

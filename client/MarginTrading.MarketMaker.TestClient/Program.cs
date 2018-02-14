@@ -9,6 +9,7 @@ using MarginTrading.MarketMaker.Contracts;
 using MarginTrading.MarketMaker.Contracts.Client;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Refit;
@@ -57,6 +58,7 @@ namespace MarginTrading.MarketMaker.TestClient
         {
             var services = new ServiceCollection();
             var builder = new ContainerBuilder();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.RegisterMtMarketMakerClient("http://localhost:5007", "TestClient");
             builder.Populate(services);
             var container = builder.Build();
@@ -65,11 +67,11 @@ namespace MarginTrading.MarketMaker.TestClient
             await client.AssetPairs.List().Dump();
             await client.AssetPairs.Get(AssetPairId).Dump();
             await TryDeleteOld(client);
-            await client.AssetPairs.Add(TestAssetPairId, AssetPairQuotesSourceTypeEnum.External).Dump();
+            await client.AssetPairs.Add(TestAssetPairId, AssetPairQuotesSourceTypeEnum.Manual).Dump();
             await client.AssetPairs.Get(TestAssetPairId).Dump();
-            await client.AssetPairs.Update(new AssetPairInputModel{AssetPairId = TestAssetPairId, SourceType = AssetPairQuotesSourceTypeEnum.CrossRates}).Dump();
+            await client.AssetPairs.Update(new AssetPairInputModel{AssetPairId = TestAssetPairId, SourceType = AssetPairQuotesSourceTypeEnum.Disabled}).Dump();
             var updatedPair = await client.AssetPairs.Get(TestAssetPairId).Dump();
-            if (updatedPair.SourceType != "CrossRates")
+            if (updatedPair.SourceType != "Disabled")
             {
                 throw new Exception("SourceType not updated");
             }

@@ -4,6 +4,7 @@ using System.Linq;
 using Autofac;
 using FluentAssertions;
 using FluentAssertions.Equivalency;
+using MarginTrading.MarketMaker.AzureRepositories.Implementation;
 using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Contracts.Messages;
 using MarginTrading.MarketMaker.Contracts.Models;

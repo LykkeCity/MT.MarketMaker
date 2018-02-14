@@ -5,9 +5,9 @@ namespace MarginTrading.MarketMaker.Models.Settings
 {
     public class SettingsRoot
     {
-        public ImmutableDictionary<string, AssetPairSettings> AssetPairs { get; }
+        public ImmutableSortedDictionary<string, AssetPairSettings> AssetPairs { get; }
 
-        public SettingsRoot(ImmutableDictionary<string, AssetPairSettings> assetPairs)
+        public SettingsRoot(ImmutableSortedDictionary<string, AssetPairSettings> assetPairs)
         {
             AssetPairs = assetPairs ?? throw new ArgumentNullException(nameof(assetPairs));
         }

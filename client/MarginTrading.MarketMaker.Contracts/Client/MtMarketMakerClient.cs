@@ -1,4 +1,5 @@
-﻿using Refit;
+﻿using Microsoft.AspNetCore.Http;
+using Refit;
 
 namespace MarginTrading.MarketMaker.Contracts.Client
 {
@@ -11,9 +12,9 @@ namespace MarginTrading.MarketMaker.Contracts.Client
         public ISettingsRootApi SettingsRoot { get; }
         public ICrossRateCalcInfosApi CrossRateCalcInfos { get; }
 
-        public MtMarketMakerClient(string url, string userAgent)
+        public MtMarketMakerClient(string url, string userAgent, IHttpContextAccessor httpContextAccessor)
         {
-            var httpMessageHandler = new UserAgentHttpClientHandler(userAgent);
+            var httpMessageHandler = new CustomHeadersHttpClientHandler(userAgent, httpContextAccessor);
             var settings = new RefitSettings {HttpMessageHandlerFactory = () => httpMessageHandler};
             AssetPairs = RestService.For<IAssetPairsApi>(url, settings);
             ExtPriceExchanges = RestService.For<IExtPriceExchangesApi>(url, settings);
