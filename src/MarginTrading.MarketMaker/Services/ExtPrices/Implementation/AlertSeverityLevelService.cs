@@ -35,6 +35,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 case "MM03": return EventTypeEnum.OutlierDetected;
                 case "MM04": return EventTypeEnum.ExchangeDisabled;
                 case "MM05": return EventTypeEnum.StatusInfo;
+                case "MM06": return EventTypeEnum.InvalidSettingsFound;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(RiskInformingParams.EventTypeCode), eventTypeCode, null);
             }
