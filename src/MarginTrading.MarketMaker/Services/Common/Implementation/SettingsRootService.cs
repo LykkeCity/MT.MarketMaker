@@ -2,9 +2,11 @@
 using System.Collections.Immutable;
 using JetBrains.Annotations;
 using MarginTrading.MarketMaker.AzureRepositories;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
+using MarginTrading.MarketMaker.Services.ExtPrices;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
@@ -14,6 +16,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         private readonly ISettingsValidationService _settingsValidationService;
         private readonly ISettingsChangesAuditService _settingsChangesAuditService;
         private readonly ISettingsChangesAuditRepository _settingsChangesAuditRepository;
+        private readonly IAlertService _alertService;
 
         [CanBeNull] private SettingsRoot _cache;
         private static readonly object _updateLock = new object();
@@ -21,12 +24,14 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public SettingsRootService(ISettingsStorageService settingsStorageService,
             ISettingsValidationService settingsValidationService,
             ISettingsChangesAuditService settingsChangesAuditService,
-            ISettingsChangesAuditRepository settingsChangesAuditRepository)
+            ISettingsChangesAuditRepository settingsChangesAuditRepository,
+            IAlertService alertService)
         {
             _settingsStorageService = settingsStorageService;
             _settingsValidationService = settingsValidationService;
             _settingsChangesAuditService = settingsChangesAuditService;
             _settingsChangesAuditRepository = settingsChangesAuditRepository;
+            _alertService = alertService;
         }
 
         public SettingsRoot Get()
@@ -105,7 +110,14 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         {
             var settingsRoot = _settingsStorageService.Read()
                                ?? new SettingsRoot(ImmutableSortedDictionary<string, AssetPairSettings>.Empty);
-            _settingsValidationService.Validate(settingsRoot);
+            try
+            {
+                _settingsValidationService.Validate(settingsRoot);
+            }
+            catch (Exception e)
+            {
+                _alertService.AlertRiskOfficer(string.Empty, "Found invalid settings on service start: " + e.Message, EventTypeEnum.InvalidSettingsFound);
+            }
             _cache = settingsRoot;
         }
     }

@@ -7,5 +7,6 @@
         OutlierDetected,
         ExchangeDisabled,
         StatusInfo,
+        InvalidSettingsFound
     }
 }
