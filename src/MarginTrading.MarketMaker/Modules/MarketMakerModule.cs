@@ -73,7 +73,7 @@ namespace MarginTrading.MarketMaker.Modules
             {
                 var registrationBuilder = builder.RegisterType(t.Implementation).As(t.Interface).SingleInstance();
                 if (typeof(ICustomStartup).IsAssignableFrom(t.Implementation))
-                    registrationBuilder.OnActivated(args => ((ICustomStartup) args.Instance).Initialize());
+                    registrationBuilder.OnActivated(args => ((ICustomStartup) args.Instance).Initialize()).AutoActivate();
             }
         }
     }
