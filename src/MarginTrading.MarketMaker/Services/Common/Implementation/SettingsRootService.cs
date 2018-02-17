@@ -108,17 +108,16 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public void Initialize()
         {
-            var settingsRoot = _settingsStorageService.Read()
+            _cache = _settingsStorageService.Read()
                                ?? new SettingsRoot(ImmutableSortedDictionary<string, AssetPairSettings>.Empty);
             try
             {
-                _settingsValidationService.Validate(settingsRoot);
+                _settingsValidationService.Validate(_cache);
             }
             catch (Exception e)
             {
                 _alertService.AlertRiskOfficer(string.Empty, "Found invalid settings on service start: " + e.Message, EventTypeEnum.InvalidSettingsFound);
             }
-            _cache = settingsRoot;
         }
     }
 }
