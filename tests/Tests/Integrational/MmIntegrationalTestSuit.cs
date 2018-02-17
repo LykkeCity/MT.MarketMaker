@@ -130,9 +130,9 @@ namespace Tests.Integrational
 
             public override IContainer CreateContainer()
             {
+                SettingsRoot = GetDefaultSettingsRoot();
                 var container = base.CreateContainer();
                 Trace.TraceService = container.Resolve<ITraceService>();
-                SettingsRoot = GetDefaultSettingsRoot();
                 return container;
             }
 
