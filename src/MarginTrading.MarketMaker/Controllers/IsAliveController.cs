@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using MarginTrading.MarketMaker.Contracts.Models;
+using MarginTrading.MarketMaker.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -11,6 +12,13 @@ namespace MarginTrading.MarketMaker.Controllers
     [Route("api/[controller]")]
     public class IsAliveController : Controller
     {
+        private readonly ISettingsRootService _settingsRootService;
+
+        public IsAliveController(ISettingsRootService settingsRootService)
+        {
+            _settingsRootService = settingsRootService;
+        }
+
         /// <summary>
         ///     Checks service is alive
         /// </summary>
@@ -21,6 +29,7 @@ namespace MarginTrading.MarketMaker.Controllers
         public IActionResult Get()
         {
             // NOTE: Feel free to extend IsAliveResponse, to display job-specific indicators
+            var root = _settingsRootService.Get(); // check settings exist
             return Ok(new IsAliveResponse
             {
                 Version = PlatformServices.Default.Application.ApplicationVersion,
@@ -30,6 +39,7 @@ namespace MarginTrading.MarketMaker.Controllers
 #else
                 IsDebug = false,
 #endif
+                AssetPairsCount = root.AssetPairs.Count,
             });
         }
     }
