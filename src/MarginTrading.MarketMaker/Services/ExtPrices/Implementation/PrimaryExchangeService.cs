@@ -107,6 +107,10 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                     _alertService.AlertRiskOfficer(assetPairId,
                         $"Primary exchange {primaryExchange} for {assetPairId} is an outlier. Skipping price update.", EventTypeEnum.OutlierDetected);
                     return primaryQuality;
+                case ExchangeErrorStateDomainEnum.Broken when primaryPreference > 0:
+                    _alertService.AlertRiskOfficer(assetPairId,
+                        $"Primary exchange {primaryExchange} for {assetPairId} is broken. Skipping price update.", EventTypeEnum.OutlierDetected);
+                    return primaryQuality;
                 default:
                     primaryQuality = SwitchPrimaryExchange(assetPairId, primaryQuality, exchangeQualities,
                         newPrimary =>

@@ -123,6 +123,11 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
                 return (null, primaryExchangeQuality, "Primary exchange is an outlier, skipping price update");
             }
 
+            if (primaryExchangeQuality.ErrorState == ExchangeErrorStateDomainEnum.Broken)
+            {
+                return (null, primaryExchangeQuality, "Primary exchange is broken, skipping price update");
+            }
+
             if (!allOrderbooks.TryGetValue(primaryExchangeName, out var primaryOrderbook))
             {
                 _log.WriteErrorAsync(nameof(GenerateOrderbookService), null,
