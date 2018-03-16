@@ -5,5 +5,6 @@ namespace MarginTrading.MarketMaker.Infrastructure
     public interface ISystem
     {
         DateTime UtcNow { get; }
+        IRandom GetRandom();
     }
 }

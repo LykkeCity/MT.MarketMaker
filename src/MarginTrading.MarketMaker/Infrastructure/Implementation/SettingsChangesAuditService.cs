@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Aqua.GraphCompare;
+using Common;
 using MarginTrading.MarketMaker.Models;
 using MarginTrading.MarketMaker.Models.Settings;
 using Microsoft.AspNetCore.Http;
@@ -36,16 +37,45 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
                 return null;
 
             var diffStr = JsonConvert.SerializeObject(
-                diff.Deltas.ToDictionary(d => PrintBreadcrump(d.Breadcrumb),
-                    d => new[] {d.ChangeType, d.OldValue, d.NewValue}),
+                diff.Deltas.GroupBy(d => FormatBreadcrump(d.Breadcrumb))
+                    .Select(GetChangeDescriptor)
+                    .Where(d => d.Key != null)
+                    .ToDictionary(),
                 JsonSerializerSettings);
 
             var httpContext = _httpContextAccessor.HttpContext;
             return new SettingsChangesAuditInfo(_system.UtcNow, httpContext?.Connection.RemoteIpAddress,
                 httpContext?.Request.Headers["User-Info"].ToDelimitedString(", "), $"{httpContext?.Request.Method} {httpContext?.Request.Path}", diffStr);
-        } 
-        
-        private static string PrintBreadcrump(Breadcrumb breadcrumb)
+        }
+
+        private static KeyValuePair<string, object[]> GetChangeDescriptor(IGrouping<string, Delta> group)
+        {
+            var deltas = group.ToList();
+            Delta delta = null;
+            switch (deltas.Count)
+            {
+                case 1:
+                    delta = deltas.First();
+                    break;
+                case 2:
+                    var first = deltas.First();
+                    var second = deltas.Last();
+                    if (JsonConvert.SerializeObject(first.OldValue) == JsonConvert.SerializeObject(second.NewValue) ||
+                        JsonConvert.SerializeObject(first.NewValue) == JsonConvert.SerializeObject(second.OldValue))
+                    {
+                        return new KeyValuePair<string, object[]>(null, null);
+                    }
+                    
+                    break;
+            }
+
+            if (delta == null)
+                throw new InvalidOperationException("Cannot figure out what was changed: " + deltas.ToJson());
+                    
+            return KeyValuePair.Create(group.Key, new[] {delta.ChangeType, delta.OldValue, delta.NewValue});
+        }
+
+        private static string FormatBreadcrump(Breadcrumb breadcrumb)
         {
             var results = new List<string>();
             do

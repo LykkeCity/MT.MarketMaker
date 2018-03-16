@@ -1,5 +1,8 @@
-﻿namespace MarginTrading.MarketMaker.Models
+﻿using System.Diagnostics;
+
+namespace MarginTrading.MarketMaker.Models
 {
+    [DebuggerDisplay("{Volume} for {Price}")]
     public struct OrderbookPosition
     {
         public OrderbookPosition(decimal price, decimal volume)

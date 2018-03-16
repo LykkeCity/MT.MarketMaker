@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models.Settings;
@@ -36,6 +37,13 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                 {
                     case AssetPairQuotesSourceTypeDomainEnum.External:
                         Validate(_pairSettings.ExtPriceSettings);
+
+                        if (_pairSettings.ExtPriceSettings.Steps.GetValueOrDefault(
+                            OrderbookGeneratorStepDomainEnum.AggregateOrderbook, true))
+                        {
+                            Validate(_pairSettings.AggregateOrderbookSettings);
+                        }
+
                         break;
                     case AssetPairQuotesSourceTypeDomainEnum.CrossRates:
                         Validate(_pairSettings.CrossRateCalcInfo);
@@ -43,13 +51,33 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                 }
             }
 
+            private void Validate(AggregateOrderbookSettings aggregateOrderbookSettings)
+            {
+                aggregateOrderbookSettings.RequiredNotNull("aggregateOrderbookSettings for pair " + _assetPairId);
+                aggregateOrderbookSettings.AsIsLevelsCount.RequiredNotLessThan(0,
+                    "aggregateOrderbookSettings.AsIsLevelsCount for pair " + _assetPairId);
+                var assetPairId = _assetPairId;
+                aggregateOrderbookSettings.CumulativeVolumeLevels.RequiredAll(v =>
+                    v.RequiredGreaterThan(0, 
+                        "aggregateOrderbookSettings.CumulativeVolumeLevels for pair " + assetPairId));
+                aggregateOrderbookSettings.RandomFraction.RequiredBetween(0, 0.5m,
+                    "aggregateOrderbookSettings.RandomFraction for pair " + _assetPairId);
+
+                if (aggregateOrderbookSettings.AsIsLevelsCount == 0 &&
+                    aggregateOrderbookSettings.CumulativeVolumeLevels.IsEmpty)
+                {
+                    throw new ArgumentException("Either AsIsLevelsCount or CumulativeVolumeLevels should be filled",
+                        "aggregateOrderbookSettings for pair " + _assetPairId);
+                }
+            }
+
             private void Validate(AssetPairExtPriceSettings extPriceSettings)
             {
                 extPriceSettings.RequiredNotNull("extPriceSettings for pair " + _assetPairId);
-                
+
                 extPriceSettings.Exchanges.RequiredNotNullOrEmpty(
                     "extPriceSettings.Exchanges for pair " + _assetPairId);
-                
+
                 extPriceSettings.PresetDefaultExchange.RequiredInSet(extPriceSettings.Exchanges.Keys,
                     "extPriceSettings.PresetDefaultExchange for pair " + _assetPairId);
                 extPriceSettings.OutlierThreshold.RequiredBetween(0.00001m, 0.5m,
@@ -57,7 +85,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                 extPriceSettings.MinOrderbooksSendingPeriod.RequiredBetween(TimeSpan.Zero, TimeSpan.FromHours(1),
                     "extPriceSettings.MinOrderbooksSendingPeriod for " + _assetPairId);
                 extPriceSettings.Markups.RequiredNotNull("extPriceSettings.Markups for " + _assetPairId);
-                extPriceSettings.RepeatedOutliers.RequiredNotNull("extPriceSettings.RepeatedOutliers for " + _assetPairId);
+                extPriceSettings.RepeatedOutliers.RequiredNotNull(
+                    "extPriceSettings.RepeatedOutliers for " + _assetPairId);
                 extPriceSettings.RepeatedOutliers.MaxSequenceLength.RequiredBetween(2, 100000,
                     "extPriceSettings.RepeatedOutliers.MaxSequenceLength for " + _assetPairId);
                 extPriceSettings.RepeatedOutliers.MaxSequenceAge.RequiredBetween(TimeSpan.FromMilliseconds(1),
@@ -67,7 +96,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                 extPriceSettings.RepeatedOutliers.MaxAvgAge.RequiredBetween(TimeSpan.FromMilliseconds(1),
                     TimeSpan.FromHours(1), "extPriceSettings.RepeatedOutliers.MaxAvgAge for " + _assetPairId);
                 extPriceSettings.Steps.RequiredNotNull("extPriceSettings.Steps for " + _assetPairId);
-                    
+
                 foreach (var (exchangeName, exchangeSettings) in extPriceSettings.Exchanges)
                     new ExchangeValidator(_assetPairId, exchangeName, exchangeSettings).Validate();
             }
@@ -121,7 +150,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
                     $"_exchangeSettings.OrderGeneration for pair {_assetPairId} and exchange {_exchangeName}");
                 _exchangeSettings.OrderGeneration.VolumeMultiplier.RequiredGreaterThan(0,
                     $"_exchangeSettings.OrderGeneration.VolumeMultiplier for pair {_assetPairId} and exchange {_exchangeName}");
-                _exchangeSettings.OrderGeneration.OrderRenewalDelay.RequiredBetween(TimeSpan.Zero, TimeSpan.FromHours(1), 
+                _exchangeSettings.OrderGeneration.OrderRenewalDelay.RequiredBetween(TimeSpan.Zero,
+                    TimeSpan.FromHours(1),
                     $"_exchangeSettings.OrderGeneration.OrderRenewalDelay for pair {_assetPairId} and exchange {_exchangeName}");
             }
         }

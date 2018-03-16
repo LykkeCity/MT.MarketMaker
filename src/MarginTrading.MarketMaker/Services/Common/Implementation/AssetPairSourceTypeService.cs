@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using JetBrains.Annotations;
-using MarginTrading.MarketMaker.Contracts.Enums;
 using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Models.Settings;
 using MarginTrading.MarketMaker.Services.CrossRates;
@@ -15,7 +15,8 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         private readonly IExtPricesSettingsService _extPricesSettingsService;
         private readonly ICrossRateCalcInfosService _crossRateCalcInfosService;
 
-        public AssetPairSourceTypeService(ISettingsRootService settingsRootService, IExtPricesSettingsService extPricesSettingsService, ICrossRateCalcInfosService crossRateCalcInfosService)
+        public AssetPairSourceTypeService(ISettingsRootService settingsRootService,
+            IExtPricesSettingsService extPricesSettingsService, ICrossRateCalcInfosService crossRateCalcInfosService)
         {
             _settingsRootService = settingsRootService;
             _extPricesSettingsService = extPricesSettingsService;
@@ -24,14 +25,17 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public void AddAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeDomainEnum sourceType)
         {
-            _settingsRootService.Add(assetPairId, new AssetPairSettings(sourceType, _extPricesSettingsService.GetDefault(), _crossRateCalcInfosService.GetDefault(assetPairId)));
+            _settingsRootService.Add(assetPairId,
+                new AssetPairSettings(sourceType, _extPricesSettingsService.GetDefaultExtPriceSettings(),
+                    _crossRateCalcInfosService.GetDefault(assetPairId),
+                    _extPricesSettingsService.GetDefaultAggregateOrderbookSettings()));
         }
 
         public void UpdateAssetPairQuotesSource(string assetPairId, AssetPairQuotesSourceTypeDomainEnum sourceType)
         {
             _settingsRootService.Update(assetPairId,
                 old => new AssetPairSettings(sourceType, old.ExtPriceSettings,
-                    old.CrossRateCalcInfo));
+                    old.CrossRateCalcInfo, old.AggregateOrderbookSettings));
         }
 
         public ImmutableDictionary<string, AssetPairQuotesSourceTypeDomainEnum> Get()
@@ -43,6 +47,12 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
         public AssetPairQuotesSourceTypeDomainEnum? Get(string assetPairId)
         {
             return _settingsRootService.Get(assetPairId)?.QuotesSourceType;
+        }
+
+        public ImmutableHashSet<string> GetPairsByQuotesSourceType(AssetPairQuotesSourceTypeDomainEnum quotesSourceType)
+        {
+            return _settingsRootService.Get().AssetPairs.Where(p => p.Value.QuotesSourceType == quotesSourceType)
+                .Select(p => p.Key).ToImmutableHashSet();
         }
 
         public void Delete(string assetPairId)

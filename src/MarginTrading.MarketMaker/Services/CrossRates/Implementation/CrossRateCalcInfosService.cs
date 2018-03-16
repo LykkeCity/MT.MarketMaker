@@ -31,7 +31,7 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
         public void Update([NotNull] CrossRateCalcInfo info)
         {
             _settingsRootService.Update(info.ResultingPairId,
-                old => new AssetPairSettings(old.QuotesSourceType, old.ExtPriceSettings, info));
+                old => new AssetPairSettings(old.QuotesSourceType, old.ExtPriceSettings, info, old.AggregateOrderbookSettings));
         }
 
         public ImmutableDictionary<string, CrossRateCalcInfo> Get()
@@ -50,14 +50,15 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public CrossRateCalcInfo GetDefault(string assetPairId)
         {
-            return _dependentCrossRatesService.GetForResultingPairId(assetPairId) ??
+            var forResultingPairId = _dependentCrossRatesService.CalculateDefault(assetPairId);
+            return forResultingPairId ??
                 new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false), new CrossRateSourceAssetPair(string.Empty, false));
         }
 
         public CrossRateCalcInfo Get(string assetPairId)
         {
-            var crossRateCalcInfo = (_settingsRootService.Get(assetPairId)?.CrossRateCalcInfo).RequiredNotNull(nameof(CrossRateCalcInfo));
-            return string.IsNullOrWhiteSpace(crossRateCalcInfo.ResultingPairId) ? null : crossRateCalcInfo;
+            var crossRateCalcInfo = (_settingsRootService.Get(assetPairId)?.CrossRateCalcInfo);
+            return string.IsNullOrWhiteSpace(crossRateCalcInfo?.ResultingPairId) ? null : crossRateCalcInfo;
         }
 
         private ICachedCalculation<ILookup<string, CrossRateCalcInfo>> DependentAssetPairsCache()

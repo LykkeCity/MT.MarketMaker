@@ -40,6 +40,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
         private readonly ITestingHelperService _testingHelperService;
         private readonly IStopTradesService _stopTradesService;
         private readonly ISystem _system;
+        private readonly IAggregateOrderbookService _aggregateOrderbookService;
 
 
         public GenerateOrderbookService(
@@ -56,7 +57,9 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             ILog log,
             ITelemetryService telemetryService,
             ITestingHelperService testingHelperService,
-            IStopTradesService stopTradesService, ISystem system)
+            IStopTradesService stopTradesService, 
+            ISystem system,
+            IAggregateOrderbookService aggregateOrderbookService)
         {
             _orderbooksService = orderbooksService;
             _disabledOrderbooksService = disabledOrderbooksService;
@@ -73,6 +76,7 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             _testingHelperService = testingHelperService;
             _stopTradesService = stopTradesService;
             _system = system;
+            _aggregateOrderbookService = aggregateOrderbookService;
         }
 
         public Orderbook OnNewOrderbook(ExternalOrderbook orderbook)
@@ -139,13 +143,18 @@ namespace MarginTrading.MarketMaker.Services.ExtPrices.Implementation
             }
 
             _stopTradesService.FinishCycle(primaryOrderbook, now);
-            var resultingOrderbook = Transform(primaryOrderbook, validOrderbooks);
+            var resultingOrderbook = Aggregate(Transform(primaryOrderbook, validOrderbooks));
             if (TryFindSkipOrderbookReason(resultingOrderbook) is string reason)
             {
                 return (null, primaryExchangeQuality, reason);
             }
 
             return (resultingOrderbook, primaryExchangeQuality, null);
+        }
+
+        private Orderbook Aggregate(Orderbook orderbook)
+        {
+            return _aggregateOrderbookService.Aggregate(orderbook);
         }
 
         [CanBeNull]

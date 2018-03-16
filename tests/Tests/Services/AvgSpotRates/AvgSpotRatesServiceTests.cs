@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Lykke.Service.CandlesHistory.Client;
 using Lykke.Service.CandlesHistory.Client.Models;
+using MarginTrading.MarketMaker.Enums;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Services.AvgSpotRates.Implementation;
 using MarginTrading.MarketMaker.Services.Common;
 using NUnit.Framework;
-using Moq;
 using Times = Moq.Times;
 
 namespace Tests.Services.AvgSpotRates
@@ -14,7 +15,6 @@ namespace Tests.Services.AvgSpotRates
     public class AvgSpotRatesServiceTests
     {
         private static readonly TestSuit<AvgSpotRatesService> _testSuit = TestSuit.Create<AvgSpotRatesService>();
-
 
         [SetUp]
         public void SetUp()
@@ -34,15 +34,19 @@ namespace Tests.Services.AvgSpotRates
             _testSuit
                 .Setup<ISystem>(s => s.UtcNow == now)
                 .Setup<ICandleshistoryservice>(s =>
-                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("LKKUSD", CandlePriceType.Mid, CandleTimeInterval.Min5,
+                    s.GetCandlesHistoryOrErrorWithHttpMessagesAsync("pair", CandlePriceType.Mid,
+                        CandleTimeInterval.Min5,
                         now.AddHours(-12), now, null, default) == history.ToResponse<object>())
-                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25) == Task.CompletedTask);
+                .Setup<IMarketMakerService>(s => s.ProcessNewAvgSpotRate("pair", 25, 25) == Task.CompletedTask)
+                .Setup<IAssetPairSourceTypeService>(s =>
+                    s.GetPairsByQuotesSourceType(AssetPairQuotesSourceTypeDomainEnum.SpotAgvPrices) ==
+                    ImmutableHashSet.Create("pair"));
 
             //act
             await _testSuit.Sut.Execute();
 
             //assert
-            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("LKKUSD", 25, 25), Times.Once);
+            _testSuit.GetMock<IMarketMakerService>().Verify(s => s.ProcessNewAvgSpotRate("pair", 25, 25), Times.Once);
         }
     }
 }

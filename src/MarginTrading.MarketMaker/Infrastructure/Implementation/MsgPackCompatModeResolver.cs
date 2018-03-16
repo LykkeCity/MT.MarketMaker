@@ -5,7 +5,7 @@ using MessagePack.Resolvers;
 namespace MarginTrading.MarketMaker.Infrastructure.Implementation
 {
     /// <summary>
-    /// Same as <see cref="TypelessContractlessStandardResolver"/> but with <see cref="OldSpecResolver"/> & <see cref="DynamicEnumAsStringResolver"/>
+    /// Same as <see cref="TypelessContractlessStandardResolver"/> but with <see cref="OldSpecResolver"/> &amp; <see cref="DynamicEnumAsStringResolver"/>
     /// </summary>
     public sealed class MsgPackCompatModeResolver : IFormatterResolver
     {

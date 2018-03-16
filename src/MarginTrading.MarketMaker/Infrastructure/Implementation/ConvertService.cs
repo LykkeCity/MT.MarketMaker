@@ -18,6 +18,8 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             {
                 cfg.CreateMap(typeof(ImmutableSortedDictionary<,>), typeof(ImmutableSortedDictionary<,>))
                     .ConvertUsing(typeof(ImmutableSortedDictionaryConverter<,,,>));
+                cfg.CreateMap(typeof(ImmutableSortedSet<>), typeof(ImmutableSortedSet<>))
+                    .ConvertUsing(typeof(ImmutableSortedSetConverter<,>));
             }).CreateMapper();
         }
 
@@ -40,6 +42,16 @@ namespace MarginTrading.MarketMaker.Infrastructure.Implementation
             {
                 return source.Select(p => new KeyValuePair<TKey2, TValue2>(context.Mapper.Map<TKey1, TKey2>(p.Key),
                     context.Mapper.Map<TValue1, TValue2>(p.Value))).ToImmutableSortedDictionary();
+            }
+        }
+
+        public class ImmutableSortedSetConverter<TValue1, TValue2>
+            : ITypeConverter<ImmutableSortedSet<TValue1>, ImmutableSortedSet<TValue2>>
+        {
+            public ImmutableSortedSet<TValue2> Convert(ImmutableSortedSet<TValue1> source,
+                ImmutableSortedSet<TValue2> destination, ResolutionContext context)
+            {
+                return source.Select(v => context.Mapper.Map<TValue1, TValue2>(v)).ToImmutableSortedSet();
             }
         }
     }

@@ -45,7 +45,7 @@ namespace MarginTrading.MarketMaker.Controllers
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             _extPricesSettingsService.Update(model.AssetPairId, model.ExchangeName, Convert(model),
-                "settings was manually changed");
+                "settings were manually changed");
             return Ok(new {success = true});
         }
 
@@ -85,7 +85,7 @@ namespace MarginTrading.MarketMaker.Controllers
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             if (exchangeName == null) throw new ArgumentNullException(nameof(exchangeName));
-            var settings = _extPricesSettingsService.Add(assetPairId, exchangeName, "settings was manually changed");
+            var settings = _extPricesSettingsService.Add(assetPairId, exchangeName, "settings were manually changed");
             return Convert(assetPairId, exchangeName, settings);
         }
 
@@ -98,7 +98,7 @@ namespace MarginTrading.MarketMaker.Controllers
         {
             if (assetPairId == null) throw new ArgumentNullException(nameof(assetPairId));
             if (exchangeName == null) throw new ArgumentNullException(nameof(exchangeName));
-            _extPricesSettingsService.Delete(assetPairId, exchangeName, "settings was manually changed");
+            _extPricesSettingsService.Delete(assetPairId, exchangeName, "settings were manually changed");
             return Ok(new {success = true});
         }
 
