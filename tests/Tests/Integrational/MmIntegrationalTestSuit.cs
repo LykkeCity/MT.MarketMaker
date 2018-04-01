@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
 using Lykke.Logs;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.CandlesHistory.Client;
 using Lykke.SlackNotifications;
+using MarginTrading.Backend.Contracts;
+using MarginTrading.Backend.Contracts.AssetPairSettings;
+using MarginTrading.Backend.Contracts.DataReaderClient;
 using MarginTrading.MarketMaker.AzureRepositories;
 using MarginTrading.MarketMaker.AzureRepositories.Implementation;
 using MarginTrading.MarketMaker.AzureRepositories.StorageModels;
@@ -31,7 +32,8 @@ namespace Tests.Integrational
             MarginTradingMarketMaker = new MarginTradingMarketMakerSettings
             {
                 MarketMakerId = "testMmId",
-                Db = new DbSettings {QueuePersistanceRepositoryConnString = "fake"}
+                Db = new DbSettings {QueuePersistanceRepositoryConnString = "fake"},
+               LegalEntity = "LYKKEVU"
             },
             RiskInformingSettings = new RiskInformingSettings {Data = new []
             {
@@ -93,15 +95,11 @@ namespace Tests.Integrational
                 new InMemoryBlobStorageSingleObjectFactory();
             public TestRandom Random { get; } = new TestRandom();
 
-            public IList<AssetPair> AssetPairs { get; set; } = new List<AssetPair>
+            public List<AssetPairContract> AssetPairs { get; set; } = new List<AssetPairContract>
             {
-                new AssetPair
+                new AssetPairContract
                 {
-                    BaseAssetId = "BTC",
                     Id = "BTCUSD",
-                    QuotingAssetId = "USD",
-                    Source = "",
-                    Source2 = "",
                     Accuracy = 3,
                 }
             };
@@ -117,8 +115,9 @@ namespace Tests.Integrational
                 Setup<IRabbitMqService>(StubRabbitMqService)
                     .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow),
                         m => m.Setup(s => s.GetRandom()).Returns(Random))
-                    .Setup<IAssetsService>(m => m.Setup(s => s.AssetPairGetAllWithHttpMessagesAsync(default, default))
-                        .Returns(() => AssetPairs.ToResponse()))
+                    .Setup<IMtDataReaderClient>(c => c.AssetPairsRead == suit.GetMockObj<IAssetPairsReadingApi>())
+                    .Setup<IAssetPairsReadingApi>(m => m.Setup(s => s.Get("LYKKEVU", MatchingEngineModeContract.MarketMaker))
+                        .ReturnsAsync(() => AssetPairs))
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>()
                     .Setup(new LykkeLogToAzureStorage(null))

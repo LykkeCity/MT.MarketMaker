@@ -1,9 +1,9 @@
 ﻿using System;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Lykke.Service.Assets.Client;
 using Lykke.Service.CandlesHistory.Client;
 using Lykke.SettingsReader;
+using MarginTrading.Backend.Contracts.DataReaderClient;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Settings;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -23,9 +23,8 @@ namespace MarginTrading.MarketMaker.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            _services.RegisterAssetsClient(AssetServiceSettings.Create(
-                new Uri(_settings.CurrentValue.MarginTradingMarketMaker.ExternalServices.AssetsServiceUrl),
-                TimeSpan.FromMinutes(5)));
+            _services.RegisterMtDataReaderClient(_settings.CurrentValue.MtDataReaderLiveServiceClient.ServiceUrl,
+                _settings.CurrentValue.MtDataReaderLiveServiceClient.ApiKey, "MarginTrading.MarketMaker");
             
             builder.RegisterInstance(
                     new Candleshistoryservice(new Uri(_settings.CurrentValue.CandlesHistoryServiceClient.ServiceUrl)))

@@ -11,9 +11,9 @@ namespace MarginTrading.MarketMaker.Settings
 
         public string MarketMakerId { get; set; }
 
-        public ExternalServicesSettings ExternalServices { get; set; }
-
         [CanBeNull, Optional]
         public string ApplicationInsightsKey { get; set; }
+        
+        public string LegalEntity { get; set; }
     }
 }

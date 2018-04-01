@@ -1,12 +1,18 @@
-﻿namespace MarginTrading.MarketMaker.Models
+﻿using System;
+using JetBrains.Annotations;
+using MarginTrading.MarketMaker.Infrastructure.Implementation;
+
+namespace MarginTrading.MarketMaker.Models
 {
     public class AssetPairInfo
     {
-        public string Id { get; set; }
-        public string BaseAssetId { get; set; }
-        public string QuotingAssetId { get; set; }
-        public int Accuracy { get; set; }
-        public string Source { get; set; }
-        public string Source2 { get; set; }
+        public AssetPairInfo([NotNull] string id, int accuracy)
+        {
+            Id = id ?? throw new ArgumentNullException(nameof(id));
+            Accuracy = accuracy.RequiredNotLessThan(0, nameof(accuracy));
+        }
+
+        public string Id { get; }
+        public int Accuracy { get; }
     }
 }
