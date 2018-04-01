@@ -1,20 +1,13 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Common.Log;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.CandlesHistory.Client;
 using Lykke.SettingsReader;
 using MarginTrading.MarketMaker.Infrastructure;
 using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Services.Common;
 using MarginTrading.MarketMaker.Services.Common.Implementation;
 using MarginTrading.MarketMaker.Settings;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MarginTrading.MarketMaker.Modules
 {

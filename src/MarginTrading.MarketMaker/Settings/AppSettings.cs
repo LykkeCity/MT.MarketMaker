@@ -13,5 +13,7 @@ namespace MarginTrading.MarketMaker.Settings
         public ExternalServiceClientSettings CandlesHistoryServiceClient { get; set; }
         
         public RiskInformingSettings RiskInformingSettings { get; set; }
+        
+        public MtDataReaderClientSettings MtDataReaderLiveServiceClient { get; set; }
     }
 }

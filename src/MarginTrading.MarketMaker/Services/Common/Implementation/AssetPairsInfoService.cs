@@ -1,47 +1,63 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
+using System.Threading;
+using System.Threading.Tasks;
+using Common;
+using Common.Log;
+using Lykke.SettingsReader;
+using MarginTrading.Backend.Contracts.AssetPairSettings;
+using MarginTrading.Backend.Contracts.DataReaderClient;
 using MarginTrading.MarketMaker.Infrastructure;
-using MarginTrading.MarketMaker.Infrastructure.Implementation;
 using MarginTrading.MarketMaker.Models;
+using MarginTrading.MarketMaker.Settings;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
-    public class AssetPairsInfoService : IAssetPairsInfoService
+    internal class AssetPairsInfoService : TimerPeriod, IAssetPairsInfoService, ICustomStartup
     {
-        private readonly ISystem _system;
-        private readonly IAssetsService _assetsService;
+        private readonly IMtDataReaderClient _mtDataReaderClient;
         private readonly IConvertService _convertService;
-        private readonly ICachedCalculation<IReadOnlyDictionary<string, AssetPairInfo>> _assetPairs;
+        private IReadOnlyDictionary<string, AssetPairInfo> _assetPairs;
+        private readonly ManualResetEventSlim _assetPairsInitializedEvent = new ManualResetEventSlim();
+        private readonly IReloadingManager<MarginTradingMarketMakerSettings> _settings;
 
-        public AssetPairsInfoService(ISystem system, IAssetsService assetsService, IConvertService convertService)
+        public AssetPairsInfoService(IMtDataReaderClient mtDataReaderClient, IConvertService convertService, ILog log,
+            IReloadingManager<MarginTradingMarketMakerSettings> settings)
+            : base(nameof(AssetPairsInfoService), (int) TimeSpan.FromMinutes(2).TotalMilliseconds, log)
         {
-            _system = system;
-            _assetsService = assetsService;
+            _mtDataReaderClient = mtDataReaderClient;
             _convertService = convertService;
-            _assetPairs = GetAssetPairsCache();
+            _settings = settings;
         }
 
         public IReadOnlyDictionary<string, AssetPairInfo> Get()
         {
-            return _assetPairs.Get();
-        }
-        
-        public AssetPairInfo Get(string assetPairId)
-        {
-            return _assetPairs.Get().GetValueOrDefault(assetPairId);
+            return _assetPairs;
         }
 
-        private ICachedCalculation<Dictionary<string, AssetPairInfo>> GetAssetPairsCache()
+        public AssetPairInfo Get(string assetPairId)
         {
-            return Calculate.Cached(() => _system.UtcNow,
-                (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
-                now => _assetsService.AssetPairGetAll().ToDictionary(p => p.Id,
-                    p => _convertService.Convert<AssetPair, AssetPairInfo>(p,
-                        o => o.ConfigureMap(MemberList.Destination))));
+            return _assetPairs.GetValueOrDefault(assetPairId);
+        }
+
+        public override async Task Execute()
+        {
+            _assetPairs = (await _mtDataReaderClient.AssetPairsRead.Get(_settings.CurrentValue.LegalEntity,
+                    MatchingEngineModeContract.MarketMaker))
+                .ToDictionary(s => s.Id, Convert);
+            _assetPairsInitializedEvent.Set();
+        }
+
+        private AssetPairInfo Convert(AssetPairContract pair)
+        {
+            return _convertService.Convert<AssetPairContract, AssetPairInfo>(pair);
+        }
+
+        public void Initialize()
+        {
+            Start();
+            _assetPairsInitializedEvent.Wait();
         }
     }
 }
