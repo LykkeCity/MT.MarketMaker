@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AutoMapper;
+using Common;
+using Common.Log;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using MarginTrading.MarketMaker.Infrastructure;
@@ -10,38 +15,43 @@ using MarginTrading.MarketMaker.Models;
 
 namespace MarginTrading.MarketMaker.Services.Common.Implementation
 {
-    public class AssetPairsInfoService : IAssetPairsInfoService
+    public class AssetPairsInfoService : TimerPeriod, IAssetPairsInfoService, ICustomStartup
     {
-        private readonly ISystem _system;
         private readonly IAssetsService _assetsService;
         private readonly IConvertService _convertService;
-        private readonly ICachedCalculation<IReadOnlyDictionary<string, AssetPairInfo>> _assetPairs;
+        private IReadOnlyDictionary<string, AssetPairInfo> _assetPairs;
+        private readonly ManualResetEventSlim _assetPairsInitializedEvent = new ManualResetEventSlim();
 
-        public AssetPairsInfoService(ISystem system, IAssetsService assetsService, IConvertService convertService)
+        public AssetPairsInfoService(IAssetsService assetsService, IConvertService convertService, ILog log) 
+            : base(nameof(AssetPairsInfoService), (int) TimeSpan.FromMinutes(2).TotalMilliseconds, log)
         {
-            _system = system;
             _assetsService = assetsService;
             _convertService = convertService;
-            _assetPairs = GetAssetPairsCache();
         }
 
         public IReadOnlyDictionary<string, AssetPairInfo> Get()
         {
-            return _assetPairs.Get();
+            return _assetPairs;
         }
         
         public AssetPairInfo Get(string assetPairId)
         {
-            return _assetPairs.Get().GetValueOrDefault(assetPairId);
+            return _assetPairs.GetValueOrDefault(assetPairId);
         }
 
-        private ICachedCalculation<Dictionary<string, AssetPairInfo>> GetAssetPairsCache()
+        public override Task Execute()
         {
-            return Calculate.Cached(() => _system.UtcNow,
-                (prev, now) => now.Subtract(prev) < TimeSpan.FromMinutes(5),
-                now => _assetsService.AssetPairGetAll().ToDictionary(p => p.Id,
-                    p => _convertService.Convert<AssetPair, AssetPairInfo>(p,
-                        o => o.ConfigureMap(MemberList.Destination))));
+            _assetPairs =  _assetsService.AssetPairGetAll().ToDictionary(p => p.Id,
+                p => _convertService.Convert<AssetPair, AssetPairInfo>(p,
+                    o => o.ConfigureMap(MemberList.Destination)));
+            _assetPairsInitializedEvent.Set();
+            return Task.CompletedTask;
+        }
+
+        public void Initialize()
+        {
+            Start();
+            _assetPairsInitializedEvent.Wait();
         }
     }
 }
