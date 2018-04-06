@@ -116,7 +116,7 @@ namespace Tests.Integrational
                     .Setup<ISystem>(m => m.Setup(s => s.UtcNow).Returns(() => UtcNow),
                         m => m.Setup(s => s.GetRandom()).Returns(Random))
                     .Setup<IMtDataReaderClient>(c => c.AssetPairsRead == suit.GetMockObj<IAssetPairsReadingApi>())
-                    .Setup<IAssetPairsReadingApi>(m => m.Setup(s => s.Get("LYKKEVU", MatchingEngineModeContract.MarketMaker))
+                    .Setup<IAssetPairsReadingApi>(m => m.Setup(s => s.List("LYKKEVU", MatchingEngineModeContract.MarketMaker))
                         .ReturnsAsync(() => AssetPairs))
                     .Setup<ILog>(LogToConsole)
                     .Setup<ICandleshistoryservice>()
