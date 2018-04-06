@@ -24,7 +24,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public AssetPairsInfoService(IMtDataReaderClient mtDataReaderClient, IConvertService convertService, ILog log,
             IReloadingManager<MarginTradingMarketMakerSettings> settings)
-            : base(nameof(AssetPairsInfoService), (int) TimeSpan.FromMinutes(2).TotalMilliseconds, log)
+            : base(nameof(AssetPairsInfoService), (int) TimeSpan.FromMinutes(3).TotalMilliseconds + 1, log)
         {
             _mtDataReaderClient = mtDataReaderClient;
             _convertService = convertService;
@@ -43,7 +43,7 @@ namespace MarginTrading.MarketMaker.Services.Common.Implementation
 
         public override async Task Execute()
         {
-            _assetPairs = (await _mtDataReaderClient.AssetPairsRead.Get(_settings.CurrentValue.LegalEntity,
+            _assetPairs = (await _mtDataReaderClient.AssetPairsRead.List(_settings.CurrentValue.LegalEntity,
                     MatchingEngineModeContract.MarketMaker))
                 .ToDictionary(s => s.Id, Convert);
             _assetPairsInitializedEvent.Set();
