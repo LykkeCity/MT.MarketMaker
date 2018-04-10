@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Lykke.Service.Assets.Client.Models;
+using MarginTrading.Backend.Contracts.AssetPairSettings;
 using MarginTrading.MarketMaker.AzureRepositories.StorageModels;
-using MarginTrading.MarketMaker.Models.Settings;
 
 namespace Tests.Integrational
 {
@@ -10,7 +9,7 @@ namespace Tests.Integrational
     {
         DateTime UtcNow { get; set; }
         StubRabbitMqService StubRabbitMqService { get; }
-        IList<AssetPair> AssetPairs { get; set; }
+        List<AssetPairContract> AssetPairs { get; set; }
         SettingsRootStorageModel SettingsRoot { get; set; }
         InMemoryTableStorageFactory TableStorageFactory { get; }
         InMemoryBlobStorageSingleObjectFactory BlobStorageFactory { get; }

@@ -5,6 +5,7 @@ namespace MarginTrading.MarketMaker.Settings
 {
     public class RabbitConnectionSettings
     {
+        [AmqpCheck]
         public string ConnectionString { get; set; }
         public string ExchangeName { get; set; }
         [Optional, CanBeNull]

@@ -18,13 +18,10 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
     {
         private readonly ISettingsRootService _settingsRootService;
         private readonly ICachedCalculation<ILookup<string, CrossRateCalcInfo>> _dependentAssetPairs;
-        private readonly IDependentCrossRatesService _dependentCrossRatesService;
 
-        public CrossRateCalcInfosService(ISettingsRootService settingsRootService,
-            IDependentCrossRatesService dependentCrossRatesService)
+        public CrossRateCalcInfosService(ISettingsRootService settingsRootService)
         {
             _settingsRootService = settingsRootService;
-            _dependentCrossRatesService = dependentCrossRatesService;
             _dependentAssetPairs = DependentAssetPairsCache();
         }
 
@@ -50,9 +47,8 @@ namespace MarginTrading.MarketMaker.Services.CrossRates.Implementation
 
         public CrossRateCalcInfo GetDefault(string assetPairId)
         {
-            var forResultingPairId = _dependentCrossRatesService.CalculateDefault(assetPairId);
-            return forResultingPairId ??
-                new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false), new CrossRateSourceAssetPair(string.Empty, false));
+            return new CrossRateCalcInfo(assetPairId, new CrossRateSourceAssetPair(string.Empty, false),
+                new CrossRateSourceAssetPair(string.Empty, false));
         }
 
         public CrossRateCalcInfo Get(string assetPairId)
